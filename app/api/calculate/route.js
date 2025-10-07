@@ -86,16 +86,15 @@ export async function POST(request) {
         // Hay un arancel preferencial específico para este producto
         finalDutyRate = preferentialRate
         appliedAgreement = `${countryData.agreement_type} - Arancel específico`
-      } else if (countryData.reduction_rate > 0) {
-        // Aplicar reducción general del acuerdo
-        const reduction = (finalDutyRate * countryData.reduction_rate) / 100
-        finalDutyRate = Math.max(0, finalDutyRate - reduction)
-        appliedAgreement = countryData.agreement_type
       } else if (countryData.reduction_rate < 0) {
         // Sanciones - arancel adicional
         const addition = Math.abs(countryData.reduction_rate)
         finalDutyRate = finalDutyRate + addition
         appliedAgreement = 'Sanciones - Arancel adicional'
+      } else if (countryData.agreement_type && countryData.agreement_type !== 'Sin acuerdo') {
+        // Tiene acuerdo pero no sabemos el arancel exacto
+        appliedAgreement = countryData.agreement_type
+        // NO modificamos el arancel, solo avisamos del posible acuerdo
       }
     }
     
