@@ -74,6 +74,9 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <img src="/logo.png" alt="Lex Aduana" className="h-24 w-auto" />
+          </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-3">
             Calculadora TARIC
           </h1>
@@ -145,10 +148,9 @@ export default function Home() {
                     <optgroup key={groupName} label={`━━ ${groupName} ━━`}>
                       {groupCountries.map(country => (
                         <option key={country.country_code} value={country.country_code}>
-                          {country.country_name} 
-                          {country.reduction_rate === 100 && ' ✓ (0% arancel)'}
-                          {country.reduction_rate > 0 && country.reduction_rate < 100 && ` (−${country.reduction_rate}%)`}
-                          {country.reduction_rate < 0 && ' ⚠️ (+sanciones)'}
+                          {country.country_name}
+                          {country.agreement_type === 'Sanciones' && ' ⚠️'}
+                          {country.agreement_type === 'EBA' && ' ★'}
                         </option>
                       ))}
                     </optgroup>
@@ -215,21 +217,18 @@ export default function Home() {
                   )}
 
                   {result.country.agreement && (
-                    <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
                       <div className="flex items-start">
-                        <span className="text-2xl mr-3">🌍</span>
+                        <span className="text-2xl mr-3">⚠️</span>
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900 mb-1">
-                            {result.country.name} - {result.country.agreement}
+                            Atención: {result.country.name} - {result.country.agreement}
                           </p>
-                          {result.country.notes && (
-                            <p className="text-sm text-gray-600">{result.country.notes}</p>
-                          )}
-                          {result.duty.savings > 0 && (
-                            <p className="text-sm font-semibold text-green-600 mt-2">
-                              💰 Ahorro por acuerdo: {formatCurrency(result.duty.savings)}
-                            </p>
-                          )}
+                          <p className="text-sm text-gray-700">{result.country.notes}</p>
+                          <p className="text-xs text-gray-600 mt-2">
+                            <strong>Importante:</strong> Los aranceles preferenciales varían según el producto específico y requieren documentación de origen. 
+                            Este cálculo muestra el arancel general. Consulte el acuerdo específico para confirmar las preferencias aplicables.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -320,29 +319,29 @@ export default function Home() {
           <div className="mt-8 grid md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg shadow">
               <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
+                <span className="text-blue-500 mr-2">📋</span>
+                Documentación origen
+              </h3>
+              <p className="text-sm text-gray-600">
+                EUR.1, REX, Declaración en factura según acuerdo
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
+                <span className="text-amber-500 mr-2">⚠️</span>
+                Importante
+              </h3>
+              <p className="text-sm text-gray-600">
+                Las preferencias dependen del producto específico
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
                 <span className="text-green-500 mr-2">✓</span>
-                Países con 0% arancel
+                Siempre verificar
               </h3>
               <p className="text-sm text-gray-600">
-                UE, Noruega, Suiza, Islandia, Reino Unido*
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <span className="text-blue-500 mr-2">★</span>
-                Acuerdos principales
-              </h3>
-              <p className="text-sm text-gray-600">
-                Canadá, Japón, México, Corea, Vietnam
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <span className="text-orange-500 mr-2">⚠</span>
-                Sanciones activas
-              </h3>
-              <p className="text-sm text-gray-600">
-                Rusia, Bielorrusia (+25% adicional)
+                Consultar acuerdo específico y reglas de origen
               </p>
             </div>
           </div>
