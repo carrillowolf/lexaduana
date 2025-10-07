@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   try {
-    const { hsCode, cifValue, country = 'ERGA OMNES' } = await request.json()
+    const { hsCode, cifValue, countryCode = 'ERGA OMNES' } = await request.json()
     
     if (!hsCode || !cifValue) {
       return NextResponse.json(
@@ -16,7 +16,19 @@ export async function POST(request) {
     const cleanHsCode = hsCode.replace(/\s/g, '').replace(/\./g, '')
     const paddedHsCode = cleanHsCode.padEnd(10, '0').substring(0, 10)
     
-    // Buscar arancel - primero exacto, luego reduciendo dígitos
+    // Obtener información del país
+    let countryData = null
+    if (countryCode !== 'ERGA OMNES') {
+      const { data: country } = await supabase
+        .from('countries')
+        .select('*')
+        .eq('country_code', countryCode)
+        .single()
+      
+      countryData = country
+    }
+    
+    // Buscar arancel base (ERGA OMNES)
     let tariffData = null
     let searchCode = paddedHsCode
     
@@ -27,31 +39,12 @@ export async function POST(request) {
         .from('tariffs')
         .select('goods_code, duty')
         .eq('goods_code', searchCode)
-        .eq('origin', country)
+        .eq('origin', 'ERGA OMNES')
         .single()
       
       if (data) {
         tariffData = data
         break
-      }
-    }
-    
-    // Si no encuentra con país específico, buscar ERGA OMNES
-    if (!tariffData && country !== 'ERGA OMNES') {
-      for (let len = 10; len >= 2; len -= 2) {
-        searchCode = paddedHsCode.substring(0, len).padEnd(10, '0')
-        
-        const { data, error } = await supabase
-          .from('tariffs')
-          .select('goods_code, duty')
-          .eq('goods_code', searchCode)
-          .eq('origin', 'ERGA OMNES')
-          .single()
-        
-        if (data) {
-          tariffData = data
-          break
-        }
       }
     }
     
@@ -62,6 +55,21 @@ export async function POST(request) {
       )
     }
     
+    // Buscar si hay arancel preferencial específico para este producto y país
+    let preferentialRate = null
+    if (countryData && countryCode !== 'ERGA OMNES') {
+      const { data: prefTariff } = await supabase
+        .from('preferential_tariffs')
+        .select('preferential_duty')
+        .eq('goods_code', tariffData.goods_code)
+        .eq('country_code', countryCode)
+        .single()
+      
+      if (prefTariff) {
+        preferentialRate = prefTariff.preferential_duty
+      }
+    }
+    
     // Buscar descripción
     const { data: descData } = await supabase
       .from('descriptions')
@@ -69,10 +77,31 @@ export async function POST(request) {
       .eq('goods_code', tariffData.goods_code)
       .single()
     
+    // Calcular el arancel aplicable
+    let finalDutyRate = parseFloat(tariffData.duty)
+    let appliedAgreement = null
+    
+    if (countryData) {
+      if (preferentialRate !== null) {
+        // Hay un arancel preferencial específico para este producto
+        finalDutyRate = preferentialRate
+        appliedAgreement = `${countryData.agreement_type} - Arancel específico`
+      } else if (countryData.reduction_rate > 0) {
+        // Aplicar reducción general del acuerdo
+        const reduction = (finalDutyRate * countryData.reduction_rate) / 100
+        finalDutyRate = Math.max(0, finalDutyRate - reduction)
+        appliedAgreement = countryData.agreement_type
+      } else if (countryData.reduction_rate < 0) {
+        // Sanciones - arancel adicional
+        const addition = Math.abs(countryData.reduction_rate)
+        finalDutyRate = finalDutyRate + addition
+        appliedAgreement = 'Sanciones - Arancel adicional'
+      }
+    }
+    
     // Calcular valores
     const cif = parseFloat(cifValue)
-    const dutyRate = parseFloat(tariffData.duty)
-    const dutyAmount = (cif * dutyRate) / 100
+    const dutyAmount = (cif * finalDutyRate) / 100
     const customsBase = cif + dutyAmount
     
     // IVA estándar 21% (podemos hacerlo configurable después)
@@ -80,15 +109,27 @@ export async function POST(request) {
     const vatAmount = (customsBase * vatRate) / 100
     const totalAmount = customsBase + vatAmount
     
+    // Calcular ahorro si hay acuerdo
+    const standardDutyAmount = (cif * parseFloat(tariffData.duty)) / 100
+    const savings = standardDutyAmount - dutyAmount
+    
     return NextResponse.json({
       success: true,
       data: {
         hsCode: tariffData.goods_code,
         description: descData?.description || 'Sin descripción disponible',
         cifValue: cif,
+        country: {
+          code: countryCode,
+          name: countryData?.country_name || 'Terceros países',
+          agreement: appliedAgreement,
+          notes: countryData?.notes
+        },
         duty: {
-          rate: dutyRate,
-          amount: dutyAmount
+          standardRate: parseFloat(tariffData.duty),
+          appliedRate: finalDutyRate,
+          amount: dutyAmount,
+          savings: savings > 0 ? savings : 0
         },
         vat: {
           rate: vatRate,
@@ -102,6 +143,30 @@ export async function POST(request) {
     console.error('Error en cálculo:', error)
     return NextResponse.json(
       { error: 'Error al procesar la solicitud' },
+      { status: 500 }
+    )
+  }
+}
+
+// Nueva ruta para obtener lista de países
+export async function GET() {
+  try {
+    const { data: countries, error } = await supabase
+      .from('countries')
+      .select('country_code, country_name, agreement_type, reduction_rate, notes')
+      .eq('active', true)
+      .order('country_name')
+    
+    if (error) throw error
+    
+    return NextResponse.json({
+      success: true,
+      countries
+    })
+  } catch (error) {
+    console.error('Error obteniendo países:', error)
+    return NextResponse.json(
+      { error: 'Error al obtener lista de países' },
       { status: 500 }
     )
   }
