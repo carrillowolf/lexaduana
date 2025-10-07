@@ -70,12 +70,62 @@ export async function POST(request) {
       }
     }
     
-    // Buscar descripción
-    const { data: descData } = await supabase
+    // Buscar descripciones en cascada (HS2, HS4, HS6)
+    let fullDescription = ''
+    
+    // Obtener HS2 (capítulo)
+    const hs2Code = paddedHsCode.substring(0, 2).padEnd(10, '0')
+    const { data: hs2Desc } = await supabase
+      .from('descriptions')
+      .select('description')
+      .eq('goods_code', hs2Code)
+      .single()
+    
+    // Obtener HS4
+    const hs4Code = paddedHsCode.substring(0, 4).padEnd(10, '0')
+    const { data: hs4Desc } = await supabase
+      .from('descriptions')
+      .select('description')
+      .eq('goods_code', hs4Code)
+      .single()
+    
+    // Obtener HS6
+    const hs6Code = paddedHsCode.substring(0, 6).padEnd(10, '0')
+    const { data: hs6Desc } = await supabase
+      .from('descriptions')
+      .select('description')
+      .eq('goods_code', hs6Code)
+      .single()
+    
+    // Obtener descripción exacta si existe
+    const { data: exactDesc } = await supabase
       .from('descriptions')
       .select('description')
       .eq('goods_code', tariffData.goods_code)
       .single()
+    
+    // Construir descripción jerárquica
+    const descriptions = []
+    
+    if (hs2Desc?.description) {
+      descriptions.push(hs2Desc.description.trim())
+    }
+    
+    if (hs4Desc?.description && hs4Desc.description !== hs2Desc?.description) {
+      descriptions.push(hs4Desc.description.trim())
+    }
+    
+    // Usar HS6 o la descripción exacta encontrada
+    if (hs6Desc?.description && hs6Desc.description !== hs4Desc?.description) {
+      descriptions.push(hs6Desc.description.trim())
+    } else if (exactDesc?.description && exactDesc.description !== hs6Desc?.description && exactDesc.description !== hs4Desc?.description) {
+      descriptions.push(exactDesc.description.trim())
+    }
+    
+    // Si no hay ninguna descripción, usar un texto por defecto
+    fullDescription = descriptions.length > 0 
+      ? descriptions.join(' → ') 
+      : `Código HS: ${tariffData.goods_code}`
     
     // Calcular el arancel aplicable
     let finalDutyRate = parseFloat(tariffData.duty)
@@ -116,7 +166,7 @@ export async function POST(request) {
       success: true,
       data: {
         hsCode: tariffData.goods_code,
-        description: descData?.description || 'Sin descripción disponible',
+        description: fullDescription,
         cifValue: cif,
         country: {
           code: countryCode,
