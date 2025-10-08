@@ -91,7 +91,7 @@ export default function Home() {
               ✓ {countries?.length || 0} países con acuerdos
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada 225
+              ✓ Base de datos actualizada 0225
             </span>
           </div>
         </header>
@@ -350,7 +350,7 @@ export default function Home() {
         </div>
 
         <footer className="text-center mt-12 text-gray-600 text-sm">
-          <p>© 2024 Lexaduana - Calculadora TARIC profesional</p>
+          <p>© 2025 Lexaduana - Calculadora TARIC profesional</p>
           <p className="mt-2">
             <a href="https://lexaduana.es" className="text-blue-600 hover:underline">lexaduana.es</a>
             {' | '}
