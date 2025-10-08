@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { exportToPDF } from '../components/ExportPDF'
+import HSCodeAutocomplete from '../components/HSCodeAutocomplete'
 
 export default function Home() {
   const [hsCode, setHsCode] = useState('')
@@ -64,19 +66,19 @@ export default function Home() {
   }
 
   // Agrupar países por tipo de acuerdo
-  const groupedCountries = countries.reduce((acc, country) => {
-    const group = country.agreement_type || 'Otros'
-    if (!acc[group]) acc[group] = []
-    acc[group].push(country)
-    return acc
-  }, {})
+    const groupedCountries = (countries || []).reduce((acc, country) => {
+      const group = country.agreement_type || 'Otros'
+      if (!acc[group]) acc[group] = []
+      acc[group].push(country)
+      return acc
+    }, {})
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <Image src="/logo.png" alt="Lex Aduana" className="h-24 w-auto" />
+            <img src="/logo.png" alt="Lex Aduana" className="h-24 w-auto" />
           </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-3">
             Calculadora TARIC
@@ -86,10 +88,10 @@ export default function Home() {
           </p>
           <div className="mt-4 flex justify-center gap-4">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              ✓ {countries.length} países con acuerdos
+              ✓ {countries?.length || 0} países con acuerdos
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada 2024
+              ✓ Base de datos actualizada 225
             </span>
           </div>
         </header>
@@ -102,16 +104,15 @@ export default function Home() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Código HS / TARIC
                   </label>
-                  <input
-                    type="text"
+                  <HSCodeAutocomplete
                     value={hsCode}
-                    onChange={(e) => setHsCode(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    placeholder="ej: 8471300000"
-                    required
+                    onChange={setHsCode}
+                    onSelect={(suggestion) => {
+                      console.log('Código seleccionado:', suggestion)
+                    }}
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    Introduce el código arancelario (2-10 dígitos)
+                    Escriba al menos 2 dígitos para ver sugerencias
                   </p>
                 </div>
 

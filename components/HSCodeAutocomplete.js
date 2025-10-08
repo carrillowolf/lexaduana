@@ -51,7 +51,9 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
     setIsLoading(true)
     try {
       const response = await fetch(`/api/search-codes?q=${encodeURIComponent(query)}`)
+      console.log('Response status:', response.status)
       const data = await response.json()
+      console.log('Data received:', data)
       
       if (data.success && data.results.length > 0) {
         setSuggestions(data.results)
