@@ -91,7 +91,7 @@ export default function Home() {
               ✓ {countries?.length || 0} países con acuerdos
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada 0225
+              ✓ Base de datos actualizada2025
             </span>
           </div>
         </header>
