@@ -234,7 +234,7 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
       {showSuggestions && suggestions.length === 0 && !isLoading && inputValue.length >= 2 && (
         <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600">
-            No se encontraron códigos que empiecen con "{inputValue}"
+            No se encontraron códigos que empiecen con &quot;{inputValue}&quot;
           </p>
           <p className="text-xs text-gray-500 mt-1">
             Intente con menos dígitos o verifique el código

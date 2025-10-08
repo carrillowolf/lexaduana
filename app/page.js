@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 export default function Home() {
   const [hsCode, setHsCode] = useState('')
@@ -75,7 +76,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <img src="/logo.png" alt="Lex Aduana" className="h-24 w-auto" />
+            <Image src="/logo.png" alt="Lex Aduana" className="h-24 w-auto" />
           </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-3">
             Calculadora TARIC
