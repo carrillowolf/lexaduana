@@ -71,18 +71,18 @@ export default function HeroSection({ onScrollToCalculator }) {
               </span>
             </button>
             
-            <button
-              disabled
-              className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg opacity-90 cursor-not-allowed relative overflow-hidden group"
+            <a
+              href="/monitor"
+              className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-200"
             >
               <span className="flex items-center">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 Monitor de Aranceles
-                <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">Próximamente</span>
+                <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">BETA</span>
               </span>
-            </button>
+            </a>
           </div>
           
           {/* Estadísticas */}

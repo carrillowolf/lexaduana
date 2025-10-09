@@ -167,7 +167,7 @@ export default function Home() {
               ✓ {countries.length} países con acuerdos
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada 2025
+              ✓ Base de datos actualizada 2024
             </span>
           </div>
         </header>
@@ -186,7 +186,10 @@ export default function Home() {
                   >
                     <span className="font-mono mr-2">{item.code}</span>
                     <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                      {item.description?.split('→')[0]?.trim()}
+                      {typeof item.description === 'string' 
+                        ? item.description?.split('→')[0]?.trim()
+                        : 'Búsqueda anterior'
+                      }
                     </span>
                   </button>
                 ))}
