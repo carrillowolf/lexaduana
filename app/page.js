@@ -6,6 +6,7 @@ import { exportToPDF } from '../components/ExportPDF'
 import HSCodeAutocomplete from '../components/HSCodeAutocomplete'
 import HeroSection from '../components/HeroSection'
 import FeaturesSection from '../components/FeaturesSection'
+import QuickAccessButton from '../components/QuickAccessButton'
 
 export default function Home() {
   const [hsCode, setHsCode] = useState('')
@@ -142,6 +143,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Quick Access Button */}
+      <QuickAccessButton />
+      
       {/* Hero Section */}
       <HeroSection onScrollToCalculator={scrollToCalculator} />
       
@@ -163,7 +167,7 @@ export default function Home() {
               ✓ {countries.length} países con acuerdos
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada 2024
+              ✓ Base de datos actualizada 2025
             </span>
           </div>
         </header>
