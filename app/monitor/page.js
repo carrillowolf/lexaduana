@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function MonitorAuth() {
   const [isLogin, setIsLogin] = useState(true)
@@ -220,12 +221,12 @@ export default function MonitorAuth() {
 
           {/* Link volver */}
           <div className="mt-6 text-center">
-            <a 
+            <Link 
               href="/"
               className="text-sm text-gray-600 hover:text-gray-900"
             >
               ← Volver a la calculadora
-            </a>
+            </Link>
           </div>
         </div>
       </div>
