@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { exportToPDF } from '../components/ExportPDF'
 import HSCodeAutocomplete from '../components/HSCodeAutocomplete'
+import HeroSection from '../components/HeroSection'
+import FeaturesSection from '../components/FeaturesSection'
 
 export default function Home() {
   const [hsCode, setHsCode] = useState('')
@@ -25,7 +27,18 @@ export default function Home() {
   const loadRecentSearches = () => {
     if (typeof window !== 'undefined') {
       const recent = JSON.parse(localStorage.getItem('recentHSCodes') || '[]')
-      setRecentSearches(recent.slice(0, 5))
+      // Convertir formato antiguo si es necesario
+      const formatted = recent.map(item => {
+        if (typeof item === 'string') {
+          return {
+            code: item,
+            description: 'Búsqueda anterior',
+            timestamp: new Date().toISOString()
+          }
+        }
+        return item
+      })
+      setRecentSearches(formatted.slice(0, 5))
     }
   }
 
@@ -74,8 +87,13 @@ export default function Home() {
 
       setResult(data.data)
       
-      // Actualizar búsquedas recientes
-      loadRecentSearches()
+      // Actualizar búsquedas recientes después de un cálculo exitoso
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          const recent = JSON.parse(localStorage.getItem('recentHSCodes') || '[]')
+          setRecentSearches(recent.slice(0, 5))
+        }, 100)
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -115,16 +133,28 @@ export default function Home() {
     return acc
   }, {})
 
+  const scrollToCalculator = () => {
+    document.getElementById('calculator').scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <HeroSection onScrollToCalculator={scrollToCalculator} />
+      
+      {/* Features Section */}
+      <FeaturesSection />
+      
+      {/* Calculator Section */}
+      <div id="calculator" className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <Image src="/logo.png" alt="Lex Aduana" width={96} height={96} className="h-24 w-auto" />
-          </div>
-          <h1 className="text-5xl font-bold text-gray-800 mb-3">
-            Calculadora TARIC
-          </h1>
+          <h2 className="text-4xl font-bold text-gray-800 mb-3">
+            Calculadora TARIC Profesional
+          </h2>
           <p className="text-lg text-gray-600">
             Calcula aranceles e IVA para importaciones en la UE
           </p>
@@ -485,6 +515,7 @@ export default function Home() {
             <a href="https://lexaduana.eu" className="text-blue-600 hover:underline">lexaduana.eu</a>
           </p>
         </footer>
+      </div>
       </div>
     </div>
   )
