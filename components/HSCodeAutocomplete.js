@@ -51,9 +51,7 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
     setIsLoading(true)
     try {
       const response = await fetch(`/api/search-codes?q=${encodeURIComponent(query)}`)
-      console.log('Response status:', response.status)
       const data = await response.json()
-      console.log('Data received:', data)
       
       if (data.success && data.results.length > 0) {
         setSuggestions(data.results)
@@ -112,9 +110,19 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
   }
 
   // Guardar búsquedas recientes en localStorage
-  const saveRecentSearch = (code) => {
+  const saveRecentSearch = (code, description) => {
+    if (typeof window === 'undefined') return
+    
     const recent = JSON.parse(localStorage.getItem('recentHSCodes') || '[]')
-    const updated = [code, ...recent.filter(c => c !== code)].slice(0, 5)
+    const newEntry = {
+      code,
+      description: description || 'Sin descripción',
+      timestamp: new Date().toISOString()
+    }
+    
+    // Eliminar duplicados y mantener máximo 5
+    const filtered = recent.filter(r => r.code !== code)
+    const updated = [newEntry, ...filtered].slice(0, 5)
     localStorage.setItem('recentHSCodes', JSON.stringify(updated))
   }
 
@@ -149,7 +157,7 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition pr-10"
-          placeholder="ej: 8471 o escriba 'portátil'"
+          placeholder="ej: 8471, 3926 o 0303"
           required
         />
         
@@ -189,7 +197,7 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
               onClick={() => {
                 selectSuggestion(suggestion)
                 if (!suggestion.recent) {
-                  saveRecentSearch(suggestion.code)
+                  saveRecentSearch(suggestion.code, suggestion.description)
                 }
               }}
               onMouseEnter={() => setSelectedIndex(index)}

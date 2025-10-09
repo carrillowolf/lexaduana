@@ -13,11 +13,21 @@ export default function Home() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState(null)
+  const [recentSearches, setRecentSearches] = useState([])
 
-  // Cargar lista de países al iniciar
+  // Cargar lista de países y búsquedas recientes al iniciar
   useEffect(() => {
     fetchCountries()
+    loadRecentSearches()
   }, [])
+
+  const loadRecentSearches = () => {
+    if (typeof window !== 'undefined') {
+      const recent = JSON.parse(localStorage.getItem('recentHSCodes') || '[]')
+      setRecentSearches(recent.slice(0, 5))
+    }
+  }
 
   const fetchCountries = async () => {
     try {
@@ -31,26 +41,41 @@ export default function Home() {
     }
   }
 
-  const calculate = async (e) => {
-    e.preventDefault()
+  const calculate = async (e, specificCode = null) => {
+    if (e) e.preventDefault()
     setLoading(true)
     setError('')
     setResult(null)
+    setSuggestions(null)
 
     try {
       const response = await fetch('/api/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hsCode, cifValue, countryCode })
+        body: JSON.stringify({ 
+          hsCode: specificCode || hsCode, 
+          cifValue, 
+          countryCode 
+        })
       })
 
       const data = await response.json()
+      
+      if (data.incomplete && data.suggestions) {
+        // Mostrar sugerencias de códigos hijos
+        setSuggestions(data)
+        setLoading(false)
+        return
+      }
       
       if (!response.ok) {
         throw new Error(data.error || 'Error en el cálculo')
       }
 
       setResult(data.data)
+      
+      // Actualizar búsquedas recientes
+      loadRecentSearches()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -65,20 +90,37 @@ export default function Home() {
     }).format(value)
   }
 
+  const clearAll = () => {
+    setResult(null)
+    setSuggestions(null)
+    setHsCode('')
+    setCifValue('')
+    setCountryCode('ERGA OMNES')
+    setError('')
+  }
+
+  const quickSearch = (code) => {
+    setHsCode(code)
+    if (cifValue) {
+      // Si ya hay un valor CIF, calcular directamente
+      calculate(null, code)
+    }
+  }
+
   // Agrupar países por tipo de acuerdo
-    const groupedCountries = (countries || []).reduce((acc, country) => {
-      const group = country.agreement_type || 'Otros'
-      if (!acc[group]) acc[group] = []
-      acc[group].push(country)
-      return acc
-    }, {})
+  const groupedCountries = countries.reduce((acc, country) => {
+    const group = country.agreement_type || 'Otros'
+    if (!acc[group]) acc[group] = []
+    acc[group].push(country)
+    return acc
+  }, {})
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <img src="/logo.png" alt="Lex Aduana" className="h-24 w-auto" />
+            <Image src="/logo.png" alt="Lex Aduana" width={96} height={96} className="h-24 w-auto" />
           </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-3">
             Calculadora TARIC
@@ -88,15 +130,36 @@ export default function Home() {
           </p>
           <div className="mt-4 flex justify-center gap-4">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              ✓ {countries?.length || 0} países con acuerdos
+              ✓ {countries.length} países con acuerdos
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada2025
+              ✓ Base de datos actualizada 2024
             </span>
           </div>
         </header>
 
         <div className="max-w-4xl mx-auto">
+          {/* Búsquedas recientes */}
+          {recentSearches.length > 0 && !result && (
+            <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Búsquedas recientes:</h3>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => quickSearch(item.code)}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 transition-colors"
+                  >
+                    <span className="font-mono mr-2">{item.code}</span>
+                    <span className="text-xs text-gray-500 truncate max-w-[150px]">
+                      {item.description?.split('→')[0]?.trim()}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-xl shadow-xl p-8">
             <form onSubmit={calculate} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
@@ -171,7 +234,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -183,6 +246,17 @@ export default function Home() {
                   </span>
                 ) : 'Calcular aranceles e impuestos'}
               </button>
+              
+              {/* Botón limpiar - Solo visible si hay datos */}
+              {(hsCode || cifValue || countryCode !== 'ERGA OMNES') && (
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="w-full mt-2 bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Limpiar todo
+                </button>
+              )}
             </form>
 
             {error && (
@@ -196,6 +270,56 @@ export default function Home() {
                   <div className="ml-3">
                     <p className="text-sm text-red-700">{error}</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {suggestions && (
+              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-amber-900 flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {suggestions.message}
+                  </h3>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Se encontraron {suggestions.suggestions.length} códigos que empiezan con {suggestions.originalCode}
+                  </p>
+                </div>
+                
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {suggestions.suggestions.map((item) => (
+                    <button
+                      key={item.goods_code}
+                      onClick={() => {
+                        setHsCode(item.goods_code)
+                        calculate(null, item.goods_code)
+                      }}
+                      className="w-full text-left p-3 bg-white hover:bg-amber-100 rounded-lg border border-amber-300 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <span className="font-semibold text-gray-900">
+                            📦 {item.goods_code}
+                          </span>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {item.description}
+                          </p>
+                        </div>
+                        <span className="ml-4 px-2 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded">
+                          {item.duty}%
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    💡 <strong>Consejo:</strong> Seleccione el código que mejor describa su producto. 
+                    Para mayor precisión, utilice siempre el código completo de 10 dígitos.
+                  </p>
                 </div>
               </div>
             )}
@@ -289,6 +413,15 @@ export default function Home() {
 
                     <div className="mt-4 flex gap-3">
                       <button 
+                        onClick={() => exportToPDF(result, formatCurrency)}
+                        className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center justify-center font-medium"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Exportar PDF
+                      </button>
+                      <button 
                         onClick={() => window.print()}
                         className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition flex items-center justify-center"
                       >
@@ -298,12 +431,7 @@ export default function Home() {
                         Imprimir
                       </button>
                       <button 
-                        onClick={() => {
-                          setResult(null)
-                          setHsCode('')
-                          setCifValue('')
-                          setCountryCode('ERGA OMNES')
-                        }}
+                        onClick={clearAll}
                         className="flex-1 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition flex items-center justify-center"
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
