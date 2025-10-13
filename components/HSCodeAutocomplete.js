@@ -133,11 +133,10 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
       // Mostrar búsquedas recientes
       const recent = JSON.parse(localStorage.getItem('recentHSCodes') || '[]')
       if (recent.length > 0) {
-        // Aquí podrías cargar las descripciones de los recientes
-        // Por ahora solo mostramos los códigos
-        setSuggestions(recent.map(code => ({
-          code,
-          description: 'Búsqueda reciente',
+        // Mapear correctamente los objetos recientes
+        setSuggestions(recent.map(item => ({
+          code: item.code,  // Extraer el código del objeto
+          description: item.description || 'Búsqueda reciente',
           duty: null,
           recent: true
         })))
