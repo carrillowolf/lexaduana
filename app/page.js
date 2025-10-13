@@ -397,6 +397,102 @@ export default function Home() {
                     </div>
                   )}
 
+                    {/* Alertas de medidas */}
+                    {result.alerts && result.alerts.length > 0 && (
+                      <div className="mb-6 space-y-3">
+                        <h3 className="font-semibold text-gray-900 flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          Requisitos y condiciones especiales
+                        </h3>
+
+                        {result.alerts.map((alert, index) => {
+                          // Determinar color y emoji según tipo y prioridad
+                          let bgColor, borderColor, textColor, icon
+
+                          if (alert.priority === 1) {
+                            bgColor = 'bg-red-50'
+                            borderColor = 'border-red-300'
+                            textColor = 'text-red-800'
+                            icon = '🚨'
+                          } else if (alert.priority === 2) {
+                            bgColor = 'bg-amber-50'
+                            borderColor = 'border-amber-300'
+                            textColor = 'text-amber-800'
+                            icon = '⚠️'
+                          } else {
+                            bgColor = 'bg-blue-50'
+                            borderColor = 'border-blue-300'
+                            textColor = 'text-blue-800'
+                            icon = 'ℹ️'
+                          }
+
+                          // Icono específico según tipo
+                          if (alert.alert_type === 'certificate') icon = '📋'
+                          else if (alert.alert_type === 'quota') icon = '📊'
+                          else if (alert.alert_type === 'sanction') icon = '🚫'
+
+                          // Determinar si es una alerta condicional (por grupo de países)
+                          const isConditional = alert.origin_code && /^\d+$/.test(alert.origin_code)
+
+                          return (
+                            <div key={index} className={`p-4 ${bgColor} ${borderColor} border-l-4 rounded-r-lg`}>
+                              <div className="flex items-start">
+                                <span className="text-2xl mr-3 flex-shrink-0">{icon}</span>
+                                <div className="flex-1">
+                                  <p className={`font-medium ${textColor} mb-1`}>
+                                    {alert.short_text}
+                                  </p>
+
+                                  {isConditional && (
+                                    <div className="mt-2 p-2 bg-white bg-opacity-60 rounded text-xs">
+                                      <p className="text-gray-700">
+                                        ℹ️ Esta medida aplica solo a ciertos orígenes específicos (grupo {alert.origin_code}).
+                                        {alert.origin_code === '1006' && ' Puede estar relacionado con sanciones a Rusia/Bielorrusia.'}
+                                        {' '}Verifique si aplica a {result.country.name}.
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {alert.certificate && (
+                                    <p className="text-xs text-gray-600 mt-2">
+                                      Certificado requerido: <span className="font-mono font-semibold bg-white px-2 py-0.5 rounded">{alert.certificate}</span>
+                                    </p>
+                                  )}
+
+                                  {alert.full_text && (
+                                    <details className="mt-2">
+                                      <summary className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-medium">
+                                        Ver información completa
+                                      </summary>
+                                      <div className="mt-2 p-3 bg-white rounded text-xs text-gray-700 whitespace-pre-line border border-gray-200">
+                                        {alert.full_text}
+                                      </div>
+                                    </details>
+                                  )}
+                                </div>
+                                <span className={`ml-3 px-2 py-1 rounded text-xs font-medium ${alert.priority === 1 ? 'bg-red-200 text-red-800' :
+                                    alert.priority === 2 ? 'bg-amber-200 text-amber-800' :
+                                      'bg-blue-200 text-blue-800'
+                                  }`}>
+                                  {alert.priority === 1 ? 'CRÍTICO' : alert.priority === 2 ? 'IMPORTANTE' : 'INFO'}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        <div className="mt-3 p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
+                          <p className="text-xs text-gray-700">
+                            <strong>⚠️ Importante:</strong> Las alertas mostradas pueden no aplicar todas al país seleccionado ({result.country.name}).
+                            Algunos requisitos son específicos de ciertos acuerdos comerciales o grupos de países.
+                            <strong className="text-blue-700"> Verifique siempre con las autoridades aduaneras</strong> qué documentación es obligatoria para su importación específica.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-gray-600">Valor CIF:</span>
@@ -423,11 +519,25 @@ export default function Home() {
                       <span className="font-medium">{formatCurrency(result.customsBase)}</span>
                     </div>
                     
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="text-gray-600">
-                        IVA ({result.vat.rate}%):
-                      </span>
-                      <span className="font-semibold text-lg">{formatCurrency(result.vat.amount)}</span>
+                    <div className="text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <span>IVA ({result.vat.rate}%):</span>
+                        {result.vat.type && result.vat.type !== 'general' && (
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${result.vat.type === 'superreducido'
+                               ? 'bg-green-100 text-green-700'
+                               : 'bg-blue-100 text-blue-700'
+                            }`}>
+                            {result.vat.type === 'superreducido' ? '4% Superreducido' : '10% Reducido'}
+                          </span>
+                        )}
+                      </div>
+                      {result.vat.type && result.vat.type !== 'general' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {result.vat.type === 'superreducido'
+                            ? 'Productos básicos de primera necesidad'
+                            : 'Alimentos y servicios esenciales'}
+                        </p>
+                      )}
                     </div>
                     
                     <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
