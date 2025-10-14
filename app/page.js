@@ -7,6 +7,7 @@ import HSCodeAutocomplete from '../components/HSCodeAutocomplete'
 import HeroSection from '../components/HeroSection'
 import FeaturesSection from '../components/FeaturesSection'
 import QuickAccessButton from '../components/QuickAccessButton'
+import UserMenu from '../components/UserMenu'
 
 export default function Home() {
   const [hsCode, setHsCode] = useState('')
@@ -66,28 +67,57 @@ export default function Home() {
       const response = await fetch('/api/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          hsCode: specificCode || hsCode, 
-          cifValue, 
-          countryCode 
+        body: JSON.stringify({
+          hsCode: specificCode || hsCode,
+          cifValue,
+          countryCode
         })
       })
 
       const data = await response.json()
-      
+
       if (data.incomplete && data.suggestions) {
         // Mostrar sugerencias de códigos hijos
         setSuggestions(data)
         setLoading(false)
         return
       }
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Error en el cálculo')
       }
 
       setResult(data.data)
-      
+
+      // Guardar cálculo si el usuario está logueado
+      try {
+        const supabase = (await import('@/lib/supabase-browser')).createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user) {
+          await fetch('/api/calculations/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              hsCode: data.data.hsCode,
+              cifValue: data.data.cifValue,
+              countryCode: data.data.country.code,
+              countryName: data.data.country.name,
+              dutyRate: data.data.duty.appliedRate,
+              dutyAmount: data.data.duty.amount,
+              vatRate: data.data.vat.rate,
+              vatType: data.data.vat.type,
+              vatAmount: data.data.vat.amount,
+              totalAmount: data.data.total,
+              description: data.data.description
+            })
+          })
+        }
+      } catch (saveError) {
+        // No mostrar error al usuario, solo loguear
+        console.log('No se pudo guardar el cálculo:', saveError)
+      }
+
       // Actualizar búsquedas recientes después de un cálculo exitoso
       if (typeof window !== 'undefined') {
         setTimeout(() => {
@@ -155,22 +185,27 @@ export default function Home() {
       {/* Calculator Section */}
       <div id="calculator" className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
       <div className="container mx-auto px-4 py-12">
-        <header className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-800 mb-3">
-            Calculadora TARIC Profesional
-          </h2>
-          <p className="text-lg text-gray-600">
-            Calcula aranceles e IVA para importaciones en la UE
-          </p>
-          <div className="mt-4 flex justify-center gap-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              ✓ {countries.length} países con acuerdos
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              ✓ Base de datos actualizada 2024
-            </span>
-          </div>
-        </header>
+          <header className="mb-12">
+            <div className="flex justify-end mb-4">
+              <UserMenu />
+            </div>
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-gray-800 mb-3">
+                Calculadora TARIC Profesional
+              </h2>
+              <p className="text-lg text-gray-600">
+                Calcula aranceles e IVA para importaciones en la UE
+              </p>
+              <div className="mt-4 flex justify-center gap-4">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  ✓ {countries.length} países con acuerdos
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  ✓ Base de datos actualizada 2025
+                </span>
+              </div>
+            </div>
+          </header>
 
         <div className="max-w-4xl mx-auto">
           {/* Búsquedas recientes */}
