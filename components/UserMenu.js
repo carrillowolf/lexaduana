@@ -45,6 +45,12 @@ export default function UserMenu() {
     return (
       <div className="flex items-center gap-3">
         <Link
+          href="/glosario"
+          className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition"
+        >
+          📚 Glosario
+        </Link>
+        <Link
           href="/auth/login"
           className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition"
         >
@@ -62,6 +68,12 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
+      <Link
+        href="/glosario"
+        className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition"
+      >
+        📚 Glosario
+      </Link>
       <Link
         href="/dashboard"
         className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition flex items-center gap-2"
