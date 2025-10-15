@@ -227,6 +227,13 @@ export default function DashboardPage() {
               ← Volver a la Calculadora
             </Link>
 
+            <Link
+              href="/bulk"
+              className="inline-flex items-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition"
+            >
+              📊 Calculadora Masiva
+            </Link>
+
             {calculations.length > 0 && (
               <button
                 onClick={() => exportCalculationsToExcel(calculations, user.email)}
