@@ -1,0 +1,196 @@
+{
+  "terms": [
+    {
+      "id": "arancel",
+      "term": "Arancel",
+      "category": "Impuestos",
+      "definition": "Impuesto que se aplica a las mercancías que son importadas o exportadas. El más común es el arancel de importación, que grava las mercancías que entran en un país.",
+      "example": "Si importas un portátil de China con valor de 1.000€ y el arancel es del 3,5%, pagarás 35€ de arancel.",
+      "related": ["taric", "derecho-aduanero", "iva-importacion"]
+    },
+    {
+      "id": "taric",
+      "term": "TARIC",
+      "category": "Códigos",
+      "definition": "Arancel Integrado de las Comunidades Europeas. Sistema que integra todas las medidas arancelarias y comerciales aplicables a mercancías importadas y exportadas en la UE.",
+      "example": "El código TARIC 8471300000 corresponde a ordenadores portátiles y determina el arancel aplicable.",
+      "related": ["codigo-hs", "nomenclatura-combinada", "arancel"]
+    },
+    {
+      "id": "codigo-hs",
+      "term": "Código HS",
+      "category": "Códigos",
+      "definition": "Sistema Armonizado de Designación y Codificación de Mercancías. Sistema internacional de clasificación de productos mediante códigos de 6 dígitos.",
+      "example": "El código HS 0702 identifica tomates frescos o refrigerados en todo el mundo.",
+      "related": ["taric", "nomenclatura-combinada", "clasificacion-arancelaria"]
+    },
+    {
+      "id": "valor-cif",
+      "term": "Valor CIF",
+      "category": "Incoterms",
+      "definition": "Cost, Insurance and Freight. Valor de la mercancía que incluye el coste del producto, el seguro y el flete hasta el puerto de destino. Base para calcular aranceles.",
+      "example": "Producto: 800€ + Flete: 150€ + Seguro: 50€ = Valor CIF: 1.000€",
+      "related": ["valor-fob", "base-imponible", "incoterms"]
+    },
+    {
+      "id": "valor-fob",
+      "term": "Valor FOB",
+      "category": "Incoterms",
+      "definition": "Free On Board. Valor de la mercancía puesta a bordo del buque en el puerto de origen, sin incluir flete ni seguro.",
+      "example": "Si el producto cuesta 800€ FOB, aún debes añadir transporte y seguro para calcular el CIF.",
+      "related": ["valor-cif", "incoterms", "exw"]
+    },
+    {
+      "id": "iva-importacion",
+      "term": "IVA de Importación",
+      "category": "Impuestos",
+      "definition": "Impuesto al Valor Añadido que se aplica sobre la suma del valor CIF más los aranceles. En España puede ser 4%, 10% o 21% según el producto.",
+      "example": "Valor aduanero: 1.035€ × 21% IVA = 217,35€ de IVA a pagar.",
+      "related": ["iva-superreducido", "iva-reducido", "base-imponible"]
+    },
+    {
+      "id": "iva-superreducido",
+      "term": "IVA Superreducido (4%)",
+      "category": "Impuestos",
+      "definition": "Tipo de IVA aplicable a productos de primera necesidad como pan, leche, huevos, frutas, verduras, medicamentos y libros.",
+      "example": "Al importar frutas frescas (HS 0808), se aplica IVA del 4% en lugar del 21%.",
+      "related": ["iva-importacion", "iva-reducido", "productos-basicos"]
+    },
+    {
+      "id": "iva-reducido",
+      "term": "IVA Reducido (10%)",
+      "category": "Impuestos",
+      "definition": "Tipo de IVA aplicable a alimentos procesados, transporte de viajeros, servicios de hostelería y otros productos esenciales.",
+      "example": "Al importar alimentos preparados (HS 1901), se aplica IVA del 10%.",
+      "related": ["iva-importacion", "iva-superreducido"]
+    },
+    {
+      "id": "dua",
+      "term": "DUA",
+      "category": "Documentos",
+      "definition": "Documento Único Administrativo. Declaración aduanera obligatoria para importar o exportar mercancías fuera de la UE.",
+      "example": "Al importar de China, el agente de aduanas presenta el DUA con todos los datos de la mercancía.",
+      "related": ["despacho-aduanero", "declaracion-aduanera"]
+    },
+    {
+      "id": "eur1",
+      "term": "EUR.1",
+      "category": "Documentos",
+      "definition": "Certificado de circulación de mercancías que prueba el origen preferencial de productos en acuerdos comerciales de la UE.",
+      "example": "Un EUR.1 de Turquía permite aplicar arancel 0% por la unión aduanera UE-Turquía.",
+      "related": ["origen-preferencial", "certificado-origen", "acuerdos-comerciales"]
+    },
+    {
+      "id": "origen-preferencial",
+      "term": "Origen Preferencial",
+      "category": "Comercio",
+      "definition": "Origen de mercancías que permite aplicar aranceles reducidos o nulos gracias a acuerdos comerciales entre países o bloques.",
+      "example": "Productos originarios de Japón pueden entrar a la UE con arancel 0% gracias al acuerdo EPA.",
+      "related": ["eur1", "acuerdos-comerciales", "arancel"]
+    },
+    {
+      "id": "incoterms",
+      "term": "Incoterms",
+      "category": "Incoterms",
+      "definition": "Términos de comercio internacional que definen las responsabilidades entre comprador y vendedor respecto al transporte, seguro y entrega de mercancías.",
+      "example": "EXW: el vendedor solo pone la mercancía disponible en su almacén. DDP: el vendedor paga todo hasta la entrega final.",
+      "related": ["valor-cif", "valor-fob", "exw", "ddp"]
+    },
+    {
+      "id": "exw",
+      "term": "EXW (Ex Works)",
+      "category": "Incoterms",
+      "definition": "El vendedor pone la mercancía a disposición en su propio almacén. El comprador asume todos los costes y riesgos desde ese punto.",
+      "example": "Compras EXW en China: debes organizar y pagar transporte, seguro, aduanas, etc.",
+      "related": ["incoterms", "valor-fob", "valor-cif"]
+    },
+    {
+      "id": "ddp",
+      "term": "DDP (Delivered Duty Paid)",
+      "category": "Incoterms",
+      "definition": "El vendedor asume todos los costes y riesgos hasta entregar la mercancía en destino, incluyendo aranceles e impuestos.",
+      "example": "Compras DDP: recibes el producto en tu almacén sin preocuparte de aduanas ni costes adicionales.",
+      "related": ["incoterms", "despacho-aduanero"]
+    },
+    {
+      "id": "agente-aduanas",
+      "term": "Agente de Aduanas",
+      "category": "Profesionales",
+      "definition": "Profesional autorizado para representar a importadores/exportadores ante la aduana y gestionar el despacho de mercancías.",
+      "example": "Un agente de aduanas prepara y presenta el DUA, paga aranceles y coordina la liberación de la mercancía.",
+      "related": ["dua", "despacho-aduanero", "transitario"]
+    },
+    {
+      "id": "transitario",
+      "term": "Transitario",
+      "category": "Profesionales",
+      "definition": "Empresa o profesional especializado en organizar el transporte internacional de mercancías por cuenta de terceros.",
+      "example": "Un transitario coordina el transporte marítimo desde China, la gestión aduanera y la entrega final.",
+      "related": ["agente-aduanas", "freight-forwarder"]
+    },
+    {
+      "id": "contingente-arancelario",
+      "term": "Contingente Arancelario",
+      "category": "Comercio",
+      "definition": "Cantidad máxima de un producto que puede importarse con arancel reducido o cero. Superado el límite, se aplica arancel normal.",
+      "example": "La UE permite importar 10.000 toneladas de carne con arancel reducido; a partir de ahí se paga el arancel completo.",
+      "related": ["cuota-importacion", "arancel", "medidas-comerciales"]
+    },
+    {
+      "id": "nomenclatura-combinada",
+      "term": "Nomenclatura Combinada (NC)",
+      "category": "Códigos",
+      "definition": "Sistema de clasificación de mercancías de la UE basado en el Sistema Armonizado pero con 8 dígitos en lugar de 6.",
+      "example": "El HS 8471 se subdivide en la NC como 84713000 (ordenadores portátiles).",
+      "related": ["codigo-hs", "taric", "clasificacion-arancelaria"]
+    },
+    {
+      "id": "regimen-aduanero",
+      "term": "Régimen Aduanero",
+      "category": "Procedimientos",
+      "definition": "Destino aduanero que se da a las mercancías: importación definitiva, tránsito, depósito, perfeccionamiento activo, etc.",
+      "example": "Régimen 40: Importación definitiva con pago de aranceles. Régimen 51: Tránsito comunitario.",
+      "related": ["despacho-aduanero", "deposito-aduanero"]
+    },
+    {
+      "id": "deposito-aduanero",
+      "term": "Depósito Aduanero",
+      "category": "Procedimientos",
+      "definition": "Régimen que permite almacenar mercancías en la UE sin pagar aranceles ni IVA hasta su despacho definitivo.",
+      "example": "Almacenas productos en depósito y solo pagas aranceles cuando los vendes y despachas.",
+      "related": ["regimen-aduanero", "zona-franca"]
+    },
+    {
+      "id": "certificado-fitosanitario",
+      "term": "Certificado Fitosanitario",
+      "category": "Documentos",
+      "definition": "Documento que certifica que productos vegetales cumplen con las regulaciones sanitarias del país importador.",
+      "example": "Para importar frutas frescas de terceros países, necesitas certificado fitosanitario del país de origen.",
+      "related": ["certificado-sanitario", "medidas-sanitarias"]
+    },
+    {
+      "id": "erga-omnes",
+      "term": "ERGA OMNES",
+      "category": "Comercio",
+      "definition": "Término latino que significa 'frente a todos'. Se refiere al arancel estándar que se aplica a países sin acuerdos comerciales preferenciales.",
+      "example": "El arancel ERGA OMNES para ordenadores es 3,5%, pero Japón paga 0% por su acuerdo EPA.",
+      "related": ["arancel", "origen-preferencial", "acuerdos-comerciales"]
+    },
+    {
+      "id": "antidumping",
+      "term": "Medidas Antidumping",
+      "category": "Comercio",
+      "definition": "Aranceles adicionales que se aplican cuando un país exporta productos a precios artificialmente bajos para dañar la industria local.",
+      "example": "La UE aplica aranceles antidumping a ciertos productos chinos de acero.",
+      "related": ["medidas-salvaguardia", "dumping", "arancel"]
+    },
+    {
+      "id": "base-imponible",
+      "term": "Base Imponible",
+      "category": "Impuestos",
+      "definition": "Cantidad sobre la que se calcula un impuesto. Para el IVA de importación es el valor CIF + aranceles.",
+      "example": "CIF: 1.000€ + Arancel: 35€ = Base imponible: 1.035€ para calcular el IVA.",
+      "related": ["valor-cif", "iva-importacion", "valor-aduanero"]
+    }
+  ]
+}
