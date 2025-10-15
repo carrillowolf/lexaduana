@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { exportCalculationsToExcel } from '@/lib/excelExporter'
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
@@ -228,7 +229,7 @@ export default function DashboardPage() {
 
             {calculations.length > 0 && (
               <button
-                onClick={() => alert('Exportación próximamente')}
+                onClick={() => exportCalculationsToExcel(calculations, user.email)}
                 className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
               >
                 📤 Exportar a Excel
