@@ -1,16 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { exportToPDF } from '../components/ExportPDF'
 import HSCodeAutocomplete from '../components/HSCodeAutocomplete'
-import HeroSection from '../components/HeroSection'
-import FeaturesSection from '../components/FeaturesSection'
+import HeroLanding from '../components/HeroLanding'
 import QuickAccessButton from '../components/QuickAccessButton'
 import UserMenu from '../components/UserMenu'
 import { createClient } from '@/lib/supabase-browser'
 import ExchangeRateWidget from '../components/ExchangeRateWidget'
+import FeaturesLanding from '../components/FeaturesLanding'
+import TargetAudience from '../components/TargetAudience'
+import FooterLanding from '../components/FooterLanding'
 
 export default function Home() {
   const [user, setUser] = useState(null)
@@ -239,55 +239,35 @@ export default function Home() {
       <QuickAccessButton />
       
       {/* Hero Section - Solo para no logueados */}
+      {!user && <HeroLanding />}
+
+      {/* Secciones del landing solo para no logueados */}
       {!user && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-12">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Calcula aranceles e IVA en segundos
-            </h1>
-            <p className="text-xl mb-6 text-blue-100">
-              Calculadora profesional TARIC con 195+ países • IVA variable • Alertas automáticas
-            </p>
-            <div className="flex justify-center gap-4">
-              <Link
-                href="/auth/register"
-                className="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition"
-              >
-                Empezar gratis
-              </Link>
-              <button
-                onClick={scrollToCalculator}
-                className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition"
-              >
-                Probar ahora ↓
-              </button>
-            </div>
-          </div>
-        </div>
+        <>
+          <FeaturesLanding />
+          <TargetAudience />
+        </>
       )}
       
-      {/* Features Section - Solo para no logueados */}
-      {!user && <FeaturesSection />}
-      
       {/* Calculator Section */}
-      <div id="calculator" className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+      <div id="calculator" className="min-h-screen bg-gray-50 py-20">
       <div className="container mx-auto px-4 py-12">
           <header className="mb-12">
             <div className="flex justify-end mb-4">
               <UserMenu />
             </div>
             <div className="text-center">
-              <h2 className="text-4xl font-bold text-gray-800 mb-3">
+              <h2 className="text-4xl font-bold text-[#0A3D5C] mb-3">
                 Calculadora TARIC Profesional
               </h2>
               <p className="text-lg text-gray-600">
                 Calcula aranceles e IVA para importaciones en la UE
               </p>
               <div className="mt-4 flex justify-center gap-4">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#F4C542]/20 text-[#0A3D5C] border border-[#F4C542]">
                   ✓ {countries.length} países con acuerdos
                 </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#0A3D5C]/10 text-[#0A3D5C] border border-[#0A3D5C]">
                   ✓ Base de datos actualizada 2025
                 </span>
               </div>
@@ -418,7 +398,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full bg-[#F4C542] text-[#0A3D5C] py-4 px-6 rounded-lg font-bold text-lg hover:bg-[#E5B63A] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -436,7 +416,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="w-full mt-2 bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="w-full border-2 border-[#0A3D5C] text-[#0A3D5C] py-4 px-6 rounded-lg font-semibold text-lg hover:bg-[#0A3D5C] hover:text-white transition-all duration-200"
                 >
                   Limpiar todo
                 </button>
@@ -805,6 +785,8 @@ export default function Home() {
         </footer>
       </div>
       </div>
-    </div>
+      {/* Footer solo para no logueados */}
+      {!user && <FooterLanding />}
+    </div> 
   )
 }
