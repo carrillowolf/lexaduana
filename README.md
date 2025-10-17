@@ -349,18 +349,32 @@ Ejemplos de acuerdos soportados:
 
 ## 📊 Roadmap
 
-### ✅ Completado (v3.0)
-- Sistema de autenticación completo
-- Dashboard con historial
-- IVA variable inteligente
-- Alertas TARIC por país
-- Exclusiones automáticas
+## ✅ Completado (v3.3 - Octubre 2025):
 
-### 🚧 En desarrollo (v3.1)
-- [ ] Exportación Excel del historial
-- [ ] Filtros avanzados en dashboard
-- [ ] Búsqueda en historial
-- [ ] Tags personalizados
+### 🎨 Landing Profesional
+- Hero corporativo con logo LexAduana
+- Diseño azul marino (#0A3D5C) + dorado (#F4C542)
+- Sección Features con 6 diferenciadores
+- Target Audience (Importadores/Agentes/Consultores)
+- Footer profesional con normativa legal
+- Páginas legales: Política Privacidad + Términos Uso
+
+### 💱 Sistema Tipos de Cambio
+- 30 monedas oficiales BCE
+- Conversión automática en calculadora
+- Widget en página principal
+- Página completa `/tipos-cambio`
+- Lógica vigencia (actual vs próximo)
+- Banner automático tipos próximos
+- Cumplimiento Reglamento UE 2447/2015
+
+### 📊 Base
+- 49,700+ registros TARIC
+- 195 países con acuerdos
+- Calculadora masiva (bulk)
+- Sistema usuarios + dashboard
+- Export Excel
+- Glosario 25 términos
 
 ### 📅 Próximamente (v4.0)
 - [ ] Calculadora masiva/bulk (CSV upload)
