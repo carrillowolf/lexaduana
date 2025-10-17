@@ -2,14 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { exportToPDF } from '../components/ExportPDF'
 import HSCodeAutocomplete from '../components/HSCodeAutocomplete'
 import HeroSection from '../components/HeroSection'
 import FeaturesSection from '../components/FeaturesSection'
 import QuickAccessButton from '../components/QuickAccessButton'
 import UserMenu from '../components/UserMenu'
+import { createClient } from '@/lib/supabase-browser'
+import ExchangeRateWidget from '../components/ExchangeRateWidget'
 
 export default function Home() {
+  const [user, setUser] = useState(null)
+  const supabase = createClient()
   const [hsCode, setHsCode] = useState('')
   const [cifValue, setCifValue] = useState('')
   const [countryCode, setCountryCode] = useState('ERGA OMNES')
@@ -19,6 +24,34 @@ export default function Home() {
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState(null)
   const [recentSearches, setRecentSearches] = useState([])
+  const [selectedCurrency, setSelectedCurrency] = useState('EUR')
+  const [exchangeRates, setExchangeRates] = useState([])
+  const [convertedValue, setConvertedValue] = useState(null)
+
+  // Verificar usuario
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+  }, [supabase])
+
+  // Cargar tipos de cambio
+  useEffect(() => {
+    const fetchExchangeRates = async () => {
+      try {
+        const response = await fetch('/api/exchange-rates')
+        const data = await response.json()
+        if (data.success) {
+          setExchangeRates(data.data)
+        }
+      } catch (error) {
+        console.error('Error cargando tipos de cambio:', error)
+      }
+    }
+    fetchExchangeRates()
+  }, [])
 
   // Cargar lista de países y búsquedas recientes al iniciar
   useEffect(() => {
@@ -63,13 +96,16 @@ export default function Home() {
     setResult(null)
     setSuggestions(null)
 
+    // Usar valor convertido si existe, si no el original
+    const finalCifValue = convertedValue ? convertedValue.eurValue : parseFloat(cifValue)
+
     try {
       const response = await fetch('/api/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hsCode: specificCode || hsCode,
-          cifValue,
+          cifValue: finalCifValue,
           countryCode
         })
       })
@@ -85,6 +121,11 @@ export default function Home() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Error en el cálculo')
+      }
+
+      // Añadir información de conversión al resultado
+      if (convertedValue) {
+        data.data.conversionInfo = convertedValue
       }
 
       setResult(data.data)
@@ -109,7 +150,10 @@ export default function Home() {
               vatType: data.data.vat.type,
               vatAmount: data.data.vat.amount,
               totalAmount: data.data.total,
-              description: data.data.description
+              description: data.data.description,
+              // Guardar info de conversión
+              originalCurrency: selectedCurrency,
+              originalValue: convertedValue ? convertedValue.original : finalCifValue
             })
           })
         }
@@ -156,6 +200,24 @@ export default function Home() {
     }
   }
 
+  // Convertir moneda cuando cambia el valor o la moneda
+  useEffect(() => {
+    if (cifValue && selectedCurrency !== 'EUR') {
+      const rate = exchangeRates.find(r => r.currency_code === selectedCurrency)
+      if (rate) {
+        const eurValue = parseFloat(cifValue) / parseFloat(rate.rate)
+        setConvertedValue({
+          original: parseFloat(cifValue),
+          currency: selectedCurrency,
+          rate: parseFloat(rate.rate),
+          eurValue: eurValue
+        })
+      }
+    } else {
+      setConvertedValue(null)
+    }
+  }, [cifValue, selectedCurrency, exchangeRates])
+
   // Agrupar países por tipo de acuerdo
   const groupedCountries = countries.reduce((acc, country) => {
     const group = country.agreement_type || 'Otros'
@@ -176,11 +238,36 @@ export default function Home() {
       {/* Quick Access Button */}
       <QuickAccessButton />
       
-      {/* Hero Section */}
-      <HeroSection onScrollToCalculator={scrollToCalculator} />
+      {/* Hero Section - Solo para no logueados */}
+      {!user && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-12">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Calcula aranceles e IVA en segundos
+            </h1>
+            <p className="text-xl mb-6 text-blue-100">
+              Calculadora profesional TARIC con 195+ países • IVA variable • Alertas automáticas
+            </p>
+            <div className="flex justify-center gap-4">
+              <Link
+                href="/auth/register"
+                className="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition"
+              >
+                Empezar gratis
+              </Link>
+              <button
+                onClick={scrollToCalculator}
+                className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition"
+              >
+                Probar ahora ↓
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
-      {/* Features Section */}
-      <FeaturesSection />
+      {/* Features Section - Solo para no logueados */}
+      {!user && <FeaturesSection />}
       
       {/* Calculator Section */}
       <div id="calculator" className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
@@ -206,6 +293,9 @@ export default function Home() {
               </div>
             </div>
           </header>
+
+          {/* Widget tipos de cambio */}
+          <ExchangeRateWidget />
 
         <div className="max-w-4xl mx-auto">
           {/* Búsquedas recientes */}
@@ -251,23 +341,45 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Valor CIF (€)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={cifValue}
-                    onChange={(e) => setCifValue(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    placeholder="ej: 10000"
-                    required
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Coste + Seguro + Flete
-                  </p>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Valor CIF
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={cifValue}
+                        onChange={(e) => setCifValue(e.target.value)}
+                        placeholder="1000"
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                      <select
+                        value={selectedCurrency}
+                        onChange={(e) => setSelectedCurrency(e.target.value)}
+                        className="w-24 px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="EUR">EUR</option>
+                        {exchangeRates.map(rate => (
+                          <option key={rate.currency_code} value={rate.currency_code}>
+                            {rate.currency_code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Mostrar conversión */}
+                    {convertedValue && (
+                      <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-blue-800">
+                          💱 {convertedValue.original.toLocaleString('es-ES')} {convertedValue.currency} = <strong>{convertedValue.eurValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR</strong>
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Tipo oficial: 1 EUR = {convertedValue.rate.toLocaleString('es-ES', { minimumFractionDigits: 4 })} {convertedValue.currency}
+                        </p>
+                      </div>
+                    )}
+                  </div>
               </div>
 
               <div>
@@ -396,23 +508,47 @@ export default function Home() {
               </div>
             )}
 
-            {result && (
-              <div className="mt-8 space-y-6">
-                <div className="border-t-2 border-gray-100 pt-6">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-                    <svg className="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Resultado del cálculo
-                  </h2>
-                  
-                  {result.description && (
-                    <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-semibold text-gray-900">📦 Producto:</span> {result.description}
-                      </p>
-                    </div>
-                  )}
+              {result && (
+                <div className="mt-8 space-y-6">
+                  <div className="border-t-2 border-gray-100 pt-6">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                      <svg className="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Resultado del cálculo
+                    </h2>
+
+                    {/* Info de conversión */}
+                    {result.conversionInfo && (
+                      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                        <h3 className="font-semibold text-gray-800 mb-2">💱 Conversión de Moneda</h3>
+                        <div className="grid md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-gray-600">Valor original:</span>
+                            <p className="font-semibold text-gray-900">
+                              {result.conversionInfo.original.toLocaleString('es-ES')} {result.conversionInfo.currency}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Valor en EUR:</span>
+                            <p className="font-semibold text-gray-900">
+                              {result.conversionInfo.eurValue.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-2">
+                          Tipo oficial: 1 EUR = {result.conversionInfo.rate.toLocaleString('es-ES', { minimumFractionDigits: 4 })} {result.conversionInfo.currency}
+                        </p>
+                      </div>
+                    )}
+
+                    {result.description && (
+                      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold text-gray-900">📦 Producto:</span> {result.description}
+                        </p>
+                      </div>
+                    )}
 
                   {result.country.agreement && (
                     <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
