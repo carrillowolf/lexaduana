@@ -11,6 +11,7 @@ import ExchangeRateWidget from '../components/ExchangeRateWidget'
 import FeaturesLanding from '../components/FeaturesLanding'
 import TargetAudience from '../components/TargetAudience'
 import FooterLanding from '../components/FooterLanding'
+import FavoriteButton from '../components/FavoriteButton'
 
 export default function Home() {
   const [user, setUser] = useState(null)
@@ -707,6 +708,16 @@ export default function Home() {
                           {formatCurrency(result.total)}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Botón Favoritos */}
+                    <div className="mt-4">
+                      <FavoriteButton
+                        hsCode={result.hsCode}
+                        countryCode={result.country.code}
+                        cifValue={result.cifValue}
+                        calculationData={result}
+                      />
                     </div>
 
                     <div className="mt-4 flex gap-3">
