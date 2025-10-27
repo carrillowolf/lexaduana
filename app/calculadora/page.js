@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase-browser'
 // import ExchangeRateWidget from '../../components/ExchangeRateWidget'
 import FavoriteButton from '../../components/FavoriteButton'
 import Link from 'next/link'
+import ExchangeRateBanner from '../../components/ExchangeRateBanner'
 
 export default function Home() {
   const [user, setUser] = useState(null)
@@ -259,6 +260,7 @@ export default function Home() {
           </div>
         </div>
       </header>
+      <ExchangeRateBanner />
 
       {/* Contenido principal - Calculadora */}
       <div className="pt-8">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import HSCodeAutocomplete from '@/components/HSCodeAutocomplete';
+import Link from 'next/link'
 
 export default function ComparadorPage() {
     const [hsCode, setHsCode] = useState('');
@@ -100,15 +101,15 @@ export default function ComparadorPage() {
                         </div>
 
                         <nav className="hidden md:flex items-center space-x-1">
-                            <a href="/" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+                            <Link href="/" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                                 Calculadora
-                            </a>
-                            <a href="/dashboard" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+                            </Link>
+                            <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                                 Dashboard
-                            </a>
-                            <a href="/comparador" className="px-4 py-2 text-sm font-medium text-[#0A3D5C] bg-blue-50 rounded-lg">
+                            </Link>
+                            <Link href="/comparador" className="px-4 py-2 text-sm font-medium text-[#0A3D5C] bg-blue-50 rounded-lg">
                                 Comparador
-                            </a>
+                            </Link>
                         </nav>
                     </div>
                 </div>
