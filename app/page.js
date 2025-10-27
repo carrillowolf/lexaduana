@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import ExchangeRateBanner from '../components/ExchangeRateBanner'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -54,21 +55,21 @@ export default function HomePage() {
             </div>
 
             <nav className="hidden md:flex items-center space-x-1">
-              <a href="/" className="px-4 py-2 text-sm font-medium text-[#0A3D5C] bg-blue-50 rounded-lg transition">
+              <Link href="/" className="px-4 py-2 text-sm font-medium text-[#0A3D5C] bg-blue-50 rounded-lg transition">
                 Inicio
-              </a>
-              <a href="/calculadora" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+              </Link>
+              <Link href="/calculadora" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Calculadora
-              </a>
-              <a href="/comparador" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+              </Link>
+              <Link href="/comparador" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Comparador
-              </a>
-              <a href="/tipos-cambio" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+              </Link>
+              <Link href="/tipos-cambio" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Tipos de Cambio
-              </a>
-              <a href="/glosario" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+              </Link>
+              <Link href="/glosario" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 📚 Glosario
-              </a>
+              </Link>
             </nav>
 
             <div className="flex items-center space-x-3">
@@ -88,6 +89,7 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+      <ExchangeRateBanner />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0A3D5C] via-[#0d5078] to-[#0A3D5C] py-20">
@@ -440,13 +442,13 @@ export default function HomePage() {
                 Tecnología de IA al servicio del comercio internacional.
               </p>
               <div className="flex space-x-4">
-                <a href="https://lexaduana.es" className="text-[#F4C542] hover:text-[#f0b922] transition">
+                <Link href="https://lexaduana.es" className="text-[#F4C542] hover:text-[#f0b922] transition">
                   lexaduana.es
-                </a>
+                </Link>
                 <span className="text-blue-300">|</span>
-                <a href="https://lexaduana.eu" className="text-[#F4C542] hover:text-[#f0b922] transition">
+                <Link href="https://lexaduana.eu" className="text-[#F4C542] hover:text-[#f0b922] transition">
                   lexaduana.eu
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -468,7 +470,7 @@ export default function HomePage() {
                 <li><Link href="/politica-privacidad" className="hover:text-white transition">Política de Privacidad</Link></li>
                 <li><Link href="/terminos-uso" className="hover:text-white transition">Términos de Uso</Link></li>
                 <li><Link href="/cookies" className="hover:text-white transition">Política de Cookies</Link></li>
-                <li><a href="mailto:soporte@lexaduana.es" className="hover:text-white transition">Contacto</a></li>
+                <li><Link href="mailto:soporte@lexaduana.es" className="hover:text-white transition">Contacto</Link></li>
               </ul>
             </div>
           </div>
