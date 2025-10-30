@@ -198,6 +198,79 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Clasificador IA Banner - SOLO para usuarios logueados */}
+      {user && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 mb-16">
+          <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-3xl shadow-2xl overflow-hidden">
+            {/* Decoración de fondo */}
+            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"></div>
+
+            <div className="relative px-8 py-12 md:px-12 md:py-16">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="flex-1 text-white">
+                  <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
+                    <span className="text-xs font-bold uppercase tracking-wide">✨ Nuevo</span>
+                    <span className="text-xs">•</span>
+                    <span className="text-xs">Powered by Claude Sonnet 4.5</span>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                    🤖 Clasificador Inteligente
+                  </h2>
+                  <p className="text-lg text-purple-100 mb-6 max-w-xl">
+                    Describe tu producto en lenguaje natural y obtén la clasificación TARIC
+                    con razonamiento detallado. De descripción a código HS en segundos.
+                  </p>
+                  <ul className="space-y-2 mb-8 text-purple-100">
+                    <li className="flex items-center">
+                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Validado contra base EUR-Lex actualizada
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Códigos alternativos con nivel de confianza
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Integración directa con calculadora de aranceles
+                    </li>
+                  </ul>
+                  <Link
+                    href="/clasificador"
+                    className="inline-flex items-center space-x-3 px-8 py-4 bg-white text-purple-600 font-bold rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
+                  >
+                    <span>Probar Clasificador IA</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </div>
+
+                <div className="hidden md:block flex-shrink-0">
+                  <div className="relative">
+                    <div className="w-64 h-64 bg-white/10 backdrop-blur-sm rounded-3xl p-8 transform rotate-3 hover:rotate-6 transition-transform">
+                      <svg className="w-full h-full text-white/80" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div className="absolute -top-4 -right-4 bg-pink-400 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg animate-bounce">
+                      ¡Pruébalo!
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Features Section */}
       <div className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

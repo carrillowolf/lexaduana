@@ -268,7 +268,7 @@ export default function Home() {
           
           {/* Quick Access Buttons - SOLO para logueados */}
           {user && (
-            <div className="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {/* Dashboard */}
               <Link
                 href="/dashboard"
@@ -336,6 +336,20 @@ export default function Home() {
                   </svg>
                   <h3 className="font-bold text-sm">Calc. Masiva</h3>
                   <p className="text-xs text-purple-100">100 productos</p>
+                </div>
+              </Link>
+
+              {/* Clasificador IA */}
+              <Link
+                href="/clasificador"
+                className="group relative bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
+              >
+                <div className="flex flex-col items-center text-white">
+                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <h3 className="font-bold text-sm">Clasificador IA</h3>
+                  <p className="text-xs text-pink-100">Con Claude 4.5</p>
                 </div>
               </Link>
             </div>
