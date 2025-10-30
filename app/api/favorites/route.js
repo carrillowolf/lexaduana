@@ -6,7 +6,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 export async function GET(request) {
-  const cookieStore = await cookies();
+  const cookieStore = await cookies()
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
