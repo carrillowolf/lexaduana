@@ -14,7 +14,7 @@ export default function ClasificadorPage() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [countries, setCountries] = useState([])
-  
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -45,7 +45,7 @@ export default function ClasificadorPage() {
 
   const handleClassify = async (e) => {
     e.preventDefault()
-    
+
     if (!description || description.length < 10) {
       setError('La descripción debe tener al menos 10 caracteres')
       return
@@ -166,8 +166,8 @@ export default function ClasificadorPage() {
             <div>
               <h4 className="font-bold text-amber-900 mb-2">⚠️ Aviso Legal</h4>
               <p className="text-sm text-amber-800">
-                Esta herramienta proporciona <strong>información orientativa</strong> basada en datos públicos de EUR-Lex. 
-                No constituye asesoramiento legal ni aduanero vinculante. Para clasificaciones definitivas, 
+                Esta herramienta proporciona <strong>información orientativa</strong> basada en datos públicos de EUR-Lex.
+                No constituye asesoramiento legal ni aduanero vinculante. Para clasificaciones definitivas,
                 consulte con un agente de aduanas colegiado o la AEAT.
               </p>
             </div>
@@ -383,6 +383,44 @@ export default function ClasificadorPage() {
                   </div>
                 )}
 
+                {/* Países Recomendados */}
+                {result.classification.recommendedOrigins && result.classification.recommendedOrigins.length > 0 && (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+                    <h4 className="font-bold text-gray-900 mb-3 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Países de origen recomendados
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {result.classification.recommendedOrigins.map((countryCode, idx) => {
+                        const country = countries.find(c => c.code === countryCode)
+                        return (
+                          <span key={idx} className="px-4 py-2 bg-white border border-blue-200 rounded-lg text-sm font-medium text-gray-700 hover:border-blue-400 transition">
+                            🌍 {country?.name_es || countryCode}
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-3">
+                      Orígenes que podrían ofrecer ventajas arancelarias para este producto
+                    </p>
+                  </div>
+                )}
+
+                {/* Información Adicional */}
+                {result.classification.additionalInfo && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <h4 className="font-bold text-gray-900 mb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Recomendaciones adicionales
+                    </h4>
+                    <p className="text-sm text-gray-700">{result.classification.additionalInfo}</p>
+                  </div>
+                )}
+
                 {/* Botón Calcular */}
                 <button
                   onClick={() => handleCalculate(result.classification.primaryCode)}
@@ -440,7 +478,7 @@ export default function ClasificadorPage() {
 
             {/* Metadata */}
             <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 text-center">
-              Clasificación realizada por {result.metadata.model} • {new Date(result.metadata.timestamp).toLocaleString('es-ES')} • 
+              Clasificación realizada por {result.metadata.model} • {new Date(result.metadata.timestamp).toLocaleString('es-ES')} •
               Datos basados en EUR-Lex actualizado Oct 2025
             </div>
           </div>
