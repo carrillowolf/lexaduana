@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
-import { exportCalculationsToExcel } from '@/lib/excelExporter'
+import { exportBulkToExcel } from '@/lib/excelExporter'
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
@@ -312,9 +312,24 @@ export default function DashboardPage() {
             <span>Comparador</span>
           </Link>
 
+          <Link
+            href="/bulk"
+            className="flex items-center space-x-4 p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl text-white hover:shadow-2xl transition-all group"
+          >
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Calculadora Masiva</h3>
+              <p className="text-sm text-white/80">Procesa hasta 100 productos</p>
+            </div>
+          </Link>
+
           {calculations.length > 0 && (
             <button
-              onClick={() => exportCalculationsToExcel(calculations, user.email)}
+              onClick={() => exportBulkToExcel(calculations, user.email)}
               className="flex items-center justify-center px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white font-bold rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all shadow-lg hover:shadow-xl"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

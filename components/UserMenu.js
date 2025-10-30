@@ -75,18 +75,6 @@ export default function UserMenu() {
         📚 Glosario
       </Link>
       <Link
-        href="/favoritos"
-        className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition"
-      >
-        ⭐ Mis Favoritos
-      </Link>
-      <Link
-        href="/comparador"
-        className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition"
-      >
-        🌍 Comparador
-      </Link>
-      <Link
         href="/dashboard"
         className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition flex items-center gap-2"
       >
