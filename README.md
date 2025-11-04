@@ -1,6 +1,6 @@
 # 📊 Calculadora TARIC - LexAduana
 
-> Plataforma profesional SaaS de cálculo de aranceles e IVA para importaciones a España y la Unión Europea con sistema de usuarios, clasificador IA y procesamiento masivo.
+> Plataforma profesional de cálculo de aranceles e IVA para importaciones a España y la Unión Europea con sistema de usuarios, historial y **gestión completa de despachos aduaneros**.
 
 [![Versión](https://img.shields.io/badge/versión-4.0.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
@@ -92,6 +92,10 @@ calculadora-taric-lexaduana/
 │   │   ├── register/             # Registro
 │   │   └── callback/             # Callback OAuth
 │   ├── dashboard/                # Dashboard usuario
+│   ├── despachos/             # 🆕 Gestión despachos
+│   │   ├── nuevo/            # Crear despacho
+│   │   ├── [id]/             # Detalle despacho
+│   │   └── page.js           # Lista despachos
 │   ├── calculadora/              # Calculadora principal
 │   ├── clasificador/             # 🆕 Clasificador IA
 │   ├── bulk/                     # 🆕 Calculadora masiva
@@ -140,6 +144,11 @@ calculadora-taric-lexaduana/
 | `user_calculations` | ∞ | Historial cálculos usuarios |
 | `user_favorites` | ∞ | Códigos favoritos usuarios |
 | `classification_logs` | 🆕 ∞ | Historial clasificaciones IA |
+| `dispatches` | ∞ | Despachos aduaneros |
+| `checklist_templates` | ~100 | Plantillas checklist por tipo |
+| `dispatch_checklist` | ∞ | Checklist por despacho |
+| `dispatch_documents` | ∞ | Documentos adjuntos |
+| `dispatch_timeline` | ∞ | Historial de cambios |
 
 **Total:** ~85,000 registros estáticos + datos dinámicos usuarios
 
@@ -850,6 +859,22 @@ El prompt incluye:
 - Glosario 25 términos
 - Row Level Security completo
 
+
+### ✅ Completado (v4.0 - Noviembre 2025):
+
+#### 📦 Gestión de Despachos Aduaneros
+- Dashboard con agrupación inteligente por acción
+- 7 tipos de operaciones (Import/Export Marítima/Aérea/Terrestre + Tránsitos)
+- Estados descriptivos automáticos ("Listo para picar", "Esperando cliente")
+- Detección automática "quién tiene la pelota" (Tú/Cliente/Aduanas/Inspector)
+- Progreso visual 0-100% por despacho
+- 7 etapas interactivas con guardado automático
+- Campos específicos por tipo de operación
+- Sistema de paraaduaneros (9 tipos)
+- Alertas de urgencia (reconocimientos próximos)
+- Contadores en dashboard
+- Vista detalle completa con tabs
+- Soporte FCL/LCL, desconsolidación, MRN
 ---
 
 ### 🔜 Próximamente (v4.1 - Noviembre 2025)
@@ -874,6 +899,17 @@ El prompt incluye:
 - Errores comunes
 - Monitoreo costes API
 
+### 📅 Próximamente (v4.1 - Diciembre 2025):
+- [ ] Checklist dinámico por tipo de operación
+- [ ] Sistema de documentos con upload
+- [ ] Timeline/historial de cambios
+- [ ] Gestión completa de paraaduaneros con circuitos
+- [ ] Notificaciones automáticas por email
+- [ ] Filtros avanzados y búsqueda
+- [ ] Exportar listados a Excel
+- [ ] Asignación de despachos a empleados
+- [ ] Roles y permisos (Master/Empleado)
+- [ ] Alertas automáticas ETA
 ---
 
 ### 🚀 Futuro (v5.0 - 2026)
