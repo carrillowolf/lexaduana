@@ -5,16 +5,21 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
-export default function DespachosListMejorada() {
+export default function DespachosTableV2() {
   const [user, setUser] = useState(null)
   const [dispatches, setDispatches] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('todos') // todos, mios, esperando, transito
+  const [saving, setSaving] = useState(false)
+  const [sortBy, setSortBy] = useState('eta')
+  const [filterType, setFilterType] = useState('all')
+  const [search, setSearch] = useState('')
+  const [openParaDropdown, setOpenParaDropdown] = useState(null)
+  const [editingETA, setEditingETA] = useState(null)
+  const [editingNotes, setEditingNotes] = useState(null)
   
   const router = useRouter()
   const supabase = createClient()
 
-  // Verificar usuario
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -27,7 +32,6 @@ export default function DespachosListMejorada() {
     checkUser()
   }, [router, supabase])
 
-  // Cargar despachos
   useEffect(() => {
     if (!user) return
     loadDispatches()
@@ -50,343 +54,600 @@ export default function DespachosListMejorada() {
     }
   }
 
-  // Determinar "quién tiene la pelota" y estado descriptivo
-  const getDispatchStatus = (dispatch) => {
-    const isImport = dispatch.operation_type?.startsWith('import')
-    
-    // COMPLETADO
-    if (dispatch.stage_closure === 'ok') {
-      return {
-        category: 'completed',
-        owner: 'none',
-        label: 'Completado',
-        action: 'Expediente cerrado',
-        color: 'gray',
-        urgency: 'low'
-      }
-    }
+  // Actualizar campo
+  const updateField = async (dispatchId, field, value) => {
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('dispatches')
+        .update({ 
+          [field]: value,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', dispatchId)
 
-    // LEVANTE CONCEDIDO - Requiere acción tuya
-    if (dispatch.stage_levante === 'ok' && dispatch.stage_closure === 'pending') {
-      return {
-        category: 'requires_action',
-        owner: 'you',
-        label: 'Enviar documentación',
-        action: 'Levante concedido - Pasar docs a operativa',
-        color: 'red',
-        urgency: 'high'
-      }
-    }
+      if (error) throw error
 
-    // DUA VERDE - Puede cerrar
-    if (dispatch.stage_dua === 'ok' && dispatch.stage_levante === 'pending') {
-      return {
-        category: 'requires_action',
-        owner: 'you',
-        label: 'Gestionar levante',
-        action: 'DUA en circuito verde - Tramitar levante',
-        color: 'red',
-        urgency: 'high'
-      }
-    }
-
-    // RECONOCIMIENTO FÍSICO - En tus manos
-    if (dispatch.stage_dua === 'blocked') {
-      const inspectionDate = dispatch.inspection_date ? new Date(dispatch.inspection_date) : null
-      const daysUntil = inspectionDate ? Math.ceil((inspectionDate - new Date()) / (1000 * 60 * 60 * 24)) : null
-      
-      if (daysUntil !== null && daysUntil <= 2) {
-        return {
-          category: 'requires_action',
-          owner: 'you',
-          label: 'Reconocimiento próximo',
-          action: `${dispatch.inspection_type || 'Reconocimiento'} ${daysUntil === 0 ? 'HOY' : daysUntil === 1 ? 'MAÑANA' : `en ${daysUntil}d`}`,
-          color: 'red',
-          urgency: 'critical'
-        }
-      }
-
-      return {
-        category: 'waiting_others',
-        owner: 'customs',
-        label: 'Esperando aduanas',
-        action: `Reconocimiento ${dispatch.inspection_type || 'físico'} programado`,
-        color: 'yellow',
-        urgency: 'medium'
-      }
-    }
-
-    // DUA PRESENTADO - Esperando aduanas
-    if (dispatch.stage_dua === 'in_progress' && dispatch.stage_levante === 'pending') {
-      return {
-        category: 'waiting_others',
-        owner: 'customs',
-        label: 'Esperando circuito DUA',
-        action: 'DUA presentado - Pendiente resolución aduanas',
-        color: 'yellow',
-        urgency: 'medium'
-      }
-    }
-
-    // PARAADUANEROS BLOQUEADOS
-    if (dispatch.stage_paraaduaneros === 'blocked' || dispatch.stage_paraaduaneros === 'in_progress') {
-      const paraaduaneros = dispatch.paraaduaneros || []
-      const blocked = paraaduaneros.filter(p => p.status === 'red' || p.status === 'orange')
-      
-      if (blocked.length > 0) {
-        return {
-          category: 'waiting_others',
-          owner: 'inspector',
-          label: `Paraaduanero ${blocked[0].type}`,
-          action: blocked[0].status === 'red' ? 'Esperando inspección física' : 'Pendiente certificado',
-          color: 'yellow',
-          urgency: 'medium'
-        }
-      }
-    }
-
-    // LISTO PARA PICAR - Requiere acción tuya
-    if (dispatch.stage_despacho === 'ok' && 
-        dispatch.stage_paraaduaneros !== 'in_progress' && 
-        dispatch.stage_dua === 'pending') {
-      return {
-        category: 'requires_action',
-        owner: 'you',
-        label: 'Listo para picar',
-        action: 'Documentación completa - Presentar DUA',
-        color: 'red',
-        urgency: 'high'
-      }
-    }
-
-    // ESPERANDO SUMARIA (Import marítimo/aéreo)
-    if (isImport && dispatch.stage_sumaria === 'pending') {
-      const etaDays = dispatch.eta ? Math.ceil((new Date(dispatch.eta) - new Date()) / (1000 * 60 * 60 * 24)) : null
-      
-      if (etaDays !== null && etaDays <= 0) {
-        return {
-          category: 'requires_action',
-          owner: 'you',
-          label: 'Verificar sumaria',
-          action: `Llegada hace ${Math.abs(etaDays)}d - Comprobar sumaria`,
-          color: 'red',
-          urgency: 'high'
-        }
-      }
-
-      return {
-        category: 'waiting_others',
-        owner: 'port',
-        label: 'Esperando llegada',
-        action: 'Mercancía en tránsito - Pendiente sumaria',
-        color: 'yellow',
-        urgency: 'low'
-      }
-    }
-
-    // ESPERANDO DOCS CLIENTE
-    if (dispatch.stage_docs === 'pending' || dispatch.expenses_status === 'pendiente') {
-      return {
-        category: 'waiting_others',
-        owner: 'client',
-        label: 'Esperando cliente',
-        action: dispatch.stage_docs === 'pending' ? 'Pendiente documentación' : 'Pendiente gastos',
-        color: 'yellow',
-        urgency: 'medium'
-      }
-    }
-
-    // EN TRÁNSITO
-    if (isImport && dispatch.stage_sumaria === 'pending') {
-      const etaDays = dispatch.eta ? Math.ceil((new Date(dispatch.eta) - new Date()) / (1000 * 60 * 60 * 24)) : null
-      
-      return {
-        category: 'in_transit',
-        owner: 'none',
-        label: 'En tránsito',
-        action: etaDays !== null ? `Llegada en ${etaDays} día${etaDays !== 1 ? 's' : ''}` : 'Navegando',
-        color: 'green',
-        urgency: 'low'
-      }
-    }
-
-    // DEFAULT
-    return {
-      category: 'requires_action',
-      owner: 'you',
-      label: 'Revisar',
-      action: 'Verificar estado del despacho',
-      color: 'red',
-      urgency: 'medium'
+      setDispatches(prev => prev.map(d => 
+        d.id === dispatchId ? { ...d, [field]: value } : d
+      ))
+    } catch (error) {
+      console.error('Error actualizando:', error)
+    } finally {
+      setSaving(false)
     }
   }
 
-  // Agrupar despachos por categoría
-  const groupedDispatches = dispatches.reduce((acc, dispatch) => {
-    const status = getDispatchStatus(dispatch)
-    const category = status.category
-    
-    if (!acc[category]) acc[category] = []
-    acc[category].push({ ...dispatch, statusInfo: status })
-    
-    return acc
-  }, {})
-
-  // Calcular contadores
-  const counters = {
-    requires_action: groupedDispatches.requires_action?.length || 0,
-    waiting_others: groupedDispatches.waiting_others?.length || 0,
-    in_transit: groupedDispatches.in_transit?.length || 0,
-    completed: groupedDispatches.completed?.length || 0
+  // Ciclar estado simple (4 estados)
+  const cycleStage = (current) => {
+    const cycle = {
+      'pending': 'in_progress',
+      'in_progress': 'ok',
+      'ok': 'blocked',
+      'blocked': 'pending',
+      'na': 'pending'
+    }
+    return cycle[current] || 'in_progress'
   }
 
-  // Helper: Calcular progreso
-  const calculateProgress = (dispatch) => {
-    const stages = ['stage_docs', 'stage_sumaria', 'stage_despacho', 'stage_paraaduaneros', 'stage_dua', 'stage_levante', 'stage_closure']
-    const isImport = dispatch.operation_type?.startsWith('import')
+  // Detectar alertas
+  const getAlert = (dispatch) => {
+    const now = new Date()
+    const updated = new Date(dispatch.updated_at)
+    const hoursSinceUpdate = (now - updated) / (1000 * 60 * 60)
     
-    let total = isImport ? 7 : 6 // Sumaria solo en import
-    let completed = 0
-    
-    stages.forEach(stage => {
-      if (stage === 'stage_sumaria' && !isImport) return // Skip sumaria en export
-      if (dispatch[stage] === 'ok') completed++
+    const hasStuckStage = ['stage_docs', 'stage_sumaria', 'stage_despacho', 'stage_dua', 'stage_levante'].some(stage => {
+      return (dispatch[stage] === 'in_progress' || dispatch[stage] === 'blocked') && hoursSinceUpdate > 24
     })
+
+    const isImport = dispatch.operation_type?.startsWith('import')
+    const isExport = dispatch.operation_type?.startsWith('export')
+    const eta = dispatch.eta ? new Date(dispatch.eta) : null
+    const etaDays = eta ? Math.ceil((eta - now) / (1000 * 60 * 60 * 24)) : null
     
-    return Math.round((completed / total) * 100)
-  }
-
-  // Helper: Icono según owner
-  const getOwnerIcon = (owner) => {
-    switch(owner) {
-      case 'you': return '👤'
-      case 'client': return '👥'
-      case 'customs': return '🏛️'
-      case 'inspector': return '🔐'
-      case 'port': return '🚢'
-      default: return '📦'
+    if (isImport && eta && etaDays <= 0 && dispatch.stage_sumaria !== 'ok') {
+      return { type: 'critical', text: 'ETA CUMPLIDA' }
     }
-  }
-
-  // Helper: Color de fondo según categoría
-  const getCategoryBg = (category) => {
-    switch(category) {
-      case 'requires_action': return 'bg-red-50 border-red-200'
-      case 'waiting_others': return 'bg-yellow-50 border-yellow-200'
-      case 'in_transit': return 'bg-green-50 border-green-200'
-      case 'completed': return 'bg-gray-50 border-gray-200'
-      default: return 'bg-white border-gray-200'
-    }
-  }
-
-  const getCategoryTextColor = (category) => {
-    switch(category) {
-      case 'requires_action': return 'text-red-700'
-      case 'waiting_others': return 'text-yellow-700'
-      case 'in_transit': return 'text-green-700'
-      case 'completed': return 'text-gray-700'
-      default: return 'text-gray-700'
-    }
-  }
-
-  // Helper: Icono tipo operación
-  const getOperationIcon = (type) => {
-    switch(type) {
-      case 'import_maritime': return '🚢'
-      case 'import_air': return '✈️'
-      case 'import_road': return '🚛'
-      case 'export_maritime': return '🚢📤'
-      case 'export_air': return '✈️📤'
-      case 'export_road': return '🚛📤'
-      case 'transit': return '🔄'
-      default: return '📦'
-    }
-  }
-
-  // Renderizar card de despacho
-  const DispatchCard = ({ dispatch }) => {
-    const progress = calculateProgress(dispatch)
-    const status = dispatch.statusInfo
     
+    if (isExport && eta && etaDays <= 1 && etaDays >= 0) {
+      return { type: 'warning', text: 'ETD MAÑANA' }
+    }
+
+    if (hasStuckStage) {
+      return { type: 'warning', text: '24H SIN CAMBIOS' }
+    }
+
+    return null
+  }
+
+  // Badge con estado
+  const StatusBadge = ({ status, onClick }) => {
+    const configs = {
+      'ok': { icon: '✓', text: 'OK', color: 'bg-green-100 text-green-700 border-green-300' },
+      'in_progress': { icon: '⏳', text: 'Pedidos', color: 'bg-orange-100 text-orange-700 border-orange-300' },
+      'blocked': { icon: '⚠️', text: 'Problema', color: 'bg-red-100 text-red-700 border-red-300' },
+      'pending': { icon: '-', text: 'Pendiente', color: 'bg-gray-100 text-gray-600 border-gray-300' },
+      'na': { icon: '-', text: 'N/A', color: 'bg-gray-50 text-gray-400 border-gray-200' }
+    }
+
+    const config = configs[status] || configs.pending
+
     return (
-      <div 
-        onClick={() => router.push(`/despachos/${dispatch.id}`)}
-        className={`${getCategoryBg(status.category)} border-2 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all`}
+      <button
+        onClick={onClick}
+        className={`px-2 py-1 rounded border text-xs font-medium hover:shadow transition whitespace-nowrap ${config.color}`}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <span className="text-3xl">{getOperationIcon(dispatch.operation_type)}</span>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">{dispatch.expediente_number}</h3>
-              <p className="text-sm text-gray-600">{dispatch.client_name}</p>
+        {config.icon} {config.text}
+      </button>
+    )
+  }
+
+  // Dropdown component
+  const Dropdown = ({ value, options, onChange, className = '' }) => {
+    return (
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className={`px-2 py-1 text-xs border border-gray-300 rounded hover:border-[#0A3D5C] focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none ${className}`}
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    )
+  }
+
+  // Agrupar y ordenar
+  const groupedDispatches = () => {
+    let filtered = dispatches
+
+    if (search) {
+      filtered = filtered.filter(d =>
+        d.expediente_number?.toLowerCase().includes(search.toLowerCase()) ||
+        d.client_name?.toLowerCase().includes(search.toLowerCase())
+      )
+    }
+
+    if (filterType !== 'all') {
+      filtered = filtered.filter(d => {
+        if (filterType === 'import') return d.operation_type?.startsWith('import')
+        if (filterType === 'export') return d.operation_type?.startsWith('export')
+        if (filterType === 'transit') return d.operation_type === 'transit'
+        return true
+      })
+    }
+
+    const imports = filtered.filter(d => d.operation_type?.startsWith('import'))
+    const exports = filtered.filter(d => d.operation_type?.startsWith('export'))
+    const transits = filtered.filter(d => d.operation_type === 'transit')
+
+    const sortFn = (a, b) => {
+      if (sortBy === 'eta') {
+        if (!a.eta) return 1
+        if (!b.eta) return -1
+        return new Date(a.eta) - new Date(b.eta)
+      }
+      if (sortBy === 'expediente') {
+        return a.expediente_number?.localeCompare(b.expediente_number)
+      }
+      return 0
+    }
+
+    return {
+      imports: imports.sort(sortFn),
+      exports: exports.sort(sortFn),
+      transits: transits.sort(sortFn)
+    }
+  }
+
+  const groups = groupedDispatches()
+  const totalDispatches = groups.imports.length + groups.exports.length + groups.transits.length
+
+  const criticalCount = dispatches.filter(d => getAlert(d)?.type === 'critical').length
+  const warningCount = dispatches.filter(d => getAlert(d)?.type === 'warning').length
+
+  // Fila de despacho
+  const DispatchRow = ({ dispatch }) => {
+    const alert = getAlert(dispatch)
+    const isImport = dispatch.operation_type?.startsWith('import')
+    const eta = dispatch.eta ? new Date(dispatch.eta) : null
+    const etaDays = eta ? Math.ceil((eta - new Date()) / (1000 * 60 * 60 * 24)) : null
+
+    return (
+      <tr 
+        className={`border-b border-gray-200 hover:bg-blue-50 transition ${
+          alert?.type === 'critical' ? 'border-l-4 border-l-red-500 bg-red-50' :
+          alert?.type === 'warning' ? 'border-l-4 border-l-orange-500 bg-orange-50' :
+          ''
+        }`}
+      >
+        {/* Expediente */}
+        <td className="px-3 py-3">
+          <button
+            onClick={() => router.push(`/despachos/${dispatch.id}`)}
+            className="text-left"
+          >
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">
+                {dispatch.operation_type?.startsWith('import') ? '🚢' :
+                 dispatch.operation_type?.startsWith('export') ? '📤' : '🔄'}
+              </span>
+              <div>
+                <p className="text-xs font-bold text-[#0A3D5C] hover:underline">
+                  {dispatch.expediente_number}
+                </p>
+                <p className="text-xs text-gray-500 truncate max-w-[100px]">
+                  {dispatch.client_name}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="text-right">
-            {dispatch.eta && (
-              <p className="text-xs text-gray-500">
-                {new Date(dispatch.eta).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
-              </p>
+          </button>
+        </td>
+
+        {/* ETA/ETD - Resaltado en rojo si urgente */}
+        <td className="px-3 py-3">
+          {editingETA === dispatch.id ? (
+            <input
+              type="date"
+              defaultValue={dispatch.eta || ''}
+              onBlur={(e) => {
+                updateField(dispatch.id, 'eta', e.target.value)
+                setEditingETA(null)
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  updateField(dispatch.id, 'eta', e.target.value)
+                  setEditingETA(null)
+                }
+              }}
+              className="px-2 py-1 text-xs border border-[#0A3D5C] rounded focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none"
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => setEditingETA(dispatch.id)}
+              className={`text-xs text-left hover:bg-gray-100 px-2 py-1 rounded ${
+                (isImport && etaDays !== null && etaDays <= 0) || 
+                (!isImport && etaDays !== null && etaDays <= 1 && etaDays >= 0)
+                  ? 'font-bold text-red-600 bg-red-50'
+                  : 'text-gray-600'
+              }`}
+            >
+              {eta ? (
+                <>
+                  <div>{eta.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</div>
+                  <div className="text-xs text-gray-400">
+                    {etaDays === 0 ? 'HOY' :
+                     etaDays === 1 ? '+1d' :
+                     etaDays === -1 ? '-1d' :
+                     etaDays > 0 ? `+${etaDays}d` :
+                     etaDays < 0 ? `${etaDays}d` : ''}
+                  </div>
+                </>
+              ) : (
+                <span className="text-gray-400">Sin fecha</span>
+              )}
+            </button>
+          )}
+        </td>
+
+        {/* Documentación */}
+        <td className="px-2 py-3 text-center">
+          <StatusBadge
+            status={dispatch.stage_docs}
+            onClick={() => updateField(dispatch.id, 'stage_docs', cycleStage(dispatch.stage_docs))}
+          />
+        </td>
+
+        {/* Gastos - Ahora editable */}
+        <td className="px-2 py-3 text-center">
+          <StatusBadge
+            status={dispatch.stage_gastos || 'pending'}
+            onClick={() => updateField(dispatch.id, 'stage_gastos', cycleStage(dispatch.stage_gastos || 'pending'))}
+          />
+        </td>
+
+        {/* Sumaria (solo import) */}
+        {isImport && (
+          <td className="px-2 py-3 text-center">
+            <Dropdown
+              value={dispatch.sumaria_status || 'sin_sumaria'}
+              options={[
+                { value: 'sin_sumaria', label: 'Sin Sumaria' },
+                { value: 'pte_activacion', label: 'Pte activación' },
+                { value: 'ok', label: '✓ OK' }
+              ]}
+              onChange={(value) => updateField(dispatch.id, 'sumaria_status', value)}
+              className={
+                dispatch.sumaria_status === 'ok' ? 'bg-green-50 text-green-700 border-green-300' :
+                dispatch.sumaria_status === 'pte_activacion' ? 'bg-orange-50 text-orange-700 border-orange-300' :
+                'bg-gray-50 text-gray-600'
+              }
+            />
+          </td>
+        )}
+
+        {/* Paraaduaneros - Dropdown Sí/No */}
+        <td className="px-2 py-3 text-center">
+          <Dropdown
+            value={dispatch.has_paraaduaneros ? 'si' : 'no'}
+            options={[
+              { value: 'no', label: 'No' },
+              { value: 'si', label: 'Sí' }
+            ]}
+            onChange={(value) => {
+              updateField(dispatch.id, 'has_paraaduaneros', value === 'si')
+              if (value === 'no') {
+                updateField(dispatch.id, 'paraaduaneros_types', null)
+              }
+            }}
+            className={
+              dispatch.has_paraaduaneros 
+                ? 'bg-orange-50 text-orange-700 border-orange-300 font-medium' 
+                : 'bg-gray-50 text-gray-600'
+            }
+          />
+        </td>
+
+        {/* Tipo Paraaduaneros - Con expedientes */}
+        <td className="px-2 py-3 text-center">
+          {dispatch.has_paraaduaneros ? (
+            <div className="relative">
+              <button
+                onClick={() => setOpenParaDropdown(openParaDropdown === dispatch.id ? null : dispatch.id)}
+                className="px-2 py-1 text-xs border border-gray-300 rounded hover:border-[#0A3D5C] hover:bg-gray-50 transition w-full min-h-[32px]"
+              >
+                {dispatch.paraaduaneros_types ? (
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {(() => {
+                      try {
+                        const types = JSON.parse(dispatch.paraaduaneros_types)
+                        return types.map(item => (
+                          <span key={item.code} className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium whitespace-nowrap">
+                            {item.code} {item.expediente && `#${item.expediente}`}
+                          </span>
+                        ))
+                      } catch {
+                        return <span className="text-gray-400">Error</span>
+                      }
+                    })()}
+                  </div>
+                ) : (
+                  <span className="text-gray-400">Añadir...</span>
+                )}
+              </button>
+
+              {/* Modal con expedientes */}
+              {openParaDropdown === dispatch.id && (
+                <div 
+                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                  onClick={() => setOpenParaDropdown(null)}
+                >
+                  <div 
+                    className="bg-white rounded-lg shadow-2xl p-5 w-[600px] max-h-[600px] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center justify-between">
+                      <span>Paraaduaneros - Añadir Expedientes</span>
+                      <button
+                        onClick={() => setOpenParaDropdown(null)}
+                        className="text-gray-400 hover:text-gray-600 text-lg"
+                      >
+                        ✕
+                      </button>
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      {[
+                        { code: 'ROHS', label: 'ROHS/RAEE' },
+                        { code: 'SOIV', label: 'SOIVRE' },
+                        { code: 'VETE', label: 'VETERINARIO' },
+                        { code: 'FITO', label: 'FITOSANITARIO' },
+                        { code: 'FARM', label: 'FARMACIA' },
+                        { code: 'SANI', label: 'SANIDAD EXT' },
+                        { code: 'ECO', label: 'ECOLÓGICO' },
+                        { code: 'CITE', label: 'CITES' },
+                        { code: 'OTRO', label: 'OTROS' }
+                      ].map(para => {
+                        let currentTypes = []
+                        try {
+                          currentTypes = dispatch.paraaduaneros_types ? JSON.parse(dispatch.paraaduaneros_types) : []
+                        } catch {}
+                        
+                        const existingItem = currentTypes.find(t => t.code === para.code)
+                        const isChecked = !!existingItem
+
+                        return (
+                          <div
+                            key={para.code}
+                            className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                let newTypes
+                                if (e.target.checked) {
+                                  newTypes = [...currentTypes, { code: para.code, expediente: '' }]
+                                } else {
+                                  newTypes = currentTypes.filter(t => t.code !== para.code)
+                                }
+                                updateField(dispatch.id, 'paraaduaneros_types', JSON.stringify(newTypes))
+                              }}
+                              className="w-4 h-4 text-[#0A3D5C] border-gray-300 rounded focus:ring-[#0A3D5C]"
+                            />
+                            <label className="flex-1 text-sm font-medium text-gray-700 min-w-[140px]">
+                              {para.label}
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Nº Expediente"
+                              value={existingItem?.expediente || ''}
+                              disabled={!isChecked}
+                              onChange={(e) => {
+                                const newTypes = currentTypes.map(t => 
+                                  t.code === para.code 
+                                    ? { ...t, expediente: e.target.value }
+                                    : t
+                                )
+                                updateField(dispatch.id, 'paraaduaneros_types', JSON.stringify(newTypes))
+                              }}
+                              className={`flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none ${
+                                !isChecked ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-gray-200 flex justify-end space-x-2">
+                      <button
+                        onClick={() => {
+                          updateField(dispatch.id, 'paraaduaneros_types', null)
+                        }}
+                        className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      >
+                        Limpiar todo
+                      </button>
+                      <button
+                        onClick={() => setOpenParaDropdown(null)}
+                        className="px-4 py-2 text-sm bg-[#0A3D5C] text-white rounded-lg hover:bg-[#083049]"
+                      >
+                        Guardar y cerrar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-gray-400">-</span>
+          )}
+        </td>
+
+        {/* EUR1/ATR - Solo exportaciones */}
+        {!isImport && dispatch.operation_type?.startsWith('export') && (
+          <td className="px-2 py-3 text-center">
+            <div className="space-y-1">
+              <Dropdown
+                value={dispatch.eur1_required ? 'si' : 'no'}
+                options={[
+                  { value: 'no', label: 'NO' },
+                  { value: 'si', label: 'SÍ' }
+                ]}
+                onChange={(value) => {
+                  updateField(dispatch.id, 'eur1_required', value === 'si')
+                  if (value === 'no') {
+                    updateField(dispatch.id, 'eur1_emitted', false)
+                  }
+                }}
+                className={
+                  dispatch.eur1_required
+                    ? 'bg-blue-50 text-blue-700 border-blue-300 font-medium'
+                    : 'bg-gray-50 text-gray-600'
+                }
+              />
+              
+              {/* Emitido si está requerido */}
+              {dispatch.eur1_required && (
+                <button
+                  onClick={() => updateField(dispatch.id, 'eur1_emitted', !dispatch.eur1_emitted)}
+                  className={`w-full px-2 py-1 rounded border text-xs font-medium transition ${
+                    dispatch.eur1_emitted
+                      ? 'bg-green-100 text-green-700 border-green-300'
+                      : 'bg-orange-100 text-orange-700 border-orange-300'
+                  }`}
+                >
+                  {dispatch.eur1_emitted ? '✓ Emitido' : '⏳ Pdte'}
+                </button>
+              )}
+            </div>
+          </td>
+        )}
+
+        {/* DUA - Con campo MRN si aplica */}
+        <td className="px-2 py-3 text-center">
+          <div className="space-y-1">
+            <Dropdown
+              value={dispatch.dua_status || 'pendiente'}
+              options={[
+                { value: 'pendiente', label: 'Pendiente' },
+                { value: 'picado', label: 'Picado' },
+                { value: 'mrn', label: 'MRN' }
+              ]}
+              onChange={(value) => {
+                updateField(dispatch.id, 'dua_status', value)
+                if (value !== 'mrn') {
+                  updateField(dispatch.id, 'mrn_number', null)
+                }
+              }}
+              className={
+                dispatch.dua_status === 'mrn' ? 'bg-green-50 text-green-700 border-green-300 font-medium' :
+                dispatch.dua_status === 'picado' ? 'bg-blue-50 text-blue-700 border-blue-300 font-medium' :
+                'bg-gray-50 text-gray-600'
+              }
+            />
+            
+            {/* Campo MRN si está seleccionado */}
+            {dispatch.dua_status === 'mrn' && (
+              <input
+                type="text"
+                placeholder="Ej: 25ES00000123456789012345"
+                defaultValue={dispatch.mrn_number || ''}
+                onBlur={(e) => {
+                  if (e.target.value !== dispatch.mrn_number) {
+                    updateField(dispatch.id, 'mrn_number', e.target.value || null)
+                  }
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    updateField(dispatch.id, 'mrn_number', e.target.value || null)
+                    e.target.blur()
+                  }
+                }}
+                maxLength={30}
+                className="w-full px-2 py-1.5 text-xs font-mono border border-gray-300 rounded focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none"
+              />
             )}
           </div>
-        </div>
+        </td>
 
-        {/* Producto */}
-        <p className="text-sm text-gray-700 mb-3">
-          {dispatch.product_description?.substring(0, 50)}...
-        </p>
+        {/* Levante - Solo Pendiente/OK */}
+        <td className="px-2 py-3 text-center">
+          <button
+            onClick={() => {
+              const newValue = dispatch.stage_levante === 'ok' ? 'pending' : 'ok'
+              updateField(dispatch.id, 'stage_levante', newValue)
+            }}
+            className={`px-2 py-1 rounded border text-xs font-medium hover:shadow transition whitespace-nowrap ${
+              dispatch.stage_levante === 'ok'
+                ? 'bg-green-100 text-green-700 border-green-300'
+                : 'bg-gray-100 text-gray-600 border-gray-300'
+            }`}
+          >
+            {dispatch.stage_levante === 'ok' ? '✓ OK' : '- Pendiente'}
+          </button>
+        </td>
 
-        {/* Estado principal */}
-        <div className={`flex items-center space-x-2 mb-3 p-2 rounded-lg ${
-          status.urgency === 'critical' ? 'bg-red-100' :
-          status.urgency === 'high' ? 'bg-orange-100' :
-          status.urgency === 'medium' ? 'bg-yellow-100' :
-          'bg-blue-100'
-        }`}>
-          <span className="text-xl">{getOwnerIcon(status.owner)}</span>
-          <div className="flex-1">
-            <p className={`text-xs font-bold uppercase ${getCategoryTextColor(status.category)}`}>
-              {status.label}
-            </p>
-            <p className="text-xs text-gray-600">{status.action}</p>
-          </div>
-          {status.urgency === 'critical' && (
-            <span className="text-xl animate-pulse">⚡</span>
-          )}
-        </div>
+        {/* TDocs */}
+        <td className="px-2 py-3 text-center">
+          <StatusBadge
+            status={dispatch.stage_closure}
+            onClick={() => updateField(dispatch.id, 'stage_closure', cycleStage(dispatch.stage_closure))}
+          />
+        </td>
 
-        {/* Barra de progreso */}
-        <div className="mb-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-gray-600">Progreso</span>
-            <span className="text-xs font-bold text-gray-700">{progress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all ${
-                progress === 100 ? 'bg-green-500' :
-                progress >= 70 ? 'bg-blue-500' :
-                progress >= 40 ? 'bg-yellow-500' :
-                'bg-red-500'
-              }`}
-              style={{ width: `${progress}%` }}
+        {/* Notas - Campo libre editable */}
+        <td className="px-2 py-3">
+          {editingNotes === dispatch.id ? (
+            <input
+              type="text"
+              defaultValue={dispatch.notes || ''}
+              placeholder="Añadir nota..."
+              onBlur={(e) => {
+                updateField(dispatch.id, 'notes', e.target.value || null)
+                setEditingNotes(null)
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  updateField(dispatch.id, 'notes', e.target.value || null)
+                  setEditingNotes(null)
+                }
+              }}
+              className="w-full px-2 py-1 text-xs border border-[#0A3D5C] rounded focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none"
+              autoFocus
             />
-          </div>
-        </div>
-
-        {/* Mini etapas */}
-        <div className="flex items-center space-x-1 text-xs">
-          <span className={dispatch.stage_docs === 'ok' ? 'text-green-500' : 'text-gray-300'}>📄</span>
-          {dispatch.operation_type?.startsWith('import') && (
-            <span className={dispatch.stage_sumaria === 'ok' ? 'text-green-500' : 'text-gray-300'}>📋</span>
+          ) : (
+            <div className="flex items-center space-x-2">
+              {/* Alerta automática */}
+              {alert && (
+                <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
+                  alert.type === 'critical' ? 'bg-red-100 text-red-700' :
+                  'bg-orange-100 text-orange-700'
+                }`}>
+                  {alert.text}
+                </span>
+              )}
+              
+              {/* Nota manual */}
+              <button
+                onClick={() => setEditingNotes(dispatch.id)}
+                className={`flex-1 text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${
+                  dispatch.notes ? 'text-gray-700' : 'text-gray-400'
+                }`}
+                title={dispatch.notes || 'Añadir nota'}
+              >
+                {dispatch.notes ? (
+                  <span>📝 {dispatch.notes}</span>
+                ) : (
+                  <span>💬 Añadir nota...</span>
+                )}
+              </button>
+            </div>
           )}
-          <span className={dispatch.stage_despacho === 'ok' ? 'text-green-500' : 'text-gray-300'}>📝</span>
-          <span className={dispatch.stage_paraaduaneros === 'ok' ? 'text-green-500' : dispatch.stage_paraaduaneros === 'na' ? 'text-gray-200' : 'text-gray-300'}>🔐</span>
-          <span className={dispatch.stage_dua === 'ok' ? 'text-green-500' : 'text-gray-300'}>🟠</span>
-          <span className={dispatch.stage_levante === 'ok' ? 'text-green-500' : 'text-gray-300'}>✅</span>
-          <span className={dispatch.stage_closure === 'ok' ? 'text-green-500' : 'text-gray-300'}>📤</span>
-        </div>
-      </div>
+        </td>
+      </tr>
     )
   }
 
@@ -402,165 +663,201 @@ export default function DespachosListMejorada() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
-              <div>
-                <h1 className="text-xl font-bold text-[#0A3D5C]">Despachos</h1>
-                <p className="text-xs text-gray-500">Gestión operativa</p>
-              </div>
-            </Link>
-
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-[1800px] mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
-              >
-                Dashboard
+              <Link href="/" className="flex items-center space-x-2">
+                <img src="/logo.png" alt="LexAduana" className="h-8 w-8" />
+                <span className="text-lg font-bold text-[#0A3D5C]">Despachos</span>
               </Link>
+              <span className="text-sm text-gray-500">({totalDispatches})</span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {criticalCount > 0 && (
+                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
+                  Críticos: {criticalCount}
+                </span>
+              )}
+              {warningCount > 0 && (
+                <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded">
+                  Atención: {warningCount}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none w-48"
+              />
+
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none"
+              >
+                <option value="all">Todos</option>
+                <option value="import">Importaciones</option>
+                <option value="export">Exportaciones</option>
+                <option value="transit">Tránsitos</option>
+              </select>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none"
+              >
+                <option value="eta">Por ETA</option>
+                <option value="expediente">Por Expediente</option>
+              </select>
+
               <Link
                 href="/despachos/nuevo"
-                className="px-6 py-2 bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] hover:from-[#083049] hover:to-[#0A3D5C] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center space-x-2"
+                className="px-4 py-1 bg-[#0A3D5C] text-white text-sm font-bold rounded-lg hover:bg-[#083049] transition"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Nuevo</span>
+                + Nuevo
               </Link>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Contadores superiores */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-md border-2 border-red-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Requieren acción</p>
-                <p className="text-3xl font-bold text-red-600">{counters.requires_action}</p>
-              </div>
-              <div className="text-4xl">🔴</div>
+      {/* Tablas */}
+      <div className="max-w-[1800px] mx-auto px-4 py-4">
+        {/* IMPORTACIONES */}
+        {groups.imports.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
+              <span>🚢 IMPORTACIONES</span>
+              <span className="text-xs text-gray-500">({groups.imports.length})</span>
+            </h2>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">Expediente</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">ETA</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Docs</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Gastos</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">Sumaria</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">Paraaduanero</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">Tipo</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">DUA</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Levante</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">TDocs</th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Notas/Alertas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groups.imports.map(dispatch => (
+                    <DispatchRow key={dispatch.id} dispatch={dispatch} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
+        )}
 
-          <div className="bg-white rounded-xl shadow-md border-2 border-yellow-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Esperando terceros</p>
-                <p className="text-3xl font-bold text-yellow-600">{counters.waiting_others}</p>
-              </div>
-              <div className="text-4xl">🟡</div>
+        {/* EXPORTACIONES */}
+        {groups.exports.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
+              <span>📤 EXPORTACIONES</span>
+              <span className="text-xs text-gray-500">({groups.exports.length})</span>
+            </h2>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">Expediente</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">ETD</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Docs</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Gastos</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">Paraaduanero</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">Tipo</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-32">EUR1/ATR</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">DUA</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Levante</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">TDocs</th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Notas/Alertas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groups.exports.map(dispatch => (
+                    <DispatchRow key={dispatch.id} dispatch={dispatch} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
+        )}
 
-          <div className="bg-white rounded-xl shadow-md border-2 border-green-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">En tránsito</p>
-                <p className="text-3xl font-bold text-green-600">{counters.in_transit}</p>
-              </div>
-              <div className="text-4xl">🟢</div>
+        {/* TRÁNSITOS */}
+        {groups.transits.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
+              <span>🔄 TRÁNSITOS</span>
+              <span className="text-xs text-gray-500">({groups.transits.length})</span>
+            </h2>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">Expediente</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">Fecha</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Docs</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">T1/T2</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">TDocs</th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Notas/Alertas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groups.transits.map(dispatch => (
+                    <DispatchRow key={dispatch.id} dispatch={dispatch} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
+        )}
 
-          <div className="bg-white rounded-xl shadow-md border-2 border-gray-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Completados</p>
-                <p className="text-3xl font-bold text-gray-600">{counters.completed}</p>
-              </div>
-              <div className="text-4xl">✅</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Despachos agrupados */}
-        {dispatches.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-            <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">No hay despachos</h3>
-            <p className="text-gray-600 mb-4">Crea tu primer despacho para empezar</p>
+        {totalDispatches === 0 && (
+          <div className="text-center py-12 bg-white rounded-lg">
+            <p className="text-gray-600 mb-4">No hay despachos</p>
             <Link
               href="/despachos/nuevo"
               className="inline-flex items-center px-6 py-3 bg-[#0A3D5C] text-white font-bold rounded-lg hover:bg-[#083049] transition"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Crear primer despacho
+              + Crear primer despacho
             </Link>
           </div>
-        ) : (
-          <>
-            {/* 🔴 REQUIEREN TU ACCIÓN */}
-            {groupedDispatches.requires_action?.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-red-700 mb-4 flex items-center">
-                  <span className="text-2xl mr-2">🔴</span>
-                  REQUIEREN TU ACCIÓN ({groupedDispatches.requires_action.length})
-                </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedDispatches.requires_action.map(dispatch => (
-                    <DispatchCard key={dispatch.id} dispatch={dispatch} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 🟡 ESPERANDO TERCEROS */}
-            {groupedDispatches.waiting_others?.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-yellow-700 mb-4 flex items-center">
-                  <span className="text-2xl mr-2">🟡</span>
-                  ESPERANDO TERCEROS ({groupedDispatches.waiting_others.length})
-                </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedDispatches.waiting_others.map(dispatch => (
-                    <DispatchCard key={dispatch.id} dispatch={dispatch} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 🟢 EN TRÁNSITO */}
-            {groupedDispatches.in_transit?.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-green-700 mb-4 flex items-center">
-                  <span className="text-2xl mr-2">🟢</span>
-                  EN TRÁNSITO ({groupedDispatches.in_transit.length})
-                </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedDispatches.in_transit.map(dispatch => (
-                    <DispatchCard key={dispatch.id} dispatch={dispatch} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ✅ COMPLETADOS */}
-            {groupedDispatches.completed?.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-700 mb-4 flex items-center">
-                  <span className="text-2xl mr-2">✅</span>
-                  COMPLETADOS ({groupedDispatches.completed.length})
-                </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedDispatches.completed.slice(0, 6).map(dispatch => (
-                    <DispatchCard key={dispatch.id} dispatch={dispatch} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
         )}
+      </div>
+
+      {/* Leyenda */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4">
+        <div className="max-w-[1800px] mx-auto flex items-center space-x-6 text-xs text-gray-600">
+          <span className="font-semibold">Estados:</span>
+          <div className="flex items-center space-x-1">
+            <span className="px-1 py-0.5 bg-green-100 text-green-700 border border-green-300 rounded">✓ OK</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="px-1 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">⏳ Pedidos</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="px-1 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded">⚠️ Problema</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="px-1 py-0.5 bg-gray-100 text-gray-600 border border-gray-300 rounded">- Pendiente</span>
+          </div>
+        </div>
       </div>
     </div>
   )

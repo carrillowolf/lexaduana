@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import DispatchChecklist from '@/components/DispatchChecklist'
 import Link from 'next/link'
 
 export default function DespachoDetalle() {
@@ -487,10 +488,10 @@ export default function DespachoDetalle() {
         )}
 
         {activeTab === 'checklist' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Checklist</h3>
-            <p className="text-gray-600">Próximamente: Checklist dinámico por tipo de operación</p>
-          </div>
+          <DispatchChecklist
+            dispatchId={dispatch.id}
+            dispatchType={dispatch.operation_type}
+          />
         )}
 
         {activeTab === 'docs' && (
