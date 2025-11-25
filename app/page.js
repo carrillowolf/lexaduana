@@ -61,6 +61,9 @@ export default function HomePage() {
               <Link href="/calculadora" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Calculadora
               </Link>
+              <Link href="/despachos" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+                📦 Despachos
+              </Link>
               <Link href="/comparador" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Comparador
               </Link>
@@ -157,216 +160,300 @@ export default function HomePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="h-4 bg-white/30 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-white/20 rounded w-1/2"></div>
+                    <div className="flex-1">
+                      <p className="text-white font-semibold">Cálculo Instantáneo</p>
+                      <p className="text-blue-200 text-sm">Aranceles + IVA al momento</p>
                     </div>
                   </div>
 
                   {/* Item 2 */}
                   <div className="flex items-center space-x-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="w-14 h-14 bg-emerald-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div className="w-14 h-14 bg-[#F4C542] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <svg className="w-8 h-8 text-[#0A3D5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                       </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="h-4 bg-white/30 rounded w-2/3 mb-2"></div>
-                      <div className="h-3 bg-white/20 rounded w-1/3"></div>
+                    <div className="flex-1">
+                      <p className="text-white font-semibold">Alertas TARIC</p>
+                      <p className="text-blue-200 text-sm">Certificados y requisitos</p>
                     </div>
                   </div>
 
                   {/* Item 3 */}
                   <div className="flex items-center space-x-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="w-14 h-14 bg-blue-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <div className="w-14 h-14 bg-[#F4C542] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <svg className="w-8 h-8 text-[#0A3D5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="h-4 bg-white/30 rounded w-4/5 mb-2"></div>
-                      <div className="h-3 bg-white/20 rounded w-2/5"></div>
+                    <div className="flex-1">
+                      <p className="text-white font-semibold">Comparador</p>
+                      <p className="text-blue-200 text-sm">5 países simultáneos</p>
                     </div>
                   </div>
                 </div>
               </div>
-              {/* Elementos decorativos */}
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-[#F4C542] rounded-full opacity-20 blur-3xl"></div>
-              <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-blue-400 rounded-full opacity-20 blur-3xl"></div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Clasificador IA Banner - SOLO para usuarios logueados */}
-      {user && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 mb-16">
-          <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-3xl shadow-2xl overflow-hidden">
-            {/* Decoración de fondo */}
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"></div>
-
-            <div className="relative px-8 py-12 md:px-12 md:py-16">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="flex-1 text-white">
-                  <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
-                    <span className="text-xs font-bold uppercase tracking-wide">✨ Nuevo</span>
-                    <span className="text-xs">•</span>
-                    <span className="text-xs">Powered by Claude Sonnet 4.5</span>
-                  </div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                    🤖 Clasificador Inteligente
-                  </h2>
-                  <p className="text-lg text-purple-100 mb-6 max-w-xl">
-                    Describe tu producto en lenguaje natural y obtén la clasificación TARIC
-                    con razonamiento detallado. De descripción a código HS en segundos.
-                  </p>
-                  <ul className="space-y-2 mb-8 text-purple-100">
-                    <li className="flex items-center">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Validado contra base EUR-Lex actualizada
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Códigos alternativos con nivel de confianza
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Integración directa con calculadora de aranceles
-                    </li>
-                  </ul>
-                  <Link
-                    href="/clasificador"
-                    className="inline-flex items-center space-x-3 px-8 py-4 bg-white text-purple-600 font-bold rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
-                  >
-                    <span>Probar Clasificador IA</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </Link>
-                </div>
-
-                <div className="hidden md:block flex-shrink-0">
-                  <div className="relative">
-                    <div className="w-64 h-64 bg-white/10 backdrop-blur-sm rounded-3xl p-8 transform rotate-3 hover:rotate-6 transition-transform">
-                      <svg className="w-full h-full text-white/80" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <div className="absolute -top-4 -right-4 bg-pink-400 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg animate-bounce">
-                      ¡Pruébalo!
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Features Section */}
-      <div className="bg-white py-20">
+      {/* NUEVA SECCIÓN: Gestión de Despachos */}
+      <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Sección */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Todo lo que necesitas para importar
+            <div className="inline-flex items-center px-4 py-2 bg-blue-50 rounded-full border border-blue-100 mb-6">
+              <span className="text-[#0A3D5C] font-bold mr-2">🆕 NUEVO</span>
+              <span className="text-sm font-medium text-gray-700">Sistema de gestión profesional</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Gestión Integral de
+              <span className="block text-[#0A3D5C] mt-2">Despachos Aduaneros</span>
             </h2>
-            <p className="text-xl text-gray-600">
-              Tecnología avanzada al servicio del comercio internacional
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Controla todos tus despachos de importación, exportación y tránsitos desde una única plataforma operativa
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Grid de características */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {/* Feature 1 */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 hover:shadow-xl transition-shadow">
-              <div className="w-14 h-14 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:shadow-lg transition">
+              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Cálculo Instantáneo</h3>
-              <p className="text-gray-600">
-                Resultados precisos en menos de 1 segundo. 49,000+ aranceles TARIC actualizados.
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Vista Operativa Excel</h3>
+              <p className="text-gray-600 text-sm">
+                Tabla compacta con 15+ despachos visibles. Todo editable con 1 click sin entrar al detalle.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-8 border border-emerald-100 hover:shadow-xl transition-shadow">
-              <div className="w-14 h-14 bg-emerald-600 rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:shadow-lg transition">
+              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">195+ Países</h3>
-              <p className="text-gray-600">
-                Acuerdos comerciales actualizados. Detecta automáticamente aranceles preferenciales.
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Alertas Automáticas</h3>
+              <p className="text-gray-600 text-sm">
+                ETA cumplida, 24h sin cambios, reconocimientos próximos. El sistema te avisa automáticamente.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-8 border border-amber-100 hover:shadow-xl transition-shadow">
-              <div className="w-14 h-14 bg-[#F4C542] rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-[#0A3D5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:shadow-lg transition">
+              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">30 Monedas</h3>
-              <p className="text-gray-600">
-                Tipos de cambio oficiales BCE. Conversión automática en tiempo real.
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Paraaduaneros</h3>
+              <p className="text-gray-600 text-sm">
+                Gestiona ROHS, SOIVRE, VETERINARIO, CITES con número de expediente individual por cada tipo.
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-100 hover:shadow-xl transition-shadow">
-              <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:shadow-lg transition">
+              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Comparador Multi-Origen</h3>
-              <p className="text-gray-600">
-                Compara hasta 5 países simultáneamente. Encuentra el origen más económico.
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Checklist Dinámico</h3>
+              <p className="text-gray-600 text-sm">
+                Plantillas automáticas por tipo: Import Marítima (28 items), Aérea (21 items), Export, Tránsitos.
               </p>
             </div>
 
             {/* Feature 5 */}
-            <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-8 border border-red-100 hover:shadow-xl transition-shadow">
-              <div className="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:shadow-lg transition">
+              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Alertas TARIC</h3>
-              <p className="text-gray-600">
-                15,000+ alertas de certificados, licencias y requisitos. Nunca olvides documentación.
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Estados en Tiempo Real</h3>
+              <p className="text-gray-600 text-sm">
+                Documentación, Gastos, Sumaria, DUA, MRN, EUR1/ATR, Levante, TDocs. Todo actualizable al instante.
               </p>
             </div>
 
             {/* Feature 6 */}
-            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-8 border border-cyan-100 hover:shadow-xl transition-shadow">
-              <div className="w-14 h-14 bg-cyan-600 rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:shadow-lg transition">
+              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">IVA Inteligente</h3>
-              <p className="text-gray-600">
-                Aplica automáticamente 4%, 10% o 21% según producto. Precisión garantizada.
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Notas y Documentos</h3>
+              <p className="text-gray-600 text-sm">
+                Añade notas libres, sube documentación, mantén timeline de cambios. Todo organizado y accesible.
               </p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link
+              href="/despachos"
+              className="inline-flex items-center px-8 py-4 bg-[#0A3D5C] hover:bg-[#083049] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Ver Sistema de Despachos
+            </Link>
+            <p className="mt-4 text-sm text-gray-500">Requiere registro gratuito</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section - Existente mejorado */}
+      <div className="py-20 bg-gradient-to-br from-slate-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Herramientas Profesionales
+            </h2>
+            <p className="text-xl text-gray-600">
+              Todo lo que necesitas para gestionar tus operaciones aduaneras
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Calculadora TARIC */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#0A3D5C] to-[#0d5078] rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Calculadora TARIC</h3>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>49K+ aranceles actualizados</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>IVA variable 4%/10%/21%</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Alertas TARIC automáticas</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Gestión Despachos */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-2 border-[#F4C542]">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F4C542] to-[#f5d05e] rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                <svg className="w-9 h-9 text-[#0A3D5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div className="text-center mb-4">
+                <span className="inline-block px-3 py-1 bg-[#F4C542] text-[#0A3D5C] text-xs font-bold rounded-full">NUEVO</span>
+              </div>
+              <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Gestión Despachos</h3>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Control total Import/Export</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Alertas automáticas ETA/ETD</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Paraaduaneros por expediente</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Comparador */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Comparador</h3>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>5 países simultáneos</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Detecta mejor opción</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Cálculo de ahorro</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Tipos de Cambio */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Tipos de Cambio</h3>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>30 monedas BCE</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Actualización mensual</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Cumplimiento normativo</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Target Audience */}
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50 py-20">
+      {/* Target Audience - Mejorado con Despachos */}
+      <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -382,7 +469,7 @@ export default function HomePage() {
             <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100">
               <div className="w-16 h-16 bg-gradient-to-br from-[#0A3D5C] to-[#0d5078] rounded-2xl flex items-center justify-center mb-6 mx-auto">
                 <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Importadores</h3>
@@ -391,19 +478,19 @@ export default function HomePage() {
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Calcula costes totales antes de importar</span>
+                  <span>Calcula costes antes de comprar</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Identifica documentación necesaria</span>
+                  <span>Compara proveedores de distintos países</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Optimiza tu margen comercial</span>
+                  <span>Gestiona tus despachos en tiempo real</span>
                 </li>
               </ul>
             </div>
@@ -421,13 +508,13 @@ export default function HomePage() {
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Verifica cálculos al instante</span>
+                  <span>Control operativo de 15+ despachos sin scroll</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Procesamiento masivo de operaciones</span>
+                  <span>Checklist automático por tipo de operación</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,6 +617,10 @@ export default function HomePage() {
               <h4 className="font-bold text-lg mb-4">Producto</h4>
               <ul className="space-y-2 text-blue-100 text-sm">
                 <li><Link href="/calculadora" className="hover:text-white transition">Calculadora</Link></li>
+                <li><Link href="/despachos" className="hover:text-white transition flex items-center">
+                  Despachos
+                  <span className="ml-2 px-2 py-0.5 bg-[#F4C542] text-[#0A3D5C] text-xs font-bold rounded">NUEVO</span>
+                </Link></li>
                 <li><Link href="/comparador" className="hover:text-white transition">Comparador</Link></li>
                 <li><Link href="/tipos-cambio" className="hover:text-white transition">Tipos de Cambio</Link></li>
                 <li><Link href="/glosario" className="hover:text-white transition">Glosario</Link></li>
