@@ -28,16 +28,48 @@ export default function ComparadorPage() {
             const data = await response.json();
 
             if (data.success && data.countries) {
-                const mappedCountries = data.countries.map(c => ({
-                    code: c.country_code || c.code,
-                    name: c.country_name || c.name,
-                    has_agreement: c.agreement_type && c.agreement_type !== 'Sin acuerdo',
-                    agreement_type: c.agreement_type
-                }));
-                // Ordenar: primero los que tienen acuerdo
+                const mappedCountries = data.countries
+                    .filter(c => {
+                        // Filtrar "Terceros países" o códigos genéricos
+                        const code = c.country_code || c.code;
+                        const name = (c.country_name || c.name || '').toLowerCase();
+                        return code && 
+                               code !== 'ERGA OMNES' && 
+                               !name.includes('terceros') &&
+                               !name.includes('erga omnes');
+                    })
+                    .map(c => {
+                        const reductionRate = parseFloat(c.reduction_rate) || 0;
+                        const hasSanctions = reductionRate < 0;
+                        const agreementType = c.agreement_type || '';
+                        
+                        // Solo es acuerdo real si:
+                        // - Tiene agreement_type válido
+                        // - NO es "Sin acuerdo"
+                        // - NO tiene sanciones
+                        const hasRealAgreement = agreementType && 
+                                                  agreementType !== 'Sin acuerdo' && 
+                                                  !hasSanctions;
+                        
+                        return {
+                            code: c.country_code || c.code,
+                            name: c.country_name || c.name,
+                            has_agreement: hasRealAgreement,
+                            has_sanctions: hasSanctions,
+                            agreement_type: agreementType,
+                            reduction_rate: reductionRate
+                        };
+                    });
+                
+                // Ordenar: primero con acuerdo, luego normales, al final sanciones
                 mappedCountries.sort((a, b) => {
+                    // Sanciones al final
+                    if (a.has_sanctions && !b.has_sanctions) return 1;
+                    if (!a.has_sanctions && b.has_sanctions) return -1;
+                    // Acuerdos primero
                     if (a.has_agreement && !b.has_agreement) return -1;
                     if (!a.has_agreement && b.has_agreement) return 1;
+                    // Alfabético
                     return a.name.localeCompare(b.name);
                 });
                 setCountries(mappedCountries);
@@ -242,6 +274,13 @@ export default function ComparadorPage() {
                                 </label>
                             </div>
 
+                            {/* Leyenda de colores */}
+                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-2">
+                                <span className="flex items-center"><span className="w-3 h-3 bg-amber-200 rounded mr-1"></span> ⭐ Acuerdo preferencial</span>
+                                <span className="flex items-center"><span className="w-3 h-3 bg-red-200 rounded mr-1"></span> ⚠️ Sanciones UE</span>
+                                <span className="flex items-center"><span className="w-3 h-3 bg-gray-200 rounded mr-1"></span> Sin acuerdo</span>
+                            </div>
+
                             {loadingCountries ? (
                                 <div className="flex items-center justify-center py-8">
                                     <div className="animate-spin rounded-full h-8 w-8 border-4 border-[#0A3D5C] border-t-transparent"></div>
@@ -256,20 +295,30 @@ export default function ComparadorPage() {
                                             className={`
                                                 px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 text-left
                                                 ${selectedCountries.includes(country.code)
-                                                    ? 'bg-[#0A3D5C] text-white border-[#0A3D5C] shadow-lg scale-[1.02]'
-                                                    : country.has_agreement
-                                                        ? 'bg-amber-50 text-gray-700 border-amber-200 hover:border-[#0A3D5C] hover:bg-amber-100'
-                                                        : 'bg-white text-gray-700 border-gray-200 hover:border-[#0A3D5C] hover:bg-blue-50'
+                                                    ? country.has_sanctions
+                                                        ? 'bg-red-600 text-white border-red-600 shadow-lg scale-[1.02]'
+                                                        : 'bg-[#0A3D5C] text-white border-[#0A3D5C] shadow-lg scale-[1.02]'
+                                                    : country.has_sanctions
+                                                        ? 'bg-red-50 text-red-700 border-red-300 hover:border-red-500 hover:bg-red-100'
+                                                        : country.has_agreement
+                                                            ? 'bg-amber-50 text-gray-700 border-amber-200 hover:border-[#0A3D5C] hover:bg-amber-100'
+                                                            : 'bg-white text-gray-700 border-gray-200 hover:border-[#0A3D5C] hover:bg-blue-50'
                                                 }
                                             `}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span className="truncate">{country.name}</span>
-                                                {country.has_agreement && (
+                                                {country.has_sanctions && (
+                                                    <span className={`ml-1 ${selectedCountries.includes(country.code) ? 'text-white' : 'text-red-500'}`}>⚠️</span>
+                                                )}
+                                                {country.has_agreement && !country.has_sanctions && (
                                                     <span className={`ml-1 ${selectedCountries.includes(country.code) ? 'text-[#F4C542]' : 'text-amber-500'}`}>⭐</span>
                                                 )}
                                             </div>
-                                            {country.has_agreement && !selectedCountries.includes(country.code) && (
+                                            {country.has_sanctions && !selectedCountries.includes(country.code) && (
+                                                <p className="text-xs text-red-600 mt-1 font-semibold">Sanciones UE</p>
+                                            )}
+                                            {country.has_agreement && !country.has_sanctions && !selectedCountries.includes(country.code) && (
                                                 <p className="text-xs text-amber-600 mt-1 truncate">{country.agreement_type}</p>
                                             )}
                                         </button>
@@ -291,13 +340,16 @@ export default function ComparadorPage() {
                                             <span
                                                 key={code}
                                                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${
-                                                    country?.has_agreement 
-                                                        ? 'bg-amber-50 text-amber-800 border-amber-200' 
-                                                        : 'bg-white text-gray-700 border-gray-200'
+                                                    country?.has_sanctions
+                                                        ? 'bg-red-50 text-red-800 border-red-300'
+                                                        : country?.has_agreement 
+                                                            ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                                                            : 'bg-white text-gray-700 border-gray-200'
                                                 }`}
                                             >
                                                 {country?.name}
-                                                {country?.has_agreement && <span className="ml-1">⭐</span>}
+                                                {country?.has_sanctions && <span className="ml-1">⚠️</span>}
+                                                {country?.has_agreement && !country?.has_sanctions && <span className="ml-1">⭐</span>}
                                                 <button
                                                     onClick={() => toggleCountry(code)}
                                                     className="ml-2 text-red-500 hover:text-red-700"
