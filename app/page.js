@@ -151,7 +151,7 @@ export default function HomePage() {
                   {/* Input simulado */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                     <p className="text-blue-200 text-xs mb-2">Descripción del producto</p>
-                    <p className="text-white font-medium">"Tablets con teclado desmontable, pantalla 10 pulgadas, uso industrial"</p>
+                    <p className="text-white font-medium">«Tablets con teclado desmontable, pantalla 10 pulgadas, uso industrial»</p>
                   </div>
 
                   {/* Flecha */}
