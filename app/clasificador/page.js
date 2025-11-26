@@ -36,8 +36,8 @@ export default function ClasificadorPage() {
     const loadCountries = async () => {
       const { data } = await supabase
         .from('countries')
-        .select('code, name_es')
-        .order('name_es')
+        .select('code, country_name')
+        .order('country_name', { ascending: true })
       if (data) setCountries(data)
     }
     loadCountries()
@@ -214,7 +214,7 @@ export default function ClasificadorPage() {
                 >
                   <option value="">Seleccionar país...</option>
                   {countries.map(c => (
-                    <option key={c.code} value={c.code}>{c.name_es}</option>
+                    <option key={c.code} value={c.code}>{c.country_name}</option>
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
