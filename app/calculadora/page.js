@@ -616,7 +616,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Alertas TARIC */}
+                    {/* Alertas TARIC - Versión Mejorada */}
                     {result.alerts && result.alerts.length > 0 && (
                       <div className="space-y-3">
                         <h4 className="font-bold text-gray-900 flex items-center space-x-2">
@@ -624,6 +624,7 @@ export default function Home() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                           </svg>
                           <span>Alertas y Requisitos TARIC</span>
+                          <span className="text-xs font-normal text-gray-500">({result.alerts.length} aplicables)</span>
                         </h4>
                         
                         {result.alerts.map((alert, index) => (
@@ -637,20 +638,57 @@ export default function Home() {
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <span className={`text-2xl ${
+                                {/* Cabecera con icono y tipo de medida */}
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="text-2xl">{alert.icon || (
                                     alert.priority === 1 ? '🚨' :
-                                    alert.priority === 2 ? '⚠️' :
-                                    'ℹ️'
-                                  }`}></span>
-                                  <h5 className="font-bold text-gray-900">{alert.code}</h5>
+                                    alert.priority === 2 ? '⚠️' : 'ℹ️'
+                                  )}</span>
+                                  <div>
+                                    <h5 className="font-bold text-gray-900">
+                                      {alert.translated?.measure?.text || alert.code}
+                                    </h5>
+                                    {alert.translated?.measure?.code && (
+                                      <span className="text-xs text-gray-500">Medida {alert.translated.measure.code}</span>
+                                    )}
+                                  </div>
                                 </div>
-                                <p className="text-sm text-gray-700">{alert.description}</p>
                                 
+                                {/* Certificado requerido */}
+                                {alert.translated?.certificate && alert.certificate !== 'N990' && (
+                                  <div className="flex items-center space-x-2 mb-2 ml-10">
+                                    <span className="text-lg">{alert.translated.certificate.icon}</span>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-800">
+                                        {alert.translated.certificate.text}
+                                      </p>
+                                      <span className="text-xs text-gray-500">Código: {alert.certificate}</span>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Grupo de países aplicable */}
+                                {alert.translated?.origin && alert.origin_code && (
+                                  <div className="flex items-center space-x-2 mb-2 ml-10">
+                                    <span className="text-lg">{alert.translated.origin.icon}</span>
+                                    <p className="text-sm text-gray-700">
+                                      Aplica a: <span className="font-medium">{alert.translated.origin.text}</span>
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {/* Descripción legible */}
+                                {alert.description && (
+                                  <p className="text-sm text-gray-600 mt-2 ml-10 italic">
+                                    {alert.description}
+                                  </p>
+                                )}
+                                
+                                {/* Texto completo expandible */}
                                 {alert.full_text && (
-                                  <details className="mt-2">
+                                  <details className="mt-3 ml-10">
                                     <summary className="cursor-pointer text-xs font-medium text-[#0A3D5C] hover:text-[#083049]">
-                                      Ver texto completo ↓
+                                      Ver texto original EUR-Lex ↓
                                     </summary>
                                     <div className="mt-2 p-3 bg-white rounded-lg text-xs text-gray-700 whitespace-pre-line border border-gray-200">
                                       {alert.full_text}
@@ -658,22 +696,28 @@ export default function Home() {
                                   </details>
                                 )}
                               </div>
-                              <span className={`ml-3 px-3 py-1 rounded-full text-xs font-bold ${
+                              
+                              {/* Badge de prioridad */}
+                              <span className={`ml-3 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
                                 alert.priority === 1 ? 'bg-red-200 text-red-800' :
                                 alert.priority === 2 ? 'bg-amber-200 text-amber-800' :
                                 'bg-blue-200 text-blue-800'
                               }`}>
-                                {alert.priority === 1 ? 'CRÍTICO' : alert.priority === 2 ? 'IMPORTANTE' : 'INFO'}
+                                {alert.translated?.priorityLabel || (
+                                  alert.priority === 1 ? 'CRÍTICO' : 
+                                  alert.priority === 2 ? 'IMPORTANTE' : 'INFO'
+                                )}
                               </span>
                             </div>
                           </div>
                         ))}
 
+                        {/* Nota informativa */}
                         <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
                           <p className="text-xs text-gray-700">
-                            <strong>⚠️ Importante:</strong> Las alertas mostradas pueden no aplicar todas al país seleccionado ({result.country.name}).
-                            Algunos requisitos son específicos de ciertos acuerdos comerciales o grupos de países.
-                            <strong className="text-[#0A3D5C]"> Verifique siempre con las autoridades aduaneras</strong> qué documentación es obligatoria para su importación específica.
+                            <strong>💡 Leyenda de certificados:</strong> Los códigos C0XX son certificados sanitarios/fitosanitarios, 
+                            U0XX son licencias de importación, Y0XX son declaraciones, E0XX documentos electrónicos SOIVRE.
+                            <strong className="text-[#0A3D5C]"> Verifique siempre con las autoridades aduaneras</strong> qué documentación es obligatoria.
                           </p>
                         </div>
                       </div>
