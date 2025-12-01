@@ -43,6 +43,27 @@ export async function POST(request) {
       .or(keywords.map(k => `description_es.ilike.%${k}%`).join(','))
       .limit(50)
 
+    // NUEVO: Buscar ejemplos de clasificación verificados
+    let verifiedExamplesContext = ''
+    if (keywords.length > 0) {
+      const { data: examples } = await supabase
+        .from('classification_examples')
+        .select('keywords, correct_code, correct_description, incorrect_codes, explanation')
+        .eq('active', true)
+        .or(keywords.map(k => `keywords.ilike.%${k}%`).join(','))
+        .limit(5)
+
+      if (examples && examples.length > 0) {
+        verifiedExamplesContext = `\nEJEMPLOS DE CLASIFICACIÓN VERIFICADOS POR EXPERTOS:
+${examples.map(ex => `- Producto similar: "${ex.keywords}"
+  → Código CORRECTO: ${ex.correct_code} (${ex.correct_description || ''})
+  ${ex.incorrect_codes && ex.incorrect_codes.length > 0 ? `→ Códigos INCORRECTOS a evitar: ${ex.incorrect_codes.join(', ')}` : ''}
+  → Razón: ${ex.explanation || 'Clasificación verificada por experto aduanero'}`).join('\n')}
+
+IMPORTANTE: Si el producto a clasificar es similar a estos ejemplos, usar el código correcto indicado.\n`
+      }
+    }
+
     // Buscar por capítulo si tenemos info del producto
     let chapterContext = ''
     if (relatedCodes && relatedCodes.length > 0) {
@@ -72,7 +93,7 @@ PRODUCTO A CLASIFICAR:
 DATOS ADICIONALES:
 ${countryCode ? `- País de origen: ${countryCode}` : '- País de origen: No especificado'}
 ${cifValue ? `- Valor estimado: ${cifValue}€` : '- Valor: No especificado'}${chapterContext}
-
+${verifiedExamplesContext}
 CÓDIGOS HS RELACIONADOS EN BASE DE DATOS:
 ${hsContext}
 
@@ -203,7 +224,7 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
         description: description.substring(0, 500),
         suggested_code: classification.primaryCode,
         confidence: classification.confidence,
-        model_used: 'claude-sonnet-4.5'
+        model_used: 'claude-sonnet-4-5'
       })
       .select()
       .single()
