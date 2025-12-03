@@ -29,7 +29,7 @@ export default function LoginPage() {
       if (error) throw error
 
       setMessage('¡Login exitoso! Redirigiendo...')
-      router.push('/dashboard')
+      router.push('/calculadora')
       router.refresh()
     } catch (error) {
       setError(error.message)

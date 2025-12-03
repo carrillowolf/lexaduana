@@ -1,8 +1,8 @@
 # 📊 LexAduana - Suite Profesional de Comercio Exterior
 
-> Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM y más.
+> Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-4.1.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-4.2.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -22,7 +22,10 @@ lexaduana.es
 ├── 🤖 Clasificador IA          (disponible)
 ├── ⚖️ Comparador Multi-Origen  (disponible)
 ├── 📋 Gestor de Despachos      (beta)
-├── 🌍 Verificador CBAM         (próximamente)
+├── 🌍 Módulo CBAM              (disponible) ✨ NUEVO
+│   ├── Verificador de códigos
+│   ├── Simulador de costes
+│   └── Alertas en calculadora
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
@@ -36,11 +39,12 @@ lexaduana.es
 - **195+ países** soportados con preferencias comerciales
 - **IVA variable inteligente**: 4% / 10% / 21% según producto
 - **Alertas TARIC enriquecidas**: 251 códigos traducidos con iconos y descripciones
+- **Alertas CBAM automáticas**: Aviso si el producto está sujeto al mecanismo
 - **Exclusiones por país**: Sistema automático de medidas aplicables
 - **Descripciones jerárquicas**: HS2 → HS4 → HS6 → HS10
 - **Tipos de cambio BCE**: 30 monedas con actualización mensual
 
-### 🚨 Sistema de Alertas TARIC (NUEVO v4.1)
+### 🚨 Sistema de Alertas TARIC
 - **251 códigos traducidos** al español con iconos descriptivos
 - **Tipos de medida**: 35 categorías (aranceles, controles, sanciones...)
 - **Certificados UE**: 131 códigos (C074, E017, U088, Y864...)
@@ -57,7 +61,46 @@ lexaduana.es
 - **Razonamiento explicado**: Aplica Reglas Generales de Interpretación
 - **Búsqueda contextual**: Encuentra códigos relacionados en base de datos
 - **Países recomendados**: Sugiere orígenes óptimos
+- **Alertas CBAM**: Aviso automático si el código sugerido está afectado
+- **Sistema de educación IA**: Ejemplos verificados para mejorar clasificaciones
 - **Integración directa**: Calcula aranceles automáticamente
+
+### 🌍 Módulo CBAM (NUEVO v4.2)
+Mecanismo de Ajuste en Frontera por Carbono - Preparado para 2026
+
+#### Verificador de Códigos (`/cbam`)
+- **40+ códigos CN** de los 6 sectores afectados
+- **Detección automática** por código HS (8 dígitos)
+- **Información del sector**: Cemento, Hierro/Acero, Aluminio, Fertilizantes, Hidrógeno, Electricidad
+- **Gases aplicables**: CO2, N2O, PFC según sector
+- **Tipo de emisiones**: Directas vs directas+indirectas
+
+#### Simulador de Coste de Certificados
+- **Valores por defecto UE**: Factores de emisión oficiales (tCO2/t)
+- **Precio EU ETS actual**: ~€68.50/tCO2 (actualizable)
+- **Cálculo instantáneo**: Toneladas × Factor × Precio
+- **Desglose completo**: Emisiones estimadas y coste total
+- **Avisos legales**: Estimación orientativa, consultar experto
+
+#### Alertas Integradas
+- **En calculadora**: Badge CBAM junto al código HS
+- **En clasificador IA**: Alerta si código sugerido está afectado
+- **Enlace directo**: A página de obligaciones CBAM
+
+#### Timeline y Plazos
+- **Calendario visual**: Fechas clave del período transitorio
+- **Countdown**: Días hasta próximo deadline
+- **Umbral de minimis**: 50 toneladas/año según Reglamento 2025/2083
+
+**Sectores y códigos afectados:**
+| Sector | Capítulos NC | Gases |
+|--------|--------------|-------|
+| Cemento | 2507, 2523 | CO2 |
+| Electricidad | 2716 | CO2 |
+| Fertilizantes | 2808, 2814, 3102, 3105 | CO2, N2O |
+| Hidrógeno | 2804 | CO2 |
+| Hierro/Acero | 72, 7301-7311, 7318, 7326 | CO2 |
+| Aluminio | 7601-7616 | CO2, PFC |
 
 ### 📊 Calculadora Masiva (Bulk)
 - **Procesamiento CSV**: Hasta 100 productos simultáneos
@@ -85,6 +128,12 @@ lexaduana.es
 - **Estados de seguimiento**: Pendiente, En curso, Completado
 - **Vinculación a cálculos**: Asociar productos calculados
 - **Historial de cambios**: Trazabilidad completa
+
+### 🛠️ Panel Admin (Solo administradores)
+- **Gestión de ejemplos IA** (`/admin/clasificaciones`)
+- **Educar al clasificador**: Añadir clasificaciones verificadas
+- **Corregir errores**: Indicar código correcto vs incorrectos
+- **Activar/desactivar**: Control de ejemplos activos
 
 ### 👤 Sistema de Usuarios
 - **Autenticación**: Supabase Auth (Email/Password)
@@ -123,12 +172,15 @@ calculadora-taric-lexaduana/
 │   │   ├── login/                # Página login
 │   │   ├── register/             # Registro
 │   │   └── callback/             # Callback OAuth
+│   ├── admin/                    # 🆕 Panel administración
+│   │   └── clasificaciones/      # Gestión ejemplos IA
 │   ├── dashboard/                # Dashboard usuario
 │   ├── calculadora/              # Calculadora principal
 │   ├── clasificador/             # Clasificador IA
+│   ├── cbam/                     # 🆕 Módulo CBAM completo
 │   ├── bulk/                     # Calculadora masiva
 │   ├── comparador/               # Comparador multi-origen
-│   ├── despachos/                # 🆕 Gestor de despachos
+│   ├── despachos/                # Gestor de despachos
 │   ├── favoritos/                # Gestión favoritos
 │   ├── tipos-cambio/             # Tipos de cambio
 │   ├── glosario/                 # Glosario términos
@@ -139,13 +191,16 @@ calculadora-taric-lexaduana/
 │   ├── HSCodeAutocomplete.js     # Búsqueda HS
 │   ├── ExportPDF.js              # Exportación PDF
 │   ├── ExchangeRateBanner.js     # Banner tipos cambio
+│   ├── CBAMAlert.js              # 🆕 Alertas CBAM
+│   ├── CBAMCostSimulator.js      # 🆕 Simulador costes CBAM
 │   ├── HeroSection.js            # Sección hero
 │   └── FeaturesSection.js        # Características
 ├── 📁 lib/                       # Utilidades
 │   ├── supabase.js               # Cliente Supabase server
 │   ├── supabase-browser.js       # Cliente Supabase client
 │   ├── calculateTariff.js        # Módulo cálculo principal
-│   ├── taricTranslations.js      # 🆕 251 códigos traducidos
+│   ├── cbamData.js               # 🆕 Datos CBAM (códigos, sectores, timeline)
+│   ├── taricTranslations.js      # 251 códigos traducidos
 │   ├── vatCalculator.js          # Lógica IVA variable
 │   ├── csvParser.js              # Parser CSV bulk
 │   └── excelExporter.js          # Exportador Excel
@@ -176,7 +231,8 @@ calculadora-taric-lexaduana/
 | `user_calculations` | ∞ | Historial cálculos usuarios |
 | `user_favorites` | ∞ | Códigos favoritos usuarios |
 | `classification_logs` | ∞ | Historial clasificaciones IA |
-| `dispatches` | 🆕 ∞ | Despachos aduaneros |
+| `classification_examples` | 🆕 ∞ | Ejemplos verificados para educar IA |
+| `dispatches` | ∞ | Despachos aduaneros |
 
 **Total:** ~280,000 registros estáticos + datos dinámicos usuarios
 
@@ -226,85 +282,26 @@ calculadora-taric-lexaduana/
 - Node.js >= 18.0.0
 - npm >= 8.0.0
 - Cuenta Supabase (Free tier suficiente)
-- Cuenta Vercel (Free tier suficiente)
-- **API Key Anthropic** (para clasificador IA)
-- Cuenta GitHub (para deployment)
+- API Key de Anthropic (para clasificador IA)
 
 ---
 
-## 🚀 Instalación y Desarrollo
+## 📈 Roadmap
 
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/tu-usuario/calculadora-taric-lexaduana.git
-cd calculadora-taric-lexaduana
-```
+### ✅ Completado (v4.2 - Diciembre 2025)
 
-### 2. Instalar dependencias
-```bash
-npm install
-```
+#### 🌍 Módulo CBAM Completo
+- **Verificador de códigos**: 40+ códigos CN de 6 sectores
+- **Simulador de costes**: Valores por defecto UE + precio EU ETS
+- **Alertas integradas**: En calculadora y clasificador IA
+- **Timeline interactivo**: Calendario de plazos con countdown
+- **Página informativa**: `/cbam` con recursos oficiales
 
-### 3. Configurar variables de entorno
-
-Crear `.env.local` en la raíz:
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_publica
-SUPABASE_SERVICE_KEY=tu_service_role_key_privada
-
-# Anthropic (Clasificador IA)
-ANTHROPIC_API_KEY=sk-ant-api03-...tu-api-key...
-```
-
-**⚠️ IMPORTANTE:**
-- Las variables `NEXT_PUBLIC_*` son visibles en el cliente
-- `SUPABASE_SERVICE_KEY` y `ANTHROPIC_API_KEY` son **privadas** (solo servidor)
-- No commitear `.env.local` en git (ya está en `.gitignore`)
-
-### 4. Desarrollo local
-```bash
-npm run dev
-```
-
-Aplicación disponible en: `http://localhost:3000`
-
----
-
-## 📊 Roadmap
-
-### ✅ Completado (v4.0 - Octubre 2025)
-
-#### 🤖 Clasificador IA
-- Claude Sonnet 4.5 integrado
-- Prompt con RGI completas
-- Búsqueda contextual en base de datos
-- Validación contra TARIC
-- Códigos alternativos con confianza
-- Países de origen recomendados
-- Integración con calculadora
-
-#### 📊 Calculadora Bulk
-- Procesamiento CSV hasta 100 productos
-- Export Excel profesional (4 sheets)
-- Validación completa pre-procesamiento
-- Estadísticas agregadas
-
-#### 💱 Tipos de Cambio
-- 30 monedas BCE actualizadas (Diciembre 2025)
-- Conversión automática en calculadora
-- Cumplimiento Reglamento UE 2447/2015
-
-#### ⚖️ Comparador Multi-Origen
-- Comparación 5 países simultáneos
-- Detección mejor opción automática
-- Cálculo de ahorro
-
----
-
-### ✅ Completado (v4.1 - Noviembre 2025)
+#### 🧠 Sistema Educación IA
+- **Tabla `classification_examples`**: Almacena clasificaciones verificadas
+- **Panel admin**: `/admin/clasificaciones` para gestión
+- **Contexto dinámico**: Inyecta ejemplos relevantes en prompt
+- **Corrección de errores**: Indica códigos incorrectos a evitar
 
 #### 🚨 Sistema Alertas TARIC Enriquecidas
 - **251 códigos traducidos** al español
@@ -324,28 +321,18 @@ Aplicación disponible en: `http://localhost:3000`
 
 ---
 
-### 🔜 Próximamente (v4.2 - Diciembre 2025)
-
-#### 🌍 Verificador CBAM
-- **Verificador de productos**: ¿Mi código HS está sujeto a CBAM?
-- **Categorías cubiertas**: Cemento, Hierro/Acero, Aluminio, Fertilizantes, Electricidad, Hidrógeno
-- **Calendario de plazos**: Próximo informe trimestral
-- **Información de obligaciones**: Fase transitoria vs definitiva
-- **Integración con calculadora**: Aviso automático si producto afectado
-
-Códigos HS afectados:
-- Capítulo 25: Cemento (2507, 2523)
-- Capítulo 27: Electricidad (2716)
-- Capítulo 28: Fertilizantes/Hidrógeno (2804, 2808, 2814, 2834, 3102, 3105)
-- Capítulo 72: Hierro y Acero (excepto 7202)
-- Capítulo 73: Artículos de Hierro/Acero (7301-7311, 7318, 7326)
-- Capítulo 76: Aluminio (7601-7616)
+### 🔜 Próximamente (v4.3 - Q1 2026)
 
 #### 📄 Servicio IAV (Información Arancelaria Vinculante)
 - Aviso de no vinculación en clasificador IA
 - Formulario de solicitud de IAV
 - Checklist de documentos necesarios
 - Tramitación ante AEAT como servicio premium
+
+#### 🔔 Sistema de Alertas Personalizadas
+- Marcar códigos HS como "vigilados"
+- Email cuando cambie arancel o medida
+- Dashboard de cambios recientes
 
 ---
 
@@ -380,20 +367,39 @@ Basado en la Guía Técnica de Importación CAU v3.14:
 
 ---
 
+## 📋 Backlog (Ideas futuras)
+
+Ideas pendientes de priorizar y desarrollar:
+
+| Idea | Descripción | Complejidad |
+|------|-------------|-------------|
+| **Procesador Excel EUR-Lex** | Subir Excel mensual de aranceles → detectar cambios automáticamente → generar diff antes de aplicar | Media |
+| **OCR Facturas Comerciales** | Subir PDF de factura → extraer productos, valores, país → sugerir códigos HS y calcular | Alta |
+| **Plantilla email proveedor CBAM** | Generar email en español/inglés para pedir datos de emisiones al fabricante | Baja |
+| **Historial productos CBAM** | Filtrar en dashboard solo cálculos de productos afectados por CBAM | Baja |
+| **API precio EU ETS en tiempo real** | Conectar con SENDECO2 o similar para precio actualizado | Media |
+| **PWA / App móvil** | Versión instalable para acceso rápido | Media |
+| **Multi-idioma** | Inglés, portugués para expansión | Media |
+| **Comparador CBAM por país** | Simular coste CBAM según origen (China vs Turquía vs India) | Media |
+
+---
+
 ## 🎯 Diferenciadores Clave
 
 1. **Clasificador IA con validación TARIC** - Único en el mercado español
 2. **251 códigos de alertas traducidos** - No más códigos crípticos
-3. **Datos actualizados mensualmente** - EUR-Lex oficial
-4. **Calculadora bulk profesional** - Export Excel 4 sheets
-5. **Tipos de cambio BCE** - Cumplimiento normativo
-6. **CBAM integrado** - Preparado para 2026
-7. **Visión de suite completa** - No solo una calculadora
+3. **Módulo CBAM completo** - Verificador + Simulador + Alertas
+4. **Datos actualizados mensualmente** - EUR-Lex oficial
+5. **Calculadora bulk profesional** - Export Excel 4 sheets
+6. **Tipos de cambio BCE** - Cumplimiento normativo
+7. **Sistema educación IA** - Mejora continua de clasificaciones
+8. **Visión de suite completa** - No solo una calculadora
 
 ### Competencia
 - **Calculadoras básicas**: No tienen IA, alertas crípticas, sin validación
 - **Clasificadores IA genéricos**: No integran cálculo, no validan contra TARIC
 - **Software enterprise**: Caro, complejo, orientado a grandes empresas
+- **Herramientas CBAM**: Complejas, sin integración con aranceles
 
 **Posicionamiento**: Herramienta profesional accesible para PYMES, autónomos y agentes de aduanas.
 
@@ -510,10 +516,11 @@ Para consultas, colaboraciones o reportar bugs:
 - **EUR-Lex** - Por los datos TARIC públicos
 - **BCE** - Por los tipos de cambio oficiales
 - **AEAT** - Por la documentación técnica del CAU
+- **Comisión Europea** - Por la documentación CBAM
 
 ---
 
 **Desarrollado con ❤️ por Carlos para LexAduana**
 
-*Última actualización: Noviembre 2025*
-*Versión: 4.1.0*
+*Última actualización: Diciembre 2025*
+*Versión: 4.2.0*

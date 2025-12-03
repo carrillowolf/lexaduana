@@ -255,6 +255,9 @@ export default function Home() {
               <Link href="/tipos-cambio" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Tipos de Cambio
               </Link>
+              <Link href="/cbam" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition flex items-center">
+                <span className="mr-1">🌍</span> CBAM
+              </Link>
             </nav>
 
             <UserMenu />
@@ -351,6 +354,17 @@ export default function Home() {
                   </svg>
                   <h3 className="font-bold text-sm">Clasificador IA</h3>
                   <p className="text-xs text-pink-100">Con Claude 4.5</p>
+                </div>
+              </Link>
+              {/* CBAM */}
+              <Link
+                href="/cbam"
+                className="group relative bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
+              >
+                <div className="flex flex-col items-center text-white">
+                  <span className="text-3xl mb-2">🌍</span>
+                  <h3 className="font-bold text-sm">CBAM</h3>
+                  <p className="text-xs text-teal-100">Verificador</p>
                 </div>
               </Link>
             </div>

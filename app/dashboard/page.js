@@ -101,10 +101,16 @@ export default function DashboardPage() {
 
             <div className="flex items-center space-x-3">
               <Link
-                href="/"
+                href="/calculadora"
                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
               >
                 Calculadora
+              </Link>
+              <Link
+                href="/cbam"
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition flex items-center"
+              >
+                <span className="mr-1">🌍</span> CBAM
               </Link>
               <button
                 onClick={handleLogout}
@@ -313,6 +319,19 @@ export default function DashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <span>Comparador</span>
+          </Link>
+
+          <Link
+            href="/cbam"
+            className="flex items-center space-x-4 p-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl text-white hover:shadow-2xl transition-all group"
+          >
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+              <span className="text-3xl">🌍</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">CBAM</h3>
+              <p className="text-sm text-emerald-100">Verificador y simulador</p>
+            </div>
           </Link>
 
           <Link
