@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   checkCBAM, 
-import CBAMCostSimulator from '@/components/CBAMCostSimulator'
   CBAM_SECTORS, 
   CBAM_TIMELINE, 
   getNextDeadline,
   CBAM_THRESHOLD,
   getCBAMStats 
 } from '@/lib/cbamData'
+import CBAMCostSimulator from '@/components/CBAMCostSimulator'
 
 export default function CBAMPage() {
   const [hsCode, setHsCode] = useState('')
