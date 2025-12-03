@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase-browser'
 // import ExchangeRateWidget from '../../components/ExchangeRateWidget'
 import FavoriteButton from '../../components/FavoriteButton'
 import Link from 'next/link'
+import { CBAMAlert } from '../../components/CBAMAlert'
 import ExchangeRateBanner from '../../components/ExchangeRateBanner'
 
 export default function Home() {
@@ -570,6 +571,9 @@ export default function Home() {
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Descripción</p>
                         <p className="text-sm text-gray-700 leading-relaxed">{result.description}</p>
                       </div>
+
+                    {/* Alerta CBAM si el producto está afectado */}
+                    <CBAMAlert hsCode={result.hsCode} />
                     </div>
 
                     {/* Info de conversión si existe */}
