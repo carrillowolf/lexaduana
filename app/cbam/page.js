@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   checkCBAM, 
+import CBAMCostSimulator from '@/components/CBAMCostSimulator'
   CBAM_SECTORS, 
   CBAM_TIMELINE, 
   getNextDeadline,
@@ -253,6 +254,9 @@ export default function CBAMPage() {
           </div>
         </div>
 
+
+        {/* Simulador de Coste */}
+        <CBAMCostSimulator />
         {/* Sectores Afectados */}
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
