@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { CBAMAlert } from '@/components/CBAMAlert'
 
 export default function ClasificadorPage() {
   const [user, setUser] = useState(null)
@@ -332,6 +333,9 @@ export default function ClasificadorPage() {
                       Arancel ERGA OMNES: <strong>{result.classification.primaryCodeDutyRate}%</strong>
                     </p>
                   )}
+
+                {/* Alerta CBAM si aplica */}
+                <CBAMAlert hsCode={result.classification.primaryCode} />
                 </div>
 
                 {/* Razonamiento */}
