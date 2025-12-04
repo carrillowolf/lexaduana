@@ -1,7 +1,27 @@
+/**
+ * API de Clasificación de Productos con IA
+ * Ruta: /api/classify-product
+ * 
+ * SEGURIDAD IMPLEMENTADA:
+ * - Rate limiting por IP: 20 peticiones/hora
+ * - Límite diario por usuario: 50 clasificaciones/día
+ * - Validación de entrada completa
+ * - Solo usuarios autenticados
+ */
+
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+
+// Importar sistema de seguridad
+import {
+  checkRateLimit,
+  aiClassifierLimiter,
+  checkDailyAILimit,
+  rateLimitHeaders
+} from '@/lib/rate-limit'
+import { validateClassificationInput } from '@/lib/validation'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -9,32 +29,86 @@ const anthropic = new Anthropic({
 
 export async function POST(request) {
   try {
+    // =========================================
+    // 1. RATE LIMITING POR IP
+    // =========================================
+    const rateLimit = await checkRateLimit(request, aiClassifierLimiter)
+
+    if (!rateLimit.success) {
+      const resetInMinutes = Math.ceil((rateLimit.reset - Date.now()) / 1000 / 60)
+      return NextResponse.json(
+        {
+          error: 'Has excedido el límite de clasificaciones por hora. Intenta de nuevo más tarde.',
+          retryAfterMinutes: resetInMinutes,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimit),
+        }
+      )
+    }
+
+    // =========================================
+    // 2. AUTENTICACIÓN
+    // =========================================
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
-    // Verificar usuario autenticado
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'No autenticado' },
+        { error: 'Debes iniciar sesión para usar el clasificador IA' },
         { status: 401 }
       )
     }
 
-    const { description, countryCode, cifValue } = await request.json()
+    // =========================================
+    // 3. LÍMITE DIARIO POR USUARIO
+    // =========================================
+    const dailyLimit = await checkDailyAILimit(user.id)
 
-    if (!description || description.length < 10) {
+    if (!dailyLimit.allowed) {
       return NextResponse.json(
-        { error: 'Descripción demasiado corta (mínimo 10 caracteres)' },
+        {
+          error: `Has alcanzado tu límite de ${dailyLimit.limit} clasificaciones diarias. Se reinicia en 24 horas.`,
+          usage: {
+            used: dailyLimit.used,
+            limit: dailyLimit.limit,
+            remaining: 0,
+          },
+        },
+        { status: 429 }
+      )
+    }
+
+    // =========================================
+    // 4. PARSEAR Y VALIDAR ENTRADA
+    // =========================================
+    let body
+    try {
+      body = await request.json()
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'JSON inválido en el cuerpo de la petición' },
         { status: 400 }
       )
     }
 
-    // Verificar límite de uso (implementar después)
-    // TODO: Verificar créditos disponibles según plan
+    const validation = validateClassificationInput(body)
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      )
+    }
 
-    // Buscar códigos relacionados en la base de datos
+    // Usar datos sanitizados
+    const { description, countryCode, cifValue } = validation.sanitized
+
+    // =========================================
+    // 5. BUSCAR CÓDIGOS RELACIONADOS EN BD
+    // =========================================
     const keywords = description.toLowerCase().split(' ').filter(w => w.length > 3).slice(0, 5)
 
     const { data: relatedCodes } = await supabase
@@ -43,7 +117,7 @@ export async function POST(request) {
       .or(keywords.map(k => `description_es.ilike.%${k}%`).join(','))
       .limit(50)
 
-    // NUEVO: Buscar ejemplos de clasificación verificados
+    // BUSCAR EJEMPLOS DE CLASIFICACIÓN VERIFICADOS
     let verifiedExamplesContext = ''
     if (keywords.length > 0) {
       const { data: examples } = await supabase
@@ -76,7 +150,9 @@ IMPORTANTE: Si el producto a clasificar es similar a estos ejemplos, usar el có
       `- ${h.hs_code}: ${h.description_es}`
     ).join('\n') || 'No se encontraron códigos similares en búsqueda inicial.'
 
-    // Prompt mejorado con contexto TARIC completo
+    // =========================================
+    // 6. PROMPT PARA CLAUDE
+    // =========================================
     const prompt = `Eres un agente de aduanas experto en clasificación arancelaria TARIC de la Unión Europea con 20 años de experiencia.
 
 REGLAS GENERALES DE INTERPRETACIÓN (RGI):
@@ -153,23 +229,26 @@ FORMATO DE RESPUESTA (JSON):
 
 Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
 
-    // Llamar a Claude API
+    // =========================================
+    // 7. LLAMAR A CLAUDE API
+    // =========================================
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
-      temperature: 0.3, // Baja temperatura para más precisión
+      temperature: 0.3,
       messages: [{
         role: 'user',
         content: prompt
       }]
     })
 
-    // Parsear respuesta
+    // =========================================
+    // 8. PARSEAR RESPUESTA
+    // =========================================
     const responseText = message.content[0].text
     let classification
 
     try {
-      // Extraer JSON de la respuesta (por si Claude añade texto extra)
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         classification = JSON.parse(jsonMatch[0])
@@ -184,7 +263,9 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
       }, { status: 500 })
     }
 
-    // Validar que el código existe en nuestra base de datos
+    // =========================================
+    // 9. VALIDAR CÓDIGO EN BASE DE DATOS
+    // =========================================
     const { data: validCode } = await supabase
       .from('tariffs')
       .select('hs_code, duty_rate')
@@ -216,7 +297,9 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
       }
     }
 
-    // Registrar uso para estadísticas
+    // =========================================
+    // 10. REGISTRAR USO PARA ESTADÍSTICAS
+    // =========================================
     await supabase
       .from('classification_logs')
       .insert({
@@ -229,7 +312,9 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
       .select()
       .single()
 
-    // Respuesta final
+    // =========================================
+    // 11. RESPUESTA EXITOSA
+    // =========================================
     return NextResponse.json({
       success: true,
       classification: {
@@ -245,13 +330,25 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
         timestamp: new Date().toISOString(),
         tokensUsed: message.usage.input_tokens + message.usage.output_tokens,
         relatedCodesFound: relatedCodes?.length || 0
+      },
+      // Información de uso para mostrar al usuario
+      usage: {
+        daily: {
+          used: dailyLimit.used,
+          limit: dailyLimit.limit,
+          remaining: dailyLimit.remaining,
+        }
       }
+    }, {
+      headers: rateLimitHeaders(rateLimit),
     })
 
   } catch (error) {
     console.error('Error en clasificación:', error)
+
+    // No exponer detalles internos en producción
     return NextResponse.json(
-      { error: 'Error al clasificar producto', details: error.message },
+      { error: 'Error al clasificar producto. Inténtalo de nuevo.' },
       { status: 500 }
     )
   }
