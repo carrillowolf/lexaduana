@@ -199,6 +199,8 @@ calculadora-taric-lexaduana/
 │   ├── supabase.js               # Cliente Supabase server
 │   ├── supabase-browser.js       # Cliente Supabase client
 │   ├── calculateTariff.js        # Módulo cálculo principal
+│   ├── rate-limit.js             # 🆕 Rate limiting con Upstash
+│   ├── validation.js             # 🆕 Validadores de entrada
 │   ├── cbamData.js               # 🆕 Datos CBAM (códigos, sectores, timeline)
 │   ├── taricTranslations.js      # 251 códigos traducidos
 │   ├── vatCalculator.js          # Lógica IVA variable
@@ -236,7 +238,38 @@ calculadora-taric-lexaduana/
 
 **Total:** ~280,000 registros estáticos + datos dinámicos usuarios
 
-### Esquema de seguridad:
+## 🔒 Seguridad
+
+### Autenticación
+- **JWT tokens** con Supabase Auth
+- **Session management** automático
+- **Refresh tokens** rotatorios (renovación cada 1h)
+- **Secure cookies** con `httpOnly` y `sameSite`
+
+### Protección de datos
+- **Row Level Security (RLS)** en TODAS las tablas de usuario
+- Cada usuario solo ve sus propios datos
+- Queries automáticamente filtradas por `auth.uid()`
+- Service role key solo en servidor (APIs)
+
+### Rate Limiting (Upstash Redis)
+- **Clasificador IA**: 20 req/hora por IP + 10/día por usuario
+- **Calculadora**: 150 req/min por IP
+- **Búsquedas**: 100 req/min por IP
+- **Bulk calculate**: 10 req/min por IP
+- Headers informativos: `X-RateLimit-Remaining`
+
+### Validación de entrada
+- Sanitización contra XSS e inyección SQL
+- Validación de tipos y rangos en todos los endpoints
+- Códigos HS: 4-10 dígitos numéricos
+- Valores CIF: positivos, máximo 999.999.999€
+- Descripciones: 10-2000 caracteres
+
+### Variables de entorno
+- **Nunca commiteadas** en git (`.gitignore`)
+- **NEXT_PUBLIC_*** visibles en cliente (solo URLs públicas)
+- **Secrets** solo en servidor (Service Keys, API Keys, Upstash)
 
 - **Row Level Security (RLS)** habilitado en todas las tablas de usuario
 - Políticas `SELECT`, `INSERT`, `UPDATE`, `DELETE` basadas en `auth.uid()`
@@ -263,6 +296,8 @@ calculadora-taric-lexaduana/
 - **@anthropic-ai/sdk** - Cliente oficial Claude
 - **xlsx** - Generación Excel profesional
 - **@supabase/auth-helpers-nextjs** - Integración Supabase
+- **@upstash/ratelimit** - Rate limiting serverless
+- **@upstash/redis** - Cliente Redis para Vercel Edge
 
 ### Autenticación
 - **Supabase Auth** con email/password
