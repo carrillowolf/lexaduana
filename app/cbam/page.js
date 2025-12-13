@@ -8,7 +8,9 @@ import {
   CBAM_TIMELINE, 
   getNextDeadline,
   CBAM_THRESHOLD,
-  getCBAMStats 
+  getCBAMStats,
+  CBAM_EXCLUDED_COUNTRIES,
+  CBAM_CERTIFICATES
 } from '@/lib/cbamData'
 import CBAMCostSimulator from '@/components/CBAMCostSimulator'
 
@@ -67,7 +69,7 @@ export default function CBAMPage() {
 
             <div className="flex items-center space-x-3">
               <Link
-                href="/"
+                href="/calculadora"
                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
               >
                 Calculadora
@@ -226,7 +228,32 @@ export default function CBAMPage() {
                       </div>
                     </div>
 
-                    <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    {/* NUEVO: Indicador de minimis */}
+                    <div className={`mt-4 p-4 rounded-lg ${
+                      result.deMinimisApplies 
+                        ? 'bg-blue-50 border border-blue-200' 
+                        : 'bg-purple-50 border border-purple-200'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{result.deMinimisApplies ? '📦' : '⚡'}</span>
+                        <div>
+                          <p className={`font-bold ${result.deMinimisApplies ? 'text-blue-800' : 'text-purple-800'}`}>
+                            {result.deMinimisApplies 
+                              ? `Exención de minimis APLICABLE (< ${CBAM_THRESHOLD.massThreshold}t/año)`
+                              : 'Exención de minimis NO APLICABLE'
+                            }
+                          </p>
+                          <p className={`text-sm ${result.deMinimisApplies ? 'text-blue-600' : 'text-purple-600'}`}>
+                            {result.deMinimisApplies 
+                              ? 'Si importas menos de 50 toneladas anuales de este sector, puedes estar exento (certificado Y137)'
+                              : 'La electricidad e hidrógeno no tienen umbral de minimis - siempre aplican obligaciones CBAM'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                       <h4 className="font-bold text-amber-800 mb-2">📋 Obligaciones</h4>
                       <ul className="text-amber-700 text-sm space-y-1">
                         <li>• <strong>Hasta 31/12/2025:</strong> Presentar informes trimestrales (sin pago)</li>
@@ -257,6 +284,7 @@ export default function CBAMPage() {
 
         {/* Simulador de Coste */}
         <CBAMCostSimulator />
+
         {/* Sectores Afectados */}
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -270,9 +298,19 @@ export default function CBAMPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-4xl">{sector.icon}</span>
-                  <span className="px-2 py-1 bg-white/20 rounded-full text-xs font-medium">
-                    {sector.emissions}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="px-2 py-1 bg-white/20 rounded-full text-xs font-medium">
+                      {sector.emissions}
+                    </span>
+                    {/* NUEVO: Badge de minimis */}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      sector.deMinimisApplies 
+                        ? 'bg-blue-400/30 text-blue-100' 
+                        : 'bg-red-400/30 text-red-100'
+                    }`}>
+                      {sector.deMinimisApplies ? '📦 De minimis' : '⚡ Sin umbral'}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2">{sector.name}</h3>
                 <p className="text-white/80 text-sm mb-3">{sector.description}</p>
@@ -282,6 +320,108 @@ export default function CBAMPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* NUEVO: Países Excluidos */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="p-3 bg-green-100 rounded-xl">
+              <span className="text-3xl">🌍</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-green-900 mb-2">
+                Países y Territorios Excluidos del CBAM
+              </h3>
+              <p className="text-green-700">
+                Las importaciones desde estos orígenes NO están sujetas al CBAM porque participan 
+                en el EU ETS o tienen acuerdos equivalentes (Anexo III del Reglamento).
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {CBAM_EXCLUDED_COUNTRIES.map((country) => (
+              <div key={country.code} className="bg-white/80 p-4 rounded-lg border border-green-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg font-bold text-green-800">{country.code}</span>
+                  <span className="text-green-700 font-medium">{country.name}</span>
+                </div>
+                <p className="text-sm text-green-600">{country.reason}</p>
+              </div>
+            ))}
+          </div>
+          
+          <p className="mt-4 text-sm text-green-600 bg-green-100 p-3 rounded-lg">
+            💡 <strong>Nota:</strong> Si importas desde estos países, puedes declarar la exención 
+            con el certificado <strong>Y134</strong> (territorios especiales) o simplemente no aplican 
+            las obligaciones CBAM (países ETS).
+          </p>
+        </div>
+
+        {/* NUEVO: Certificados Necesarios */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              📜 Certificados CBAM para Declaración Aduanera
+            </h2>
+            <p className="text-gray-600">
+              Códigos a declarar en el DUA desde el 01/01/2026 (medida tipo 775)
+            </p>
+          </div>
+
+          <div className="p-8">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Código</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Descripción</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Aplicación</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {Object.values(CBAM_CERTIFICATES).map((cert) => (
+                    <tr key={cert.code} className="hover:bg-gray-50">
+                      <td className="px-4 py-4">
+                        <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                          {cert.code}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-gray-700">
+                        {cert.description}
+                      </td>
+                      <td className="px-4 py-4">
+                        {cert.required ? (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                            Obligatorio
+                          </span>
+                        ) : cert.appliesTo ? (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                            Solo {cert.appliesTo.join(', ')}
+                          </span>
+                        ) : cert.notAppliesTo ? (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            Excepto {cert.notAppliesTo.join(', ')}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                            Exención
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm">
+                <strong>⚠️ Importante:</strong> Sin uno de estos certificados válidos, la importación 
+                será rechazada (condición Y060 - "None of the conditions above apply").
+              </p>
+            </div>
           </div>
         </div>
 
@@ -371,12 +511,15 @@ export default function CBAMPage() {
                 <strong>{CBAM_THRESHOLD.massThreshold} toneladas</strong> de mercancías CBAM 
                 están exentos de las obligaciones del mecanismo.
               </p>
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex flex-wrap items-center gap-4 text-sm">
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
                   Umbral: {CBAM_THRESHOLD.massThreshold}t/año
                 </span>
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                  Objetivo: {(CBAM_THRESHOLD.emissionsTarget * 100).toFixed(0)}% emisiones cubiertas
+                  Certificado: Y137
+                </span>
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                  ⚡ No aplica a: Electricidad, Hidrógeno
                 </span>
               </div>
             </div>
@@ -435,7 +578,7 @@ export default function CBAMPage() {
             <ul className="space-y-3">
               <li>
                 <Link 
-                  href="/"
+                  href="/calculadora"
                   className="flex items-center gap-2 text-emerald-600 hover:text-emerald-800"
                 >
                   <span>🧮</span>
@@ -474,7 +617,7 @@ export default function CBAMPage() {
             automáticas de productos afectados por CBAM.
           </p>
           <Link
-            href="/"
+            href="/calculadora"
             className="inline-flex items-center px-8 py-3 bg-white text-[#0A3D5C] font-bold rounded-xl hover:bg-gray-100 transition-colors"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
