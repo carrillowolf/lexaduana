@@ -419,7 +419,7 @@ export default function CBAMPage() {
             <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-amber-800 text-sm">
                 <strong>⚠️ Importante:</strong> Sin uno de estos certificados válidos, la importación 
-                será rechazada (condición Y060 - "None of the conditions above apply").
+                será rechazada (condición Y060 - 'None of the conditions above apply').
               </p>
             </div>
           </div>
