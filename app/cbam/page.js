@@ -13,6 +13,7 @@ import {
   CBAM_CERTIFICATES
 } from '@/lib/cbamData'
 import CBAMCostSimulator from '@/components/CBAMCostSimulator'
+import CBAMEmailTemplate from '@/components/CBAMEmailTemplate'
 
 export default function CBAMPage() {
   const [hsCode, setHsCode] = useState('')
@@ -525,6 +526,9 @@ export default function CBAMPage() {
             </div>
           </div>
         </div>
+
+        {/* Plantilla Email Proveedor */}
+        <CBAMEmailTemplate />
 
         {/* Recursos */}
         <div className="grid md:grid-cols-2 gap-6">
