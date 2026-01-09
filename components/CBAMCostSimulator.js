@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { checkCBAM, CBAM_SECTORS } from '@/lib/cbamData'
+import { checkCBAM, CBAM_SECTORS, CBAM_BENCHMARKS, calculateCBAMCost } from '@/lib/cbamData'
 
 // Valores por defecto de emisiones (tCO2e por tonelada de producto)
 // Fuente: Comisión Europea - Valores por defecto período transitorio CBAM
@@ -70,17 +70,25 @@ export default function CBAMCostSimulator() {
     if (!product || !tonnes || parseFloat(tonnes) <= 0) return
 
     const tonnesNum = parseFloat(tonnes)
-    const emissions = tonnesNum * product.factor
-    const cost = emissions * EU_ETS_PRICE.price
+
+    // USAR LA FUNCIÓN CORRECTA CON BENCHMARK
+    const calculation = calculateCBAMCost(
+      tonnesNum,
+      product.factor,
+      EU_ETS_PRICE.price,
+      selectedSector
+    )
 
     setResult({
       product: product.name,
       sector: DEFAULT_EMISSION_FACTORS[selectedSector].name,
-      tonnes: tonnesNum,
-      emissionFactor: product.factor,
-      totalEmissions: emissions,
-      pricePerTonne: EU_ETS_PRICE.price,
-      totalCost: cost
+      tonnes: calculation.tonnes,
+      emissionFactor: calculation.emissionsPerTonne,
+      benchmark: calculation.benchmark,
+      emissionsSubjectToCBAM: calculation.emissionsSubjectToCBAM,
+      totalEmissions: calculation.totalEmissions,
+      pricePerTonne: calculation.co2Price,
+      totalCost: calculation.totalCost
     })
   }
 
@@ -169,30 +177,69 @@ export default function CBAMCostSimulator() {
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border-2 border-emerald-200">
               <h3 className="text-lg font-bold text-gray-800 mb-4">📊 Resultado de la simulación</h3>
               
-              <div className="grid sm:grid-cols-3 gap-4 mb-6">
+              <div className="grid sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-lg p-4 text-center">
                   <p className="text-sm text-gray-500 mb-1">Cantidad</p>
                   <p className="text-2xl font-bold text-gray-800">{formatNumber(result.tonnes, 0)} <span className="text-sm font-normal">t</span></p>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-500 mb-1">Emisiones estimadas</p>
-                  <p className="text-2xl font-bold text-emerald-600">{formatNumber(result.totalEmissions)} <span className="text-sm font-normal">tCO₂</span></p>
+                  <p className="text-sm text-gray-500 mb-1">Emisiones producto</p>
+                  <p className="text-xl font-bold text-gray-600">{formatNumber(result.emissionFactor, 3)} <span className="text-sm font-normal">tCO₂/t</span></p>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-500 mb-1">Coste certificados</p>
-                  <p className="text-2xl font-bold text-[#0A3D5C]">{formatCurrency(result.totalCost)}</p>
+                  <p className="text-sm text-gray-500 mb-1">Benchmark UE</p>
+                  <p className="text-xl font-bold text-blue-600">-{formatNumber(result.benchmark, 3)} <span className="text-sm font-normal">tCO₂/t</span></p>
+                </div>
+                <div className="bg-white rounded-lg p-4 text-center">
+                  <p className="text-sm text-gray-500 mb-1">Emisiones CBAM</p>
+                  <p className="text-xl font-bold text-emerald-600">{formatNumber(result.emissionsSubjectToCBAM, 3)} <span className="text-sm font-normal">tCO₂/t</span></p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg p-4 space-y-2 text-sm">
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-center mb-4">
+                <p className="text-purple-100 mb-1">Coste estimado certificados CBAM</p>
+                <p className="text-5xl font-bold text-white">{formatCurrency(result.totalCost)}</p>
+                <p className="text-purple-200 text-sm mt-2">
+                  {formatNumber(result.totalEmissions, 2)} tCO₂ × {formatCurrency(result.pricePerTonne)}/tCO₂
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg p-4 space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-600">Sector:</span><span className="font-medium">{result.sector}</span></div>
                 <div className="flex justify-between"><span className="text-gray-600">Producto:</span><span className="font-medium">{result.product}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Factor de emisión:</span><span className="font-medium">{result.emissionFactor} tCO₂/t</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Precio EU ETS:</span><span className="font-medium">{formatCurrency(result.pricePerTonne)}/tCO₂</span></div>
                 <hr className="my-2" />
-                <div className="flex justify-between text-base">
-                  <span className="text-gray-800 font-medium">Cálculo:</span>
-                  <span className="font-mono text-gray-600">{formatNumber(result.tonnes)}t × {result.emissionFactor} × {formatCurrency(result.pricePerTonne)}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Emisiones producto:</span>
+                  <span className="font-medium">{formatNumber(result.emissionFactor, 3)} tCO₂/t</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Benchmark UE:</span>
+                  <span className="font-medium text-blue-600">- {formatNumber(result.benchmark, 3)} tCO₂/t</span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-gray-800 font-bold">Emisiones sujetas a CBAM:</span>
+                  <span className="font-bold text-emerald-600">{formatNumber(result.emissionsSubjectToCBAM, 3)} tCO₂/t</span>
+                </div>
+                <hr className="my-2" />
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Precio EU ETS:</span>
+                  <span className="font-medium">{formatCurrency(result.pricePerTonne)}/tCO₂</span>
+                </div>
+                <div className="flex justify-between text-base border-t pt-2">
+                  <span className="text-gray-800 font-medium">Fórmula:</span>
+                  <span className="font-mono text-gray-600 text-xs">
+                    {formatNumber(result.tonnes)}t × ({formatNumber(result.emissionFactor, 3)} - {formatNumber(result.benchmark, 3)}) × {formatCurrency(result.pricePerTonne)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-xl">ℹ️</span>
+                  <div className="text-sm text-blue-800">
+                    <p className="font-bold mb-1">¿Por qué se resta el benchmark?</p>
+                    <p>Las fábricas europeas ya pagan por el benchmark ({formatNumber(result.benchmark, 3)} tCO₂/t) en el EU ETS. El CBAM solo cobra por las emisiones que <strong>exceden</strong> ese nivel de eficiencia.</p>
+                  </div>
                 </div>
               </div>
             </div>

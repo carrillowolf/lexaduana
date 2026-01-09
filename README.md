@@ -99,7 +99,9 @@ Migración completa a estructura de datos EUR-Lex oficial:
 - **Integración directa**: Calcula aranceles automáticamente
 
 ### 🌍 Módulo CBAM
-Mecanismo de Ajuste en Frontera por Carbono - Preparado para 2026
+Mecanismo de Ajuste en Frontera por Carbono - **Obligatorio desde 01/01/2026**
+
+> Actualizado con paquete regulatorio Diciembre 2025: C(2025) 8552, C(2025) 8560, COM(2025) 989
 
 #### Verificador de Códigos (`/cbam`)
 - **40+ códigos CN** de los 6 sectores afectados
@@ -107,6 +109,7 @@ Mecanismo de Ajuste en Frontera por Carbono - Preparado para 2026
 - **Información del sector**: Cemento, Hierro/Acero, Aluminio, Fertilizantes, Hidrógeno, Electricidad
 - **Gases aplicables**: CO2, N2O, PFC según sector
 - **Tipo de emisiones**: Directas vs directas+indirectas
+- **Indicador de minimis**: Muestra si aplica exención <50t/año
 
 #### Simulador de Coste de Certificados
 - **Valores por defecto UE**: Factores de emisión oficiales (tCO2/t)
@@ -115,25 +118,74 @@ Mecanismo de Ajuste en Frontera por Carbono - Preparado para 2026
 - **Desglose completo**: Emisiones estimadas y coste total
 - **Avisos legales**: Estimación orientativa, consultar experto
 
+#### 🆕 Precios de Certificados (Dic 2025)
+Según Reglamento C(2025) 8560:
+| Período | Metodología | Frecuencia |
+|---------|-------------|------------|
+| 2026 | Media trimestral EU ETS | 4 precios/año |
+| 2027+ | Media semanal EU ETS | ~52 precios/año |
+
+#### 🆕 Penalización Valores por Defecto (Dic 2025)
+Markup progresivo según C(2025) 8552 si no se aportan emisiones reales verificadas:
+| Año | Markup | Impacto |
+|-----|--------|---------|
+| 2026 | +10% | Transición |
+| 2027 | +20% | Intermedio |
+| 2028+ | +30% | Permanente |
+
+#### 🆕 Extensión Productos Downstream (2028)
+Propuesta COM(2025) 989 - Aplicación prevista 01/01/2028:
+- **~180 nuevos códigos CN**: Manufacturas de acero y aluminio
+- **~7.500 nuevos importadores** afectados
+- **~3.850 PYMEs** con obligaciones adicionales
+- Sectores: Estructuras metálicas, tornillería, depósitos, cables...
+
+#### Guía "CBAM para Principiantes" (`/cbam/guia`)
+- **Explicación en 5 minutos**: Sin jerga técnica
+- **Analogía visual**: Por qué existe el CBAM
+- **Timeline simplificado**: 3 fases clave
+- **4 pasos prácticos**: Registro → Datos → Certificados → Entrega
+- **FAQs interactivos**: 6 preguntas frecuentes
+- **Botón flotante**: Acceso rápido desde página principal
+
 #### Alertas Integradas
 - **En calculadora**: Badge CBAM junto al código HS
 - **En clasificador IA**: Alerta si código sugerido está afectado
 - **Enlace directo**: A página de obligaciones CBAM
 
-#### Timeline y Plazos
-- **Calendario visual**: Fechas clave del período transitorio
-- **Countdown**: Días hasta próximo deadline
-- **Umbral de minimis**: 50 toneladas/año según Reglamento 2025/2083
+#### Timeline y Plazos (Actualizado Dic 2025)
+| Fecha | Evento |
+|-------|--------|
+| 31/12/2025 | Fin período transitorio |
+| 01/01/2026 | 🚨 CBAM definitivo - Obligación de compra |
+| 31/03/2026 | Límite solicitud declarante autorizado |
+| 01/01/2027 | Precio semanal certificados |
+| 30/09/2027 | Primera entrega de certificados |
+| 01/01/2028 | Extensión productos downstream |
+| 01/01/2034 | Eliminación total derechos gratuitos |
+
+#### Países Excluidos
+- Islandia, Liechtenstein, Noruega (EEE con EU ETS)
+- Suiza (Acuerdo vinculado)
+- Territorios especiales UE: Büsingen, Heligoland, Livigno
+
+#### Certificados para DUA (desde 01/01/2026)
+| Código | Descripción |
+|--------|-------------|
+| Y128 | Número cuenta CBAM (obligatorio) |
+| Y134 | Exención territorios especiales |
+| Y137 | Exención de minimis (<50t/año) |
+| Y238 | Solicitud declarante en trámite |
 
 **Sectores y códigos afectados:**
-| Sector | Capítulos NC | Gases |
-|--------|--------------|-------|
-| Cemento | 2507, 2523 | CO2 |
-| Electricidad | 2716 | CO2 |
-| Fertilizantes | 2808, 2814, 3102, 3105 | CO2, N2O |
-| Hidrógeno | 2804 | CO2 |
-| Hierro/Acero | 72, 7301-7311, 7318, 7326 | CO2 |
-| Aluminio | 7601-7616 | CO2, PFC |
+| Sector | Capítulos NC | Gases | De minimis |
+|--------|--------------|-------|------------|
+| Cemento | 2507, 2523 | CO2 | ✅ Aplica |
+| Electricidad | 2716 | CO2 | ❌ No aplica |
+| Fertilizantes | 2808, 2814, 3102, 3105 | CO2, N2O | ✅ Aplica |
+| Hidrógeno | 2804 | CO2 | ❌ No aplica |
+| Hierro/Acero | 72, 7301-7311, 7318, 7326 | CO2 | ✅ Aplica |
+| Aluminio | 7601-7616 | CO2, PFC | ✅ Aplica |
 
 ### 📊 Calculadora Masiva (Bulk)
 - **Procesamiento CSV**: Hasta 100 productos simultáneos
