@@ -244,6 +244,40 @@ export default function CBAMCostSimulator() {
               </div>
             </div>
 
+            {/* NUEVO: Disclaimer Free Allocation Adjustment */}
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-5 mb-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">ℹ️</span>
+                <div>
+                  <h4 className="font-bold text-blue-900 mb-2">
+                    Sobre el ajuste por asignación gratuita (2026-2033)
+                  </h4>
+                  <div className="text-sm text-blue-800 space-y-2">
+                    <p>
+                      <strong>Este simulador calcula el coste base</strong> usando la fórmula:
+                      <span className="block font-mono text-xs bg-blue-100 p-2 rounded mt-1">
+                        (Emisiones - Benchmark UE) × Precio CO₂
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Durante 2026-2033 habrá una reducción progresiva</strong> en el
+                      número de certificados a entregar (Free Allocation Adjustment - FAA) para
+                      reflejar la eliminación gradual de la asignación gratuita en el EU ETS.
+                    </p>
+                    <p>
+                      <strong>El coste real será MENOR</strong> que el mostrado aquí, pero la
+                      Comisión Europea aún no ha publicado los factores oficiales (CBAM factor
+                      y CSCF) necesarios para calcularlo con exactitud.
+                    </p>
+                    <p className="text-blue-900 font-medium">
+                      💡 Este cálculo representa el <strong>coste máximo</strong> (100% aplicable
+                      desde 2034). En años anteriores pagarás menos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <span className="text-xl">⚠️</span>
@@ -255,6 +289,7 @@ export default function CBAMCostSimulator() {
                     <li>• El precio EU ETS fluctúa diariamente</li>
                     <li>• Hasta 31/12/2025 no hay obligación de compra (período transitorio)</li>
                     <li>• Consulte con un asesor especializado para cálculos definitivos</li>
+                    <li>• No incluye el ajuste por asignación gratuita (FAA) aplicable 2026-2033</li>
                   </ul>
                 </div>
               </div>
