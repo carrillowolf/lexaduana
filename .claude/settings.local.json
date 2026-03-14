@@ -26,7 +26,10 @@
       "Bash(node -e \"import * as XLSX from ''xlsx''; console.log\\(Object.keys\\(XLSX\\).join\\('', ''\\)\\)\")",
       "Bash(node scripts/loadBlock1.js --dry-run --only=types)",
       "Bash(node scripts/loadBlock1.js --dry-run --only=declarable)",
-      "Bash(node scripts/loadBlock2.js --dry-run)"
+      "Bash(node scripts/loadBlock2.js --dry-run)",
+      "Bash(git push:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git add:*)"
     ]
   }
 }
