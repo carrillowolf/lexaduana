@@ -2,11 +2,12 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-4.4.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.2.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
 [![Claude](https://img.shields.io/badge/Claude-4.5-purple.svg)](https://anthropic.com)
+[![TARIC](https://img.shields.io/badge/TARIC-Marzo_2026-orange.svg)](https://taxation-customs.ec.europa.eu)
 
 🌐 **En producción:** [lexaduana.es](https://lexaduana.es)
 
@@ -32,32 +33,55 @@ lexaduana.es
 
 ---
 
-## 🆕 Novedades v4.3.0 (Diciembre 2025)
+## 🆕 Novedades v5.2.0 (Marzo 2026)
 
-### 📊 Nueva Base de Datos TARIC Unificada
-Migración completa a estructura de datos EUR-Lex oficial:
+### 📊 Migración Completa TARIC — Marzo 2026
+Migración total de 14 archivos Excel EUR-Lex oficiales a 14 tablas Supabase:
 
 | Tabla | Registros | Contenido |
 |-------|-----------|-----------|
-| `taric_measures` | **141,291** | Aranceles, preferencias, anti-dumping |
-| `measure_conditions` | **30,968** | Certificados requeridos (85 tipos) |
-| `measure_exclusions` | **35,510** | Países excluidos de medidas |
-| **Total** | **207,769** | Datos oficiales EUR-Lex |
+| `taric_measures` | **136,009** | Aranceles, preferencias, anti-dumping |
+| `measure_conditions` | **29,229** | Certificados y condiciones requeridas |
+| `measure_exclusions` | **28,975** | Exclusiones país (solo importación) |
+| `measure_footnotes` | **121,938** | Notas a pie de medida |
+| `descriptions` | **25,691** | Descripciones jerárquicas HS (EN) |
+| `declarable_codes` | **25,697** | Códigos declarables (leaf nodes) |
+| `geographical_areas` | **311** | Áreas geográficas TARIC |
+| `geographical_areas_composition` | **2,621** | Composición de grupos geográficos |
+| `measure_types` | **78** | Tipos de medida con traducciones |
+| `certificate_types` | **1,766** | Tipos de certificado (EN + ES) |
+| `footnote_descriptions` | **5,280** | Descripciones de notas (EN + ES) |
+| `additional_codes` | **6,506** | Códigos adicionales (EN + ES) |
+| `exchange_rates` | **2,235** | Tipos de cambio BCE |
+| `legal_bases` | **4,399** | Bases legales |
+| **Total** | **390,735** | Datos oficiales EUR-Lex Marzo 2026 |
 
-### ✨ Mejoras incluidas:
-- **Contingentes arancelarios**: Soporte para 1,454 contingentes con order_no
-- **Anti-dumping detallado**: Por empresa (add_code) y país
-- **Fechas de vigencia**: En todas las medidas (start_date, end_date)
-- **79 tipos de medida**: vs ~10 anteriores
-- **Preferencias implícitas**: Acuerdos de Asociación (Marruecos, Túnez, Egipto, etc.)
-- **Filtrado de alertas por origen**: Solo muestra alertas relevantes al país consultado
-- **Actualización mensual simplificada**: Script automatizado
+### ✨ Nuevas capacidades v5.2:
+- **Códigos declarables inteligentes**: Sugerencias de subcódigos válidos cuando se introduce un código padre
+- **Notas a pie enriquecidas**: 121,938 footnotes con descripciones bilingües (EN/ES) como alertas informativas
+- **Certificados enriquecidos**: Condiciones de medida con descripciones de certificados en español
+- **Códigos adicionales**: Descripciones bilingües en alertas anti-dumping
+- **Aranceles país-específicos**: Detección correcta de aranceles base cuando un país está excluido de ERGA OMNES (ej: Rusia con sanciones)
+- **Composición geográfica**: Resolución de grupos de países (1011 ERGA OMNES → membresía real)
+- **Consulta jerárquica optimizada**: De 5 queries secuenciales a 1 query batch con `.in()`
+- **Exclusiones solo importación**: Filtrado de 35,510 → 28,975 exclusiones relevantes
+- **Scripts de migración en 3 bloques**: loadBlock1.js, loadBlock2.js, loadBlock3.js con dry-run
 
-### 🔧 Cambios técnicos:
-- Nuevo `calculateTariff.js` v4.3 optimizado para tabla unificada
-- Preferencias implícitas para acuerdos de libre comercio (productos industriales cap. 25-97)
-- Filtrado de alertas legacy por país de origen
-- Nueva carpeta `lexaduana-migration/` con scripts de actualización
+### 🌍 Mejoras CBAM (Marzo 2026)
+- **Paquete regulatorio Diciembre 2025** integrado: C(2025) 8552, C(2025) 8560, COM(2025) 989
+- **Precios de certificados**: Media trimestral 2026, semanal desde 2027
+- **Penalización valores por defecto**: Markup progresivo (+10%/+20%/+30%)
+- **Extensión downstream 2028**: ~180 nuevos códigos CN previstos
+- **Guía "CBAM para Principiantes"**: Página `/cbam/guia` con explicación en 5 minutos
+- **Certificados DUA**: Y128, Y134, Y137, Y238 para declaraciones desde 01/01/2026
+
+### 🔧 Cambios técnicos v5.2:
+- `calculateTariff.js` v5.2 — Motor de cálculo completo con 14 tablas
+- Scripts de migración estructurados en 3 bloques con soporte `--dry-run` y `--only=`
+- Schemas SQL dedicados: `bloque1-schema.sql`, `bloque2-schema.sql`, `bloque3-schema.sql`
+- Columnas TEXT en lugar de VARCHAR para campos de longitud variable
+- Vistas `tariffs` y `tariff_complete` actualizadas para nueva estructura
+- RLS (Row Level Security) habilitado en todas las tablas nuevas
 
 ---
 
@@ -66,25 +90,30 @@ Migración completa a estructura de datos EUR-Lex oficial:
 ### ✅ Calculadora Profesional
 - **Cálculo preciso** de aranceles e IVA según normativa europea
 - **195+ países** soportados con preferencias comerciales
-- **141,291 medidas TARIC** actualizadas mensualmente
+- **136,009 medidas TARIC** actualizadas (Marzo 2026)
 - **IVA variable inteligente**: 4% / 10% / 21% según producto
-- **Alertas TARIC enriquecidas**: 251 códigos traducidos con iconos y descripciones
+- **Alertas TARIC enriquecidas**: Footnotes + certificados + códigos adicionales bilingües
 - **Alertas CBAM automáticas**: Aviso si el producto está sujeto al mecanismo
-- **Exclusiones por país**: 35,510 exclusiones automáticas
-- **Contingentes arancelarios**: Detección automática de cuotas disponibles (1,454)
+- **Exclusiones por país**: 28,975 exclusiones automáticas (solo importación)
+- **Contingentes arancelarios**: Detección automática de cuotas disponibles
 - **Preferencias implícitas**: Acuerdos de Asociación aplicados automáticamente
-- **Descripciones jerárquicas**: HS2 → HS4 → HS6 → HS10
+- **Aranceles país-específicos**: Gestión correcta de sanciones y exclusiones
+- **Códigos declarables**: Sugerencias inteligentes de subcódigos válidos (is_leaf)
+- **Descripciones jerárquicas**: HS2 → HS4 → HS6 → HS10 (query batch optimizada)
 - **Tipos de cambio BCE**: 30 monedas con actualización mensual
+- **121,938 notas informativas**: Footnotes como alertas contextuales
 
 ### 🚨 Sistema de Alertas TARIC
-- **251 códigos traducidos** al español con iconos descriptivos
-- **79 tipos de medida**: aranceles, controles, sanciones, anti-dumping...
-- **85 tipos de certificados**: C074, E017, U088, Y864...
+- **78 tipos de medida** traducidos al español con iconos descriptivos
+- **1,766 tipos de certificado** bilingües (EN + ES) desde base de datos
+- **5,280 descripciones de notas** bilingües (EN + ES)
+- **6,506 códigos adicionales** bilingües (EN + ES)
+- **311 áreas geográficas** con composición de 2,621 membresías
 - **Códigos AEAT**: 120+ códigos nacionales españoles
-- **Grupos geográficos**: 12 áreas (ERGA OMNES, SGP, América Central...)
 - **Filtrado por origen**: Solo muestra alertas relevantes al país consultado
 - **Prioridades visuales**: Crítico (rojo), Importante (ámbar), Info (azul)
 - **Texto expandible**: Ver descripción EUR-Lex original
+- **Footnotes informativos**: Notas a pie de medida como alertas contextuales
 
 ### 🤖 Clasificador IA
 - **Claude Sonnet 4.5**: Clasificación inteligente de productos
@@ -283,19 +312,24 @@ lexaduana/
 ├── 📁 lib/                       # Utilidades
 │   ├── supabase.js               # Cliente Supabase server
 │   ├── supabase-browser.js       # Cliente Supabase client
-│   ├── calculateTariff.js        # 🆕 Módulo cálculo v4.3
+│   ├── calculateTariff.js        # Motor cálculo v5.2
 │   ├── rate-limit.js             # Rate limiting con Upstash
 │   ├── validation.js             # Validadores de entrada
 │   ├── cbamData.js               # Datos CBAM (códigos, sectores, timeline)
-│   ├── taricTranslations.js      # 251 códigos traducidos
+│   ├── taricTranslations.js      # Traducciones estáticas (fallback)
 │   ├── vatCalculator.js          # Lógica IVA variable
 │   ├── csvParser.js              # Parser CSV bulk
 │   └── excelExporter.js          # Exportador Excel
-├── 📁 lexaduana-migration/       # 🆕 Scripts actualización mensual
+├── 📁 scripts/                   # Scripts migración TARIC
+│   ├── bloque1-schema.sql        # Schema bloque 1 (master data)
+│   ├── loadBlock1.js             # Carga bloque 1 (5 tablas)
+│   ├── bloque2-schema.sql        # Schema bloque 2 (core data)
+│   ├── loadBlock2.js             # Carga bloque 2 (4 tablas)
+│   ├── bloque3-schema.sql        # Schema bloque 3 (lookup tables)
+│   └── loadBlock3.js             # Carga bloque 3 (5 tablas)
+├── 📁 lexaduana-migration/       # Scripts legacy (compatibilidad)
 │   ├── import-all-taric.js       # Importador Excel → Supabase
 │   └── ACTUALIZACION_MENSUAL.md  # Guía de actualización
-├── 📁 scripts/                   # Scripts procesamiento
-│   └── (scripts auxiliares)
 └── 📁 public/                    # Assets estáticos
     ├── icons/                    # Iconos
     └── images/                   # Imágenes
@@ -305,21 +339,42 @@ lexaduana/
 
 ## 🗄️ Base de Datos (Supabase)
 
-### Tablas principales (v4.3)
+### Tablas TARIC (v5.2 — Marzo 2026)
 
 ```sql
--- Nueva estructura unificada TARIC
-taric_measures          -- 141,291 registros (aranceles, preferencias, anti-dumping)
-measure_conditions      -- 30,968 registros (certificados requeridos)
-measure_exclusions      -- 35,510 registros (países excluidos)
-measure_types           -- 79 tipos de medida con traducciones
-certificate_types       -- 85 tipos de certificado con traducciones
+-- ══════════════════════════════════════════════
+-- BLOQUE 1: Master Data (5 tablas, 54,398 filas)
+-- ══════════════════════════════════════════════
+geographical_areas              --    311 áreas geográficas
+geographical_areas_composition  --  2,621 composición de grupos (país → grupo)
+descriptions                    -- 25,691 descripciones jerárquicas HS (EN)
+measure_types                   --     78 tipos de medida con traducciones
+declarable_codes                -- 25,697 códigos declarables (leaf nodes)
+
+-- ══════════════════════════════════════════════
+-- BLOQUE 2: Core Data (4 tablas, 316,151 filas)
+-- ══════════════════════════════════════════════
+taric_measures                  -- 136,009 medidas (aranceles, preferencias, anti-dumping)
+measure_conditions              --  29,229 condiciones y certificados requeridos
+measure_exclusions              --  28,975 exclusiones por país (solo importación)
+measure_footnotes               -- 121,938 notas a pie de medida
+
+-- ══════════════════════════════════════════════
+-- BLOQUE 3: Lookup Tables (5 tablas, 20,186 filas)
+-- ══════════════════════════════════════════════
+certificate_types               --  1,766 tipos de certificado (EN + ES)
+footnote_descriptions           --  5,280 descripciones de notas (EN + ES)
+additional_codes                --  6,506 códigos adicionales (EN + ES)
+exchange_rates                  --  2,235 tipos de cambio BCE
+legal_bases                     --  4,399 bases legales
+
+-- ══════════════════════════════════════════════
+-- TOTAL: 14 tablas, 390,735 registros
+-- ══════════════════════════════════════════════
 
 -- Tablas de soporte
-descriptions            -- Descripciones jerárquicas HS
 countries               -- 195 países con acuerdos
 vat_rates               -- IVA por código
-exchange_rates          -- Tipos de cambio BCE
 measure_alerts          -- Alertas legacy (compatibilidad)
 
 -- Tablas de usuario
@@ -332,22 +387,51 @@ despachos               -- Gestión de despachos
 classification_examples -- Ejemplos para educar clasificador
 ```
 
-### Actualización mensual de datos
+### Actualización mensual de datos TARIC
+
+Los datos se actualizan mediante scripts de migración en 3 bloques:
 
 ```bash
-cd lexaduana-migration/
+# 1. Descargar los 14 Excel de EUR-Lex
+# 2. Ejecutar schemas SQL en Supabase SQL Editor
+# 3. Cargar datos con scripts Node.js
 
-# Usar variables de entorno (NUNCA hardcodear keys)
-SUPABASE_URL="https://tu-proyecto.supabase.co" \
-SUPABASE_SERVICE_KEY="tu-api-key" \
-node import-all-taric.js measures
+# Bloque 1: Master data (desbloquea el resto)
+node scripts/loadBlock1.js --dry-run          # Verificar primero
+node scripts/loadBlock1.js                     # Ejecutar carga
 
-# Repetir para conditions y exclusions
-node import-all-taric.js conditions
-node import-all-taric.js exclusions
+# Bloque 2: Core data (medidas, condiciones, exclusiones, footnotes)
+node scripts/loadBlock2.js --dry-run
+node scripts/loadBlock2.js
+
+# Bloque 3: Lookup tables (certificados, notas, códigos adicionales)
+node scripts/loadBlock3.js --dry-run
+node scripts/loadBlock3.js --only=certificates # Cargar solo una tabla
+
+# Opciones disponibles:
+# --dry-run          Simular sin escribir en Supabase
+# --only=<tabla>     Cargar solo una tabla específica
+# --excel-path=/ruta Ruta personalizada a los archivos Excel
 ```
 
-Ver `lexaduana-migration/ACTUALIZACION_MENSUAL_TARIC.md` para guía completa.
+### Archivos Excel necesarios (14 ficheros)
+
+| Archivo | Tabla destino |
+|---------|--------------|
+| `Geographical areas composition.xlsx` | geographical_areas_composition |
+| `Geographical areas.xlsx` | geographical_areas |
+| `Goods nomenclature descriptions EN.xlsx` | descriptions |
+| `Measure types.xlsx` | measure_types |
+| `Nomenclature EN.xlsx` | declarable_codes |
+| `Measures.xlsx` | taric_measures |
+| `Measure conditions.xlsx` | measure_conditions |
+| `Measure excluded geographical areas.xlsx` | measure_exclusions |
+| `Footnotes on measures.xlsx` | measure_footnotes |
+| `Box 44 codes of the SAD.xlsx` | certificate_types |
+| `Footnotes descriptions.xlsx` | footnote_descriptions |
+| `Additional codes descriptions.xlsx` | additional_codes |
+| `CCT Exchange rates.xlsx` | exchange_rates |
+| `Legal basis.xlsx` | legal_bases |
 
 ---
 
@@ -408,16 +492,25 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 
 ## 📈 Roadmap
 
-### ✅ Completado (v4.3 - Diciembre 2025)
+### ✅ Completado (v5.2 - Marzo 2026)
 
-#### 📊 Nueva Base de Datos TARIC Unificada
-- 207,769 registros EUR-Lex oficiales
-- Tabla unificada `taric_measures`
-- 79 tipos de medida vs ~10 anteriores
-- Contingentes arancelarios con order_no
-- Anti-dumping por empresa (add_code)
-- Preferencias implícitas por acuerdo
-- Script actualización mensual automatizado
+#### 📊 Migración Completa TARIC Marzo 2026
+- **390,735 registros** EUR-Lex oficiales en 14 tablas
+- Motor de cálculo `calculateTariff.js` v5.2
+- Scripts de migración en 3 bloques con dry-run
+- Códigos declarables (leaf nodes) para sugerencias inteligentes
+- Composición geográfica para resolución de grupos de países
+- Footnotes enriquecidos con descripciones bilingües
+- Certificados y códigos adicionales bilingües (EN + ES)
+- Aranceles país-específicos (gestión de sanciones/exclusiones)
+- Query jerárquica optimizada (1 query batch vs 5 secuenciales)
+
+#### 🌍 Módulo CBAM Completo
+- Paquete regulatorio Diciembre 2025 integrado
+- Guía "CBAM para Principiantes"
+- Simulador de costes con penalización progresiva
+- Extensión downstream 2028 documentada
+- Certificados DUA (Y128, Y134, Y137, Y238)
 
 #### 📋 Gestor de Despachos
 - CRUD completo de despachos
@@ -426,7 +519,13 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 
 ---
 
-### 🔜 Próximamente (v4.4 - Q1 2026)
+### 🔜 Próximamente (v5.3 - Q2 2026)
+
+#### 🎨 Renovación Frontend
+- Visualización de footnotes y certificados enriquecidos
+- Códigos adicionales en alertas anti-dumping
+- Indicador de aranceles país-específicos
+- Mejoras UX en comparador multi-origen
 
 #### 📄 Servicio IAV (Información Arancelaria Vinculante)
 - Aviso de no vinculación en clasificador IA
@@ -441,7 +540,7 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 
 ---
 
-### 🚀 Futuro (v5.0 - 2026)
+### 🚀 Futuro (v6.0 - 2026)
 
 #### 🔗 Integraciones AEAT
 Basado en la Guía Técnica de Importación CAU v3.14:
@@ -491,16 +590,16 @@ Ideas pendientes de priorizar y desarrollar:
 
 ## 🎯 Diferenciadores Clave
 
-1. **207,769 registros EUR-Lex oficiales** - La base de datos TARIC más completa
-2. **Clasificador IA con validación TARIC** - Único en el mercado español
-3. **251 códigos de alertas traducidos** - No más códigos crípticos
-4. **Módulo CBAM completo** - Verificador + Simulador + Alertas
-5. **Preferencias implícitas** - Acuerdos de Asociación aplicados automáticamente
-6. **Datos actualizados mensualmente** - EUR-Lex oficial
-7. **Calculadora bulk profesional** - Export Excel 4 sheets
-8. **Tipos de cambio BCE** - Cumplimiento normativo
-9. **Sistema educación IA** - Mejora continua de clasificaciones
-10. **Visión de suite completa** - No solo una calculadora
+1. **390,735 registros EUR-Lex oficiales** - La base de datos TARIC más completa en España
+2. **14 tablas Supabase sincronizadas** - Datos Marzo 2026 con actualización mensual
+3. **Clasificador IA con validación TARIC** - Único en el mercado español
+4. **Alertas bilingües enriquecidas** - Certificados, footnotes y códigos adicionales en ES
+5. **Módulo CBAM completo** - Verificador + Simulador + Guía + Alertas
+6. **Aranceles país-específicos** - Gestión correcta de sanciones y exclusiones
+7. **Códigos declarables inteligentes** - Sugerencias de subcódigos válidos
+8. **Calculadora bulk profesional** - Export Excel 4 sheets
+9. **Tipos de cambio BCE** - Cumplimiento normativo
+10. **Sistema educación IA** - Mejora continua de clasificaciones
 
 ### Competencia
 - **Calculadoras básicas**: No tienen IA, alertas crípticas, sin validación
@@ -568,11 +667,30 @@ npm install xlsx
 
 ### Error: VARCHAR too short en importación TARIC
 
-Si al importar datos EUR-Lex aparece error de longitud:
+Si al importar datos EUR-Lex aparece error de longitud, cambiar a TEXT:
 ```sql
-ALTER TABLE taric_measures ALTER COLUMN origin_name TYPE VARCHAR(200);
-ALTER TABLE taric_measures ALTER COLUMN measure_type_name TYPE VARCHAR(200);
-ALTER TABLE taric_measures ALTER COLUMN legal_base TYPE VARCHAR(200);
+-- Primero DROP views dependientes, luego ALTER, luego recrear views
+ALTER TABLE taric_measures ALTER COLUMN origin_name TYPE TEXT;
+ALTER TABLE taric_measures ALTER COLUMN duty_expression TYPE TEXT;
+ALTER TABLE measure_footnotes ALTER COLUMN footnote_code TYPE TEXT;
+```
+
+### Error: View depends on column
+
+Si al alterar columnas aparece "cannot alter type of a column used by a view":
+```sql
+-- 1. DROP views dependientes en orden inverso
+DROP VIEW IF EXISTS tariff_complete;
+DROP VIEW IF EXISTS tariffs;
+-- 2. ALTER columnas
+-- 3. Recrear views
+```
+
+### Error: NULL start_date en importación Excel
+
+Si las fechas salen NULL, asegurar `cellDates: true` en XLSX.read():
+```javascript
+const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true })
 ```
 
 ---
@@ -606,7 +724,7 @@ Para consultas, colaboraciones o reportar bugs:
 
 ## 📄 Licencia
 
-© 2024-2025 LexAduana. Todos los derechos reservados.
+© 2024-2026 LexAduana. Todos los derechos reservados.
 
 **Términos:**
 - ✅ Uso personal/profesional en plataforma
@@ -638,5 +756,5 @@ Para consultas, colaboraciones o reportar bugs:
 
 **Desarrollado con ❤️ por Carlos para LexAduana**
 
-*Última actualización: Diciembre 2025*
-*Versión: 4.3.0*
+*Última actualización: Marzo 2026*
+*Versión: 5.2.0*
