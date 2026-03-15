@@ -617,6 +617,30 @@ export default function Home() {
                       </div>
                     )}
 
+                    {/* Condiciones y certificados requeridos */}
+                    {result.duty.conditions && result.duty.conditions.length > 0 && (
+                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <span className="text-xl">📋</span>
+                          <h4 className="font-bold text-gray-900">Condiciones y Certificados</h4>
+                          <span className="text-xs text-gray-500">({result.duty.conditions.length} requeridos)</span>
+                        </div>
+                        <div className="space-y-2">
+                          {result.duty.conditions.map((cond, i) => (
+                            <div key={i} className="flex items-start space-x-3 bg-white rounded-lg p-3 border border-gray-200">
+                              <span className="text-sm font-mono font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded whitespace-nowrap">
+                                {cond.certificate}
+                              </span>
+                              <p className="text-sm text-gray-700 flex-1">{cond.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-3 italic">
+                          Verifique con las autoridades aduaneras qué documentación es obligatoria para su operación.
+                        </p>
+                      </div>
+                    )}
+
                     {/* Alertas TARIC - Versión Mejorada */}
                     {result.alerts && result.alerts.length > 0 && (
                       <div className="space-y-3">
