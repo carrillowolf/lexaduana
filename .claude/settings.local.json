@@ -29,7 +29,13 @@
       "Bash(node scripts/loadBlock2.js --dry-run)",
       "Bash(git push:*)",
       "Bash(git filter-branch:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "mcp__Desktop_Commander__start_search",
+      "mcp__Desktop_Commander__get_more_search_results",
+      "Bash(grep -E \"\\\\.js$\")",
+      "mcp__Desktop_Commander__get_file_info",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git commit:*)"
     ]
   }
 }

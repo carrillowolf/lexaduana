@@ -144,7 +144,10 @@ Mecanismo de Ajuste en Frontera por Carbono - **Obligatorio desde 01/01/2026**
 - **Valores por defecto UE**: Factores de emisión oficiales (tCO2/t)
 - **Precio EU ETS actual**: ~€68.50/tCO2 (actualizable)
 - **Cálculo instantáneo**: Toneladas × Factor × Precio
-- **Desglose completo**: Emisiones estimadas y coste total
+- **Ajuste FAA (Free Allocation Adjustment)**: Phase-in progresivo 2026-2034 aplicado al cálculo
+- **Selector de año visual**: 9 botones (2026-2034) con % phase-in y markup
+- **Desglose bruto/efectivo**: Coste bruto, ajuste FAA y coste efectivo
+- **Proyección 2026-2034**: Gráfico de barras colapsable con coste proyectado por año
 - **Avisos legales**: Estimación orientativa, consultar experto
 
 #### 🆕 Precios de Certificados (Dic 2025)
@@ -508,7 +511,8 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 #### 🌍 Módulo CBAM Completo
 - Paquete regulatorio Diciembre 2025 integrado
 - Guía "CBAM para Principiantes"
-- Simulador de costes con penalización progresiva
+- Simulador de costes con penalización progresiva y ajuste FAA
+- Proyección de costes 2026-2034 con phase-in CBAM
 - Extensión downstream 2028 documentada
 - Certificados DUA (Y128, Y134, Y137, Y238)
 

@@ -53,6 +53,20 @@ const MARKUP_SCHEDULE = {
   2028: { pct: 0.30, label: '+30%' },
 }
 
+// Phase-in CBAM (Reg. UE 2023/956 + Directiva EU ETS revisada)
+// Porcentaje del coste CBAM que recae sobre el importador cada año
+const CBAM_PHASE_IN_RATES = {
+  2026: 0.025,
+  2027: 0.050,
+  2028: 0.100,
+  2029: 0.225,
+  2030: 0.485,
+  2031: 0.610,
+  2032: 0.735,
+  2033: 0.860,
+  2034: 1.000,
+}
+
 // Precio EU ETS fallback
 const EU_ETS_PRICE_FALLBACK = {
   price: 68.50,
@@ -66,8 +80,9 @@ export default function CBAMCostSimulator() {
   const [tonnes, setTonnes] = useState('')
   const [emissionSource, setEmissionSource] = useState('default') // 'default' | 'real'
   const [customEmission, setCustomEmission] = useState('')
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedYear, setSelectedYear] = useState(Math.min(2034, Math.max(2026, new Date().getFullYear())))
   const [result, setResult] = useState(null)
+  const [showProjection, setShowProjection] = useState(false)
   const [etsPrice, setEtsPrice] = useState(EU_ETS_PRICE_FALLBACK)
   const [etsPriceLoading, setEtsPriceLoading] = useState(true)
 
@@ -123,8 +138,13 @@ export default function CBAMCostSimulator() {
 
   const getMarkup = () => {
     if (emissionSource === 'real') return { pct: 0, label: 'Sin markup' }
-    const year = Math.min(Math.max(selectedYear, 2026), 2028)
-    return MARKUP_SCHEDULE[year] || MARKUP_SCHEDULE[2028]
+    if (selectedYear <= 2026) return MARKUP_SCHEDULE[2026]
+    if (selectedYear <= 2027) return MARKUP_SCHEDULE[2027]
+    return MARKUP_SCHEDULE[2028] // 2028+ permanente
+  }
+
+  const getPhaseInRate = (year) => {
+    return CBAM_PHASE_IN_RATES[year] || 1.0
   }
 
   const calculateCost = () => {
@@ -147,6 +167,10 @@ export default function CBAMCostSimulator() {
       selectedSector
     )
 
+    const phaseInRate = getPhaseInRate(selectedYear)
+    const grossCost = calculation.totalCost
+    const effectiveCost = grossCost * phaseInRate
+
     setResult({
       product: product.name,
       sector: DEFAULT_EMISSION_FACTORS[selectedSector].name,
@@ -161,7 +185,11 @@ export default function CBAMCostSimulator() {
       emissionsSubjectToCBAM: calculation.emissionsSubjectToCBAM,
       totalEmissions: calculation.totalEmissions,
       pricePerTonne: calculation.co2Price,
-      totalCost: calculation.totalCost,
+      totalCost: grossCost,
+      // FAA
+      phaseInYear: selectedYear,
+      phaseInRate,
+      effectiveCost,
       // Coste sin markup para comparación
       costWithoutMarkup: emissionSource === 'default'
         ? (() => {
@@ -194,6 +222,9 @@ export default function CBAMCostSimulator() {
           co2Price: result.pricePerTonne,
           totalEmissions: result.totalEmissions,
           totalCost: result.totalCost,
+          effectiveCost: result.effectiveCost,
+          phaseInYear: result.phaseInYear,
+          phaseInRate: result.phaseInRate,
           markupApplied: result.markup.pct * 100,
           notes: notes || `${result.sector} - ${result.product}`,
         })
@@ -295,7 +326,7 @@ export default function CBAMCostSimulator() {
           </div>
         </div>
 
-        {/* Row 2: Fuente de emisiones + Año */}
+        {/* Row 2: Fuente de emisiones + Emisión real (si aplica) */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Fuente de emisiones */}
           <div>
@@ -340,7 +371,7 @@ export default function CBAMCostSimulator() {
             </div>
           </div>
 
-          {/* Año / Emisión real */}
+          {/* Emisión real (solo si es fuente real) O Año de importación */}
           <div>
             {emissionSource === 'real' ? (
               <>
@@ -361,23 +392,54 @@ export default function CBAMCostSimulator() {
                 </p>
               </>
             ) : (
-              <>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Año de cálculo</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => { setSelectedYear(parseInt(e.target.value)); setResult(null) }}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500"
-                >
-                  <option value={2026}>2026 — Markup +10%</option>
-                  <option value={2027}>2027 — Markup +20%</option>
-                  <option value={2028}>2028+ — Markup +30% (permanente)</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Penalización C(2025) 8552 por usar valores por defecto
+              <div className="h-full flex items-end">
+                <p className="text-xs text-gray-500 pb-1">
+                  El markup C(2025) 8552 se aplica automáticamente según el año seleccionado
                 </p>
-              </>
+              </div>
             )}
           </div>
+        </div>
+
+        {/* Row 3: Año de importación (siempre visible) */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Año de importación</label>
+          <div className="grid grid-cols-9 gap-1">
+            {Object.entries(CBAM_PHASE_IN_RATES).map(([year, rate]) => {
+              const y = parseInt(year)
+              const isSelected = selectedYear === y
+              const markupInfo = emissionSource === 'default'
+                ? (y <= 2026 ? '+10%' : y <= 2027 ? '+20%' : '+30%')
+                : null
+              return (
+                <button
+                  key={year}
+                  onClick={() => { setSelectedYear(y); setResult(null) }}
+                  className={`px-2 py-3 rounded-xl border-2 text-center transition-all ${
+                    isSelected
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-md'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="text-sm font-bold">{year}</div>
+                  <div className={`text-xs font-medium ${isSelected ? 'text-emerald-600' : 'text-gray-400'}`}>
+                    {(rate * 100).toFixed(1)}%
+                  </div>
+                  {markupInfo && (
+                    <div className={`text-[10px] ${isSelected ? 'text-amber-600' : 'text-gray-400'}`}>
+                      mk {markupInfo}
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Porcentaje CBAM aplicable (phase-in). En {selectedYear}, el importador paga el <strong>{(getPhaseInRate(selectedYear) * 100).toFixed(1)}%</strong> del coste bruto.
+            {emissionSource === 'default' && (
+              <span className="text-amber-600"> Markup por valores por defecto: {getMarkup().label}.</span>
+            )}
+          </p>
         </div>
 
         <button
@@ -421,11 +483,36 @@ export default function CBAMCostSimulator() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-center mb-4">
-                <p className="text-purple-100 mb-1">Coste estimado certificados CBAM</p>
-                <p className="text-5xl font-bold text-white">{formatCurrency(result.totalCost)}</p>
-                <p className="text-purple-200 text-sm mt-2">
-                  {formatNumber(result.totalEmissions, 2)} tCO₂ × {formatCurrency(result.pricePerTonne)}/tCO₂
+              {/* Coste efectivo (con FAA) - prominente */}
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-6 text-center mb-4">
+                <p className="text-emerald-100 mb-1">Coste CBAM efectivo en {result.phaseInYear}</p>
+                <p className="text-5xl font-bold text-white">{formatCurrency(result.effectiveCost)}</p>
+                <p className="text-emerald-200 text-sm mt-2">
+                  Phase-in {result.phaseInYear}: {(result.phaseInRate * 100).toFixed(1)}% del coste bruto
+                </p>
+              </div>
+
+              {/* Desglose FAA */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Coste CBAM bruto (sin FAA):</span>
+                    <span className="font-bold text-gray-800">{formatCurrency(result.totalCost)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-emerald-700">
+                    <span>Ajuste asignación gratuita (FAA):</span>
+                    <span className="font-bold">
+                      -{((1 - result.phaseInRate) * 100).toFixed(1)}% (año {result.phaseInYear})
+                    </span>
+                  </div>
+                  <hr />
+                  <div className="flex justify-between items-center text-base">
+                    <span className="font-bold text-gray-800">Coste CBAM efectivo:</span>
+                    <span className="font-bold text-emerald-700 text-lg">{formatCurrency(result.effectiveCost)}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-3">
+                  {formatNumber(result.totalEmissions, 2)} tCO₂ × {formatCurrency(result.pricePerTonne)}/tCO₂ × {(result.phaseInRate * 100).toFixed(1)}%
                 </p>
               </div>
 
@@ -538,30 +625,75 @@ export default function CBAMCostSimulator() {
               </div>
             )}
 
-            {/* Disclaimer FAA */}
+            {/* Proyección 2026-2034 */}
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowProjection(!showProjection)}
+                className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📈</span>
+                  <span className="font-bold text-gray-800">Ver proyección 2026-2034</span>
+                </div>
+                <span className={`text-gray-400 transition-transform ${showProjection ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              {showProjection && (
+                <div className="px-5 pb-5 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mt-3 mb-4">
+                    Proyección con el mismo volumen ({formatNumber(result.tonnes, 0)} t) e intensidad de emisiones
+                  </p>
+                  <div className="space-y-2">
+                    {Object.entries(CBAM_PHASE_IN_RATES).map(([year, rate]) => {
+                      const projectedCost = result.totalCost * rate
+                      const barWidth = Math.max(2, rate * 100)
+                      const isCurrentYear = parseInt(year) === result.phaseInYear
+                      return (
+                        <div key={year} className={`flex items-center gap-3 p-2 rounded-lg ${isCurrentYear ? 'bg-emerald-50 border border-emerald-200' : ''}`}>
+                          <span className={`text-sm font-mono w-10 shrink-0 ${isCurrentYear ? 'font-bold text-emerald-700' : 'text-gray-600'}`}>
+                            {year}
+                          </span>
+                          <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${isCurrentYear ? 'bg-emerald-500' : 'bg-gradient-to-r from-purple-400 to-pink-400'}`}
+                              style={{ width: `${barWidth}%` }}
+                            />
+                          </div>
+                          <span className={`text-sm w-28 text-right shrink-0 ${isCurrentYear ? 'font-bold text-emerald-700' : 'font-medium text-gray-700'}`}>
+                            {formatCurrency(projectedCost)}
+                          </span>
+                          <span className={`text-xs w-14 text-right shrink-0 ${isCurrentYear ? 'text-emerald-600 font-bold' : 'text-gray-400'}`}>
+                            ({(rate * 100).toFixed(1)}%)
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p className="text-xs text-purple-800">
+                      <strong>En 2034</strong> se paga el 100% — de {formatCurrency(result.effectiveCost)} hoy a {formatCurrency(result.totalCost)} en 2034.
+                      La diferencia es <strong>{formatCurrency(result.totalCost - result.effectiveCost)}</strong> de exposición creciente.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Info FAA */}
             <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-5">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">ℹ️</span>
-                <div>
-                  <h4 className="font-bold text-blue-900 mb-2">
-                    Sobre el ajuste por asignación gratuita (2026-2033)
-                  </h4>
-                  <div className="text-sm text-blue-800 space-y-2">
-                    <p>
-                      <strong>Este cálculo muestra el coste base</strong> usando la fórmula:
-                      <span className="block font-mono text-xs bg-blue-100 p-2 rounded mt-1">
-                        (Emisiones{emissionSource === 'default' ? ' + Markup' : ''} - Benchmark UE) × Precio CO₂
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Durante 2026-2033 habrá una reducción progresiva</strong> en el
-                      número de certificados a entregar (Free Allocation Adjustment - FAA).
-                    </p>
-                    <p className="text-blue-900 font-medium">
-                      💡 Este cálculo representa el <strong>coste máximo</strong> (100% aplicable
-                      desde 2034). En años anteriores pagarás menos.
-                    </p>
-                  </div>
+                <div className="text-sm text-blue-800 space-y-2">
+                  <h4 className="font-bold text-blue-900">Ajuste por Asignación Gratuita (FAA)</h4>
+                  <p>
+                    Durante 2026-2034, el coste CBAM se introduce progresivamente. En 2026, solo el 2,5%
+                    del coste recae sobre el importador, aumentando gradualmente hasta el 100% en 2034.
+                    Esto refleja la eliminación progresiva de las asignaciones gratuitas del EU ETS para sectores CBAM.
+                  </p>
+                  <p className="text-blue-900 font-medium">
+                    Este cálculo ya incluye el ajuste FAA para el año {result.phaseInYear} ({(result.phaseInRate * 100).toFixed(1)}%).
+                  </p>
                 </div>
               </div>
             </div>
@@ -575,7 +707,7 @@ export default function CBAMCostSimulator() {
                     <li>• Esta es una <strong>estimación orientativa</strong></li>
                     <li>• Las emisiones reales dependen del proceso productivo de cada instalación</li>
                     <li>• El precio EU ETS fluctúa diariamente</li>
-                    <li>• No incluye el ajuste por asignación gratuita (FAA) aplicable 2026-2033</li>
+                    <li>• El ajuste FAA aplicado es una aproximación basada en el phase-in oficial</li>
                     <li>• Consulte con un asesor especializado para cálculos definitivos</li>
                   </ul>
                 </div>
