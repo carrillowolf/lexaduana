@@ -67,6 +67,24 @@ const CBAM_PHASE_IN_RATES = {
   2034: 1.000,
 }
 
+// Precios oficiales trimestrales de certificados CBAM 2026
+// Media trimestral de los precios de subasta del EU ETS
+// Fuente: Comisión Europea — actualizar manualmente cuando se publiquen
+// Para actualizar: cambiar null por el precio en €/tCO₂ y el panel se actualizará solo
+const CBAM_QUARTERLY_PRICES_2026 = {
+  Q1: null,  // Se publica 7 abril 2026
+  Q2: null,  // Se publica 6 julio 2026
+  Q3: null,  // Se publica 5 octubre 2026
+  Q4: null,  // Se publica 4 enero 2027
+}
+
+const CBAM_QUARTERLY_PUBLISH_DATES = {
+  Q1: '7 de abril de 2026',
+  Q2: '6 de julio de 2026',
+  Q3: '5 de octubre de 2026',
+  Q4: '4 de enero de 2027',
+}
+
 // Precio EU ETS fallback
 const EU_ETS_PRICE_FALLBACK = {
   price: 68.50,
@@ -441,6 +459,69 @@ export default function CBAMCostSimulator() {
             )}
           </p>
         </div>
+
+        {/* Panel de precios oficiales trimestrales CBAM 2026 — solo visible si año = 2026 */}
+        {selectedYear === 2026 && (
+          <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">📊</span>
+              <h4 className="font-bold text-blue-900">Precios oficiales de certificados CBAM 2026</h4>
+            </div>
+            <p className="text-xs text-blue-700 mb-4">
+              La Comisión Europea publica trimestralmente el precio de los certificados CBAM, calculado como la media de los precios de subasta del EU ETS.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {Object.entries(CBAM_QUARTERLY_PRICES_2026).map(([quarter, price]) => {
+                const hasPrice = price !== null && price !== undefined
+                return (
+                  <div
+                    key={quarter}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                      hasPrice
+                        ? 'bg-white border-emerald-300 shadow-sm'
+                        : 'bg-white/60 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block w-2 h-2 rounded-full ${hasPrice ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                        <span className="text-sm font-bold text-gray-800">{quarter} 2026</span>
+                      </div>
+                      {hasPrice ? (
+                        <p className="text-lg font-bold text-emerald-700 ml-4 mt-1">
+                          {formatNumber(price)} €/tCO₂
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500 ml-4 mt-1">
+                          Pendiente — se publica el {CBAM_QUARTERLY_PUBLISH_DATES[quarter]}
+                        </p>
+                      )}
+                    </div>
+                    {hasPrice && (
+                      <button
+                        onClick={() => setEtsPrice({ price: price, date: new Date().toISOString(), source: `Precio oficial CBAM ${quarter} 2026` })}
+                        className="ml-3 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                        title={`Usar ${formatNumber(price)} €/tCO₂ como precio EUA en la calculadora`}
+                      >
+                        Usar este precio
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            {Object.values(CBAM_QUARTERLY_PRICES_2026).some(p => p !== null) && (
+              <p className="text-xs text-blue-600 mt-3">
+                💡 Pulsa &quot;Usar este precio&quot; para aplicar el precio oficial del trimestre a tu cálculo.
+              </p>
+            )}
+            {Object.values(CBAM_QUARTERLY_PRICES_2026).every(p => p === null) && (
+              <p className="text-xs text-blue-600 mt-3">
+                🕐 Aún no se ha publicado ningún precio oficial. El primer precio se espera el 7 de abril de 2026.
+              </p>
+            )}
+          </div>
+        )}
 
         <button
           onClick={calculateCost}

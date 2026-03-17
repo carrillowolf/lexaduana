@@ -70,6 +70,7 @@ Migración total de 14 archivos Excel EUR-Lex oficiales a 14 tablas Supabase:
 ### 🌍 Mejoras CBAM (Marzo 2026)
 - **Paquete regulatorio Diciembre 2025** integrado: C(2025) 8552, C(2025) 8560, COM(2025) 989
 - **Precios de certificados**: Media trimestral 2026, semanal desde 2027
+- **Panel precios oficiales Q1-Q4 2026**: Muestra precios publicados por la Comisión con botón "Usar este precio"
 - **Penalización valores por defecto**: Markup progresivo (+10%/+20%/+30%)
 - **Extensión downstream 2028**: ~180 nuevos códigos CN previstos
 - **Guía "CBAM para Principiantes"**: Página `/cbam/guia` con explicación en 5 minutos
@@ -148,6 +149,7 @@ Mecanismo de Ajuste en Frontera por Carbono - **Obligatorio desde 01/01/2026**
 - **Selector de año visual**: 9 botones (2026-2034) con % phase-in y markup
 - **Desglose bruto/efectivo**: Coste bruto, ajuste FAA y coste efectivo
 - **Proyección 2026-2034**: Gráfico de barras colapsable con coste proyectado por año
+- **Panel precios oficiales trimestrales**: Precios CBAM 2026 publicados por la Comisión Europea con botón "Usar este precio"
 - **Avisos legales**: Estimación orientativa, consultar experto
 
 #### 🆕 Precios de Certificados (Dic 2025)
@@ -156,6 +158,20 @@ Según Reglamento C(2025) 8560:
 |---------|-------------|------------|
 | 2026 | Media trimestral EU ETS | 4 precios/año |
 | 2027+ | Media semanal EU ETS | ~52 precios/año |
+
+#### 🆕 Panel de Precios Oficiales Trimestrales 2026
+Panel integrado en la calculadora que muestra los precios oficiales de certificados CBAM publicados por la Comisión Europea:
+| Trimestre | Fecha de publicación | Estado |
+|-----------|---------------------|--------|
+| Q1 2026 | 7 abril 2026 | Pendiente |
+| Q2 2026 | 6 julio 2026 | Pendiente |
+| Q3 2026 | 5 octubre 2026 | Pendiente |
+| Q4 2026 | 4 enero 2027 | Pendiente |
+
+- **Visible solo en año 2026**: Se oculta automáticamente si se selecciona otro año
+- **Actualización manual**: Cambiar `null` por precio en `CBAM_QUARTERLY_PRICES_2026` en `CBAMCostSimulator.js`
+- **Botón "Usar este precio"**: Aplica el precio oficial al campo de precio EUA de la calculadora
+- **Sin API externa**: No requiere fetch ni scraping — los precios se actualizan en el código
 
 #### 🆕 Penalización Valores por Defecto (Dic 2025)
 Markup progresivo según C(2025) 8552 si no se aportan emisiones reales verificadas:
