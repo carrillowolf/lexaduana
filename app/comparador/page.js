@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import HSCodeAutocomplete from '@/components/HSCodeAutocomplete';
 import Link from 'next/link'
+import { trackEvent } from '@/lib/analytics'
 
 export default function ComparadorPage() {
     const [hsCode, setHsCode] = useState('');
@@ -116,6 +117,7 @@ export default function ComparadorPage() {
 
             if (response.ok) {
                 setResults(data);
+                trackEvent('compare_origins', { hs_code: hsCode, countries: selectedCountries.length })
             } else {
                 alert(data.error || 'Error al comparar');
             }

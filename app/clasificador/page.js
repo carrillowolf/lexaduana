@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { CBAMAlert } from '@/components/CBAMAlert'
+import { trackEvent } from '@/lib/analytics'
 
 export default function ClasificadorPage() {
   const [user, setUser] = useState(null)
@@ -74,6 +75,7 @@ export default function ClasificadorPage() {
       }
 
       setResult(data)
+      trackEvent('classify_product', { confidence: data.classification?.confidence })
     } catch (err) {
       setError(err.message)
     } finally {

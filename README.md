@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.2.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.2.1-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -278,11 +278,13 @@ Propuesta COM(2025) 989 - Aplicación prevista 01/01/2028:
 
 ### 🎨 Experiencia de Usuario
 - **Diseño premium**: Colores corporativos (#0A3D5C navy, #F4C542 gold)
-- **Responsive**: Optimizado móvil y desktop
+- **Responsive**: Optimizado móvil y desktop (Tailwind CSS v4)
+- **Landing como suite**: 3 herramientas principales con igual peso visual (no calculadora embebida)
 - **Quick Access Buttons**: Navegación rápida entre herramientas
 - **Autocomplete inteligente**: Búsqueda de códigos HS
 - **Badges visuales**: Prioridad de alertas con iconos
 - **Export PDF**: Resultados individuales
+- **Google Analytics 4**: Tracking de eventos por herramienta (lib/analytics.js)
 
 ---
 
@@ -317,8 +319,8 @@ lexaduana/
 │   ├── favoritos/                # Gestión favoritos
 │   ├── tipos-cambio/             # Tipos de cambio
 │   ├── glosario/                 # Glosario términos
-│   ├── page.js                   # Landing page
-│   └── layout.js                 # Layout global
+│   ├── page.js                   # Landing page (Hero + Features + CTA inline)
+│   └── layout.js                 # Layout global (SEO, GA4, Schema.org)
 ├── 📁 components/                # Componentes React
 │   ├── UserMenu.js               # Menú autenticación
 │   ├── HSCodeAutocomplete.js     # Búsqueda HS
@@ -326,8 +328,8 @@ lexaduana/
 │   ├── ExchangeRateBanner.js     # Banner tipos cambio
 │   ├── CBAMAlert.js              # Alertas CBAM
 │   ├── CBAMCostSimulator.js      # Simulador costes CBAM
-│   ├── HeroSection.js            # Sección hero
-│   └── FeaturesSection.js        # Características
+│   └── cbam/
+│       └── CBAMVerifier.js       # Verificador CBAM interactivo
 ├── 📁 lib/                       # Utilidades
 │   ├── supabase.js               # Cliente Supabase server
 │   ├── supabase-browser.js       # Cliente Supabase client
@@ -338,7 +340,8 @@ lexaduana/
 │   ├── taricTranslations.js      # Traducciones estáticas (fallback)
 │   ├── vatCalculator.js          # Lógica IVA variable
 │   ├── csvParser.js              # Parser CSV bulk
-│   └── excelExporter.js          # Exportador Excel
+│   ├── excelExporter.js          # Exportador Excel
+│   └── analytics.js              # GA4 trackEvent helper
 ├── 📁 scripts/                   # Scripts migración TARIC
 │   ├── bloque1-schema.sql        # Schema bloque 1 (master data)
 │   ├── loadBlock1.js             # Carga bloque 1 (5 tablas)
@@ -539,9 +542,34 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 
 ---
 
+### ✅ Completado (v5.2.1 - Marzo 2026)
+
+#### 🎨 Rediseño Landing Page
+- **Reposicionamiento de marca**: De "calculadora de aranceles" a "suite profesional de comercio exterior"
+- **Nuevo Hero centrado**: Tagline gold + headline + subtítulo + 2 CTAs (Empezar gratis / Ver herramientas)
+- **3 tarjetas principales iguales**: Calculadora TARIC, Clasificador IA y Módulo CBAM con mismo peso visual
+- **3 tarjetas secundarias compactas**: Comparador, Despachos (beta), Tipos de Cambio
+- **Banner CBAM urgencia**: Aviso de obligatoriedad desde enero 2026
+- **Barra de confianza**: "Datos EUR-Lex oficiales · Actualización mensual · 100+ profesionales"
+- **Scroll suave**: Botón "Ver herramientas" navega a sección de herramientas
+- **Calculadora eliminada de landing**: La landing es puerta de entrada, no herramienta
+- **Footer actualizado**: Subtítulo "Suite Profesional de Comercio Exterior"
+
+#### 📊 Google Analytics 4 - Eventos Custom
+- **GA4 ya integrado** con ID G-PYT83VPMB7 en layout.js
+- **Helper `lib/analytics.js`**: Función `trackEvent()` reutilizable
+- **Eventos trackeados**: `calculate_tariff`, `classify_product`, `cbam_check`, `compare_origins`
+- **Páginas instrumentadas**: calculadora, clasificador, CBAMVerifier, comparador
+
+#### 🔍 SEO Actualizado
+- **Title**: "LexAduana | Suite Profesional de Comercio Exterior"
+- **Description**: Menciona las 3 herramientas principales + EUR-Lex
+- **Open Graph / Twitter Cards**: Actualizados con nuevo posicionamiento
+- **Schema.org**: Descripción actualizada como suite de herramientas
+
 ### 🔜 Próximamente (v5.3 - Q2 2026)
 
-#### 🎨 Renovación Frontend
+#### 🎨 Renovación Frontend (páginas internas)
 - Visualización de footnotes y certificados enriquecidos
 - Códigos adicionales en alertas anti-dumping
 - Indicador de aranceles país-específicos
@@ -777,4 +805,4 @@ Para consultas, colaboraciones o reportar bugs:
 **Desarrollado con ❤️ por Carlos para LexAduana**
 
 *Última actualización: Marzo 2026*
-*Versión: 5.2.0*
+*Versión: 5.2.1*

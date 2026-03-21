@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { checkCBAM } from '@/lib/cbamData'
+import { trackEvent } from '@/lib/analytics'
 
 /**
  * Verificador CBAM interactivo
@@ -22,6 +23,7 @@ export default function CBAMVerifier({ threshold }) {
     setTimeout(() => {
       const cbamResult = checkCBAM(hsCode)
       setResult(cbamResult)
+      trackEvent('cbam_check', { cn_code: hsCode, affected: cbamResult?.affected })
       setChecking(false)
     }, 300)
   }

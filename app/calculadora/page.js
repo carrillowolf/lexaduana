@@ -11,6 +11,7 @@ import FavoriteButton from '../../components/FavoriteButton'
 import Link from 'next/link'
 import { CBAMAlert } from '../../components/CBAMAlert'
 import ExchangeRateBanner from '../../components/ExchangeRateBanner'
+import { trackEvent } from '@/lib/analytics'
 
 export default function Home() {
   const [user, setUser] = useState(null)
@@ -132,6 +133,7 @@ export default function Home() {
       }
 
       setResult(data.data)
+      trackEvent('calculate_tariff', { hs_code: specificCode || hsCode, origin: countryCode })
 
       // Guardar cálculo si el usuario está logueado
       try {

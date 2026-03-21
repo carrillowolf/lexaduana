@@ -5,37 +5,37 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Lexaduana - Calculadora TARIC Profesional | Aranceles UE 2025",
-  description: "Calcula aranceles e IVA para importaciones en la UE. Base de datos actualizada 2025 con +8,600 códigos HS y 70+ acuerdos internacionales. Gratis y profesional.",
-  keywords: "TARIC, aranceles, aduanas, importación, UE, calculadora aduanera, códigos HS, IVA importación, comercio internacional",
-  authors: [{ name: "Lexaduana" }],
-  creator: "Lexaduana",
-  publisher: "Lexaduana",
-  
+  title: "LexAduana | Suite Profesional de Comercio Exterior",
+  description: "Plataforma de herramientas aduaneras para importaciones a la UE. Calculadora TARIC, clasificador con IA y modulo CBAM. Datos oficiales EUR-Lex actualizados mensualmente.",
+  keywords: "aduanas, TARIC, aranceles, importaciones, CBAM, clasificacion arancelaria, comercio exterior, UE, calculadora aduanera, codigos HS, IVA importacion",
+  authors: [{ name: "LexAduana" }],
+  creator: "LexAduana",
+  publisher: "LexAduana",
+
   openGraph: {
-    title: "Lexaduana - Calculadora TARIC Profesional",
-    description: "La calculadora de aranceles más completa para profesionales del comercio internacional. Actualizada 2025.",
+    title: "LexAduana | Suite Profesional de Comercio Exterior",
+    description: "Calcula aranceles, clasifica productos con IA y gestiona el CBAM. Datos oficiales EUR-Lex actualizados mensualmente.",
     url: "https://lexaduana.es",
-    siteName: "Lexaduana",
+    siteName: "LexAduana",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Lexaduana - Calculadora TARIC",
+        alt: "LexAduana - Suite Profesional de Comercio Exterior",
       }
     ],
     locale: "es_ES",
     type: "website",
   },
-  
+
   twitter: {
     card: "summary_large_image",
-    title: "Lexaduana - Calculadora TARIC Profesional",
-    description: "Calcula aranceles e IVA para importaciones en la UE. +8,600 códigos actualizados.",
+    title: "LexAduana | Suite Profesional de Comercio Exterior",
+    description: "Calcula aranceles, clasifica productos con IA y gestiona el CBAM. 390K+ registros EUR-Lex oficiales.",
     images: ["/og-image.png"],
   },
-  
+
   robots: {
     index: true,
     follow: true,
@@ -78,8 +78,8 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
-              name: "Lexaduana",
-              description: "Calculadora profesional de aranceles TARIC para importaciones en la UE",
+              name: "LexAduana",
+              description: "Suite profesional de herramientas aduaneras: calculadora TARIC, clasificador IA y modulo CBAM para importaciones a la UE",
               url: "https://lexaduana.es",
               applicationCategory: "FinanceApplication",
               operatingSystem: "Web",

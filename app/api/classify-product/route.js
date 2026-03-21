@@ -111,11 +111,43 @@ export async function POST(request) {
     // =========================================
     const keywords = description.toLowerCase().split(' ').filter(w => w.length > 3).slice(0, 5)
 
+    // Fase 1: Búsqueda por palabras clave en descripciones (columnas correctas)
     const { data: relatedCodes } = await supabase
       .from('descriptions')
-      .select('hs_code, description_es')
-      .or(keywords.map(k => `description_es.ilike.%${k}%`).join(','))
+      .select('goods_code, description')
+      .or(keywords.map(k => `description.ilike.%${k}%`).join(','))
       .limit(50)
+
+    // Fase 2: Identificar capítulos relevantes y cargar TODOS los códigos declarables
+    let declarableCodesContext = ''
+    let chapterContext = ''
+    if (relatedCodes && relatedCodes.length > 0) {
+      const chapters = [...new Set(relatedCodes.map(c => c.goods_code.substring(0, 2)))]
+      chapterContext = `\nCapítulos relevantes detectados: ${chapters.join(', ')}`
+
+      // Cargar todos los códigos declarables (is_leaf=true) de esos capítulos
+      const chapterFilters = chapters.map(ch => `goods_code.like.${ch}%`).join(',')
+      const { data: declarableCodes } = await supabase
+        .from('declarable_codes')
+        .select('goods_code')
+        .eq('is_leaf', true)
+        .or(chapterFilters)
+        .order('goods_code')
+
+      if (declarableCodes && declarableCodes.length > 0) {
+        // Obtener descripciones para los códigos declarables
+        const declCodes = declarableCodes.map(d => d.goods_code)
+        const { data: declDescs } = await supabase
+          .from('descriptions')
+          .select('goods_code, description')
+          .in('goods_code', declCodes)
+
+        const descMap = new Map((declDescs || []).map(d => [d.goods_code, d.description]))
+
+        declarableCodesContext = `\nCÓDIGOS DECLARABLES VÁLIDOS EN NUESTRA BASE DE DATOS (${declCodes.length} códigos en capítulos ${chapters.join(', ')}):
+${declCodes.map(code => `- ${code}: ${descMap.get(code) || '(sin descripción)'}`).join('\n')}`
+      }
+    }
 
     // BUSCAR EJEMPLOS DE CLASIFICACIÓN VERIFICADOS
     let verifiedExamplesContext = ''
@@ -138,16 +170,9 @@ IMPORTANTE: Si el producto a clasificar es similar a estos ejemplos, usar el có
       }
     }
 
-    // Buscar por capítulo si tenemos info del producto
-    let chapterContext = ''
-    if (relatedCodes && relatedCodes.length > 0) {
-      const chapters = [...new Set(relatedCodes.map(c => c.hs_code.substring(0, 2)))]
-      chapterContext = `\nCapítulos relevantes detectados: ${chapters.join(', ')}`
-    }
-
-    // Crear contexto con códigos relacionados
+    // Crear contexto con códigos relacionados por keyword
     const hsContext = relatedCodes?.slice(0, 15).map(h =>
-      `- ${h.hs_code}: ${h.description_es}`
+      `- ${h.goods_code}: ${h.description}`
     ).join('\n') || 'No se encontraron códigos similares en búsqueda inicial.'
 
     // =========================================
@@ -170,8 +195,11 @@ DATOS ADICIONALES:
 ${countryCode ? `- País de origen: ${countryCode}` : '- País de origen: No especificado'}
 ${cifValue ? `- Valor estimado: ${cifValue}€` : '- Valor: No especificado'}${chapterContext}
 ${verifiedExamplesContext}
-CÓDIGOS HS RELACIONADOS EN BASE DE DATOS:
+CÓDIGOS HS RELACIONADOS (búsqueda por palabras clave):
 ${hsContext}
+${declarableCodesContext}
+
+⚠️ RESTRICCIÓN CRÍTICA: Solo puedes sugerir códigos que aparezcan en la lista de "CÓDIGOS DECLARABLES VÁLIDOS" de arriba. Si ningún código encaja perfectamente, elige el más cercano de la lista y explica las limitaciones. NUNCA inventes códigos que no estén en la lista.
 
 METODOLOGÍA DE CLASIFICACIÓN:
 1. **Identificar función principal**: ¿Cuál es el uso/propósito primario?
@@ -266,26 +294,44 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
     // =========================================
     // 9. VALIDAR CÓDIGO EN BASE DE DATOS
     // =========================================
-    const { data: validCode } = await supabase
+    // Validar código principal contra declarable_codes (is_leaf=true)
+    const { data: validDeclarable } = await supabase
+      .from('declarable_codes')
+      .select('goods_code, is_leaf')
+      .eq('goods_code', classification.primaryCode)
+      .eq('is_leaf', true)
+      .maybeSingle()
+
+    // También obtener arancel si existe
+    const { data: validTariff } = await supabase
       .from('tariffs')
-      .select('hs_code, duty_rate')
-      .eq('hs_code', classification.primaryCode)
-      .single()
+      .select('goods_code, duty')
+      .eq('goods_code', classification.primaryCode)
+      .maybeSingle()
+
+    const validCode = validDeclarable || validTariff
 
     // Verificar códigos alternativos
     const validatedAlternatives = []
     if (classification.alternativeCodes) {
       for (const alt of classification.alternativeCodes) {
-        const { data: altValid } = await supabase
-          .from('tariffs')
-          .select('hs_code, duty_rate')
-          .eq('hs_code', alt.code)
-          .single()
+        const { data: altDeclarable } = await supabase
+          .from('declarable_codes')
+          .select('goods_code, is_leaf')
+          .eq('goods_code', alt.code)
+          .eq('is_leaf', true)
+          .maybeSingle()
 
-        if (altValid) {
+        const { data: altTariff } = await supabase
+          .from('tariffs')
+          .select('goods_code, duty')
+          .eq('goods_code', alt.code)
+          .maybeSingle()
+
+        if (altDeclarable || altTariff) {
           validatedAlternatives.push({
             ...alt,
-            dutyRate: altValid.duty_rate,
+            dutyRate: altTariff?.duty,
             validated: true
           })
         } else {
@@ -320,7 +366,7 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
       classification: {
         ...classification,
         primaryCodeExists: !!validCode,
-        primaryCodeDutyRate: validCode?.duty_rate,
+        primaryCodeDutyRate: validTariff?.duty,
         alternativeCodes: validatedAlternatives,
         recommendedOrigins: classification.recommendedOrigins || [],
         additionalInfo: classification.additionalInfo || null
