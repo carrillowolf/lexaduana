@@ -1,0 +1,1478 @@
+[
+  {
+    "code": "AF",
+    "name": "Afghanistan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AL",
+    "name": "Albania",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "DZ",
+    "name": "Algeria",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AS",
+    "name": "American Samoa",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AD",
+    "name": "Andorra",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AO",
+    "name": "Angola",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AI",
+    "name": "Anguilla",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AQ",
+    "name": "Antarctica",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AG",
+    "name": "Antigua and Barbuda",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AR",
+    "name": "Argentina",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AM",
+    "name": "Armenia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AW",
+    "name": "Aruba",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AU",
+    "name": "Australia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AT",
+    "name": "Austria",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "AZ",
+    "name": "Azerbaijan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BS",
+    "name": "Bahamas",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BH",
+    "name": "Bahrain",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BD",
+    "name": "Bangladesh",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BB",
+    "name": "Barbados",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BY",
+    "name": "Belarus",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BE",
+    "name": "Belgium",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "BZ",
+    "name": "Belize",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BJ",
+    "name": "Benin",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BM",
+    "name": "Bermuda",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BT",
+    "name": "Bhutan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BO",
+    "name": "Bolivia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BQ",
+    "name": "Bonaire, Sint Eustatius and Saba",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BA",
+    "name": "Bosnia and Herzegovina",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BW",
+    "name": "Botswana",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BV",
+    "name": "Bouvet Island",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BR",
+    "name": "Brazil",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "IO",
+    "name": "Bristish Indian Ocean Territory",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BN",
+    "name": "Brunei Darussalam",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BG",
+    "name": "Bulgaria",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "BF",
+    "name": "Burkina Faso",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BI",
+    "name": "Burundi",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KH",
+    "name": "Cambodia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CM",
+    "name": "Cameroon",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CA",
+    "name": "Canada",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CV",
+    "name": "Cape Verde",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KY",
+    "name": "Cayman Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CF",
+    "name": "Central African Republic",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "XC",
+    "name": "Ceuta",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "TD",
+    "name": "Chad",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CL",
+    "name": "Chile",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CN",
+    "name": "China",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CX",
+    "name": "Christmas Island",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CC",
+    "name": "Cocos Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CO",
+    "name": "Colombia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KM",
+    "name": "Comoros",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CD",
+    "name": "Congo, Democratic Republic of",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CG",
+    "name": "Congo, Republic of",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CK",
+    "name": "Cook Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CR",
+    "name": "Costa Rica",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CI",
+    "name": "Côte d'Ivoire",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "HR",
+    "name": "Croatia",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "CU",
+    "name": "Cuba",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CW",
+    "name": "Curaçao",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "CY",
+    "name": "Cyprus",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "CZ",
+    "name": "Czech Republic",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "DK",
+    "name": "Denmark",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "DJ",
+    "name": "Dijibouti",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "DM",
+    "name": "Dominica",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "DO",
+    "name": "Dominican Republic",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "EC",
+    "name": "Ecuador",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "EG",
+    "name": "Egypt",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SV",
+    "name": "El Salvador",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GQ",
+    "name": "Equatorial Guinea",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ER",
+    "name": "Eritrea",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "EE",
+    "name": "Estonia",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "SZ",
+    "name": "Eswatini",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ET",
+    "name": "Ethiopia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "FK",
+    "name": "Falkland Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "FO",
+    "name": "Faroe Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "FJ",
+    "name": "Fiji",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "FI",
+    "name": "Finland",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "FR",
+    "name": "France",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "PF",
+    "name": "French Polynesia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TF",
+    "name": "French Southern Territories",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GA",
+    "name": "Gabon",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GM",
+    "name": "Gambia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GE",
+    "name": "Georgia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "DE",
+    "name": "Germany",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "GH",
+    "name": "Ghana",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GI",
+    "name": "Gibraltar",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GR",
+    "name": "Greece",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "GL",
+    "name": "Greenland",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GD",
+    "name": "Grenada",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GU",
+    "name": "Guam",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GT",
+    "name": "Guatemala",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GG",
+    "name": "Guernsey",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GN",
+    "name": "Guinea",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GW",
+    "name": "Guinea-Bissau",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GY",
+    "name": "Guyana",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "HT",
+    "name": "Haiti",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "HM",
+    "name": "Heard Island and McDonald Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "QP",
+    "name": "High seas (Maritime domain outside of territorial waters)",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "HN",
+    "name": "Honduras",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "HK",
+    "name": "Hong Kong",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "HU",
+    "name": "Hungary",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "IS",
+    "name": "Iceland",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "IN",
+    "name": "India",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ID",
+    "name": "Indonesia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "IR",
+    "name": "Iran",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "IQ",
+    "name": "Iraq",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "IE",
+    "name": "Ireland",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "IM",
+    "name": "Isle of Man",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "IL",
+    "name": "Israel",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "IT",
+    "name": "Italy",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "JM",
+    "name": "Jamaica",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "JP",
+    "name": "Japan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "JE",
+    "name": "Jersey",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "JO",
+    "name": "Jordan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KZ",
+    "name": "Kazakhstan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KE",
+    "name": "Kenya",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KI",
+    "name": "Kiribati",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KP",
+    "name": "Korea, Democratic People's Republic of",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KR",
+    "name": "Korea, Republic of",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "XK",
+    "name": "Kosovo",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KW",
+    "name": "Kuwait",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KG",
+    "name": "Kyrgyzstan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LA",
+    "name": "Laos",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LV",
+    "name": "Latvia",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "LB",
+    "name": "Lebanon",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LS",
+    "name": "Lesotho",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LR",
+    "name": "Liberia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LY",
+    "name": "Libya",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LI",
+    "name": "Liechtenstein",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "LT",
+    "name": "Lithuania",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "LU",
+    "name": "Luxembourg",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "MO",
+    "name": "Macao",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MG",
+    "name": "Madagascar",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MW",
+    "name": "Malawi",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MY",
+    "name": "Malaysia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MV",
+    "name": "Maldives",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ML",
+    "name": "Mali",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MT",
+    "name": "Malta",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "MH",
+    "name": "Marshall Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MR",
+    "name": "Mauritania",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MU",
+    "name": "Mauritius",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "XL",
+    "name": "Melilla",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "MX",
+    "name": "Mexico",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "FM",
+    "name": "Micronesia, Federated States of",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MD",
+    "name": "Moldova",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MC",
+    "name": "Monaco",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "MN",
+    "name": "Mongolia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ME",
+    "name": "Montenegro",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MS",
+    "name": "Montserrat",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MA",
+    "name": "Morocco",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MZ",
+    "name": "Mozambique",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MM",
+    "name": "Myanmar",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NA",
+    "name": "Namibia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NR",
+    "name": "Nauru",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NP",
+    "name": "Nepal",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NL",
+    "name": "Netherlands",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "NC",
+    "name": "New Caledonia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NZ",
+    "name": "New Zealand",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NI",
+    "name": "Nicaragua",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NE",
+    "name": "Niger",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NG",
+    "name": "Nigeria",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NU",
+    "name": "Niue",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NF",
+    "name": "Norfolk Island",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MK",
+    "name": "North Macedonia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "MP",
+    "name": "Northern Mariana Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "NO",
+    "name": "Norway",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "PS",
+    "name": "Occupied Palestinian Territory",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "OM",
+    "name": "Oman",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PK",
+    "name": "Pakistan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PW",
+    "name": "Palau",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PA",
+    "name": "Panama",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PG",
+    "name": "Papua New Guinea",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PY",
+    "name": "Paraguay",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PE",
+    "name": "Peru",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PH",
+    "name": "Philippines",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PN",
+    "name": "Pitcairn",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PL",
+    "name": "Poland",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "PT",
+    "name": "Portugal",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "PR",
+    "name": "Puerto Rico",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "QA",
+    "name": "Qatar",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "RO",
+    "name": "Romania",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "RU",
+    "name": "Russian Federation",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "RW",
+    "name": "Rwanda",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "BL",
+    "name": "Saint Barthélemy",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SH",
+    "name": "Saint Helena, Ascension and Tristan da Cunha",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VC",
+    "name": "Saint Vincent and the Grenadines",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "WS",
+    "name": "Samoa",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SM",
+    "name": "San Marino",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "ST",
+    "name": "Sao Tome and Principe",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SA",
+    "name": "Saudi Arabia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SN",
+    "name": "Senegal",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "RS",
+    "name": "Serbia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SC",
+    "name": "Seychelles",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SL",
+    "name": "Sierra Leone",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SG",
+    "name": "Singapore",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SX",
+    "name": "Sint Maarten (Dutch part)",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SK",
+    "name": "Slovakia",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "SI",
+    "name": "Slovenia",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "SB",
+    "name": "Solomon Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SO",
+    "name": "Somalia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ZA",
+    "name": "South Africa",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GS",
+    "name": "South Georgia and South Sandwich",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SS",
+    "name": "South Sudan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ES",
+    "name": "Spain",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "LK",
+    "name": "Sri Lanka",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "KN",
+    "name": "St Kitts and Nevis",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "LC",
+    "name": "St Lucia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "PM",
+    "name": "St Pierre and Miquelon",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SD",
+    "name": "Sudan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SR",
+    "name": "Suriname",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "SE",
+    "name": "Sweden",
+    "cbamApplies": false,
+    "isEUMember": true
+  },
+  {
+    "code": "CH",
+    "name": "Switzerland",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "SY",
+    "name": "Syria",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TW",
+    "name": "Taiwan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TJ",
+    "name": "Tajikistan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TZ",
+    "name": "Tanzania",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TH",
+    "name": "Thailand",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TL",
+    "name": "Timor-Leste",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TG",
+    "name": "Togo",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TK",
+    "name": "Tokelau",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TO",
+    "name": "Tonga",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TT",
+    "name": "Trinidad and Tobago",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TN",
+    "name": "Tunisia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TR",
+    "name": "Türkiye",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TM",
+    "name": "Turkmenistan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TC",
+    "name": "Turks and Caicos Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "TV",
+    "name": "Tuvalu",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "UG",
+    "name": "Uganda",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "UA",
+    "name": "Ukraine",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "AE",
+    "name": "United Arab Emirates",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GB",
+    "name": "United Kingdom (excluding Northern Ireland)",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "GB",
+    "name": "United Kingdom (Northern Ireland)",
+    "cbamApplies": false,
+    "isEUMember": false
+  },
+  {
+    "code": "UM",
+    "name": "United States Minor Outlying Islands",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "US",
+    "name": "United States of America",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "UY",
+    "name": "Uruguay",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "UZ",
+    "name": "Uzbekistan",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VU",
+    "name": "Vanuatu",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VA",
+    "name": "Vatican City State",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VE",
+    "name": "Venezuela (Bolivarian Republic of)",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VN",
+    "name": "Viet Nam",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VG",
+    "name": "Virgin Islands (British)",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "VI",
+    "name": "Virgin Islands, U.S.",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "WF",
+    "name": "Wallis and Futuna",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "EH",
+    "name": "Western Sahara",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "YE",
+    "name": "Yemen",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ZM",
+    "name": "Zambia",
+    "cbamApplies": true,
+    "isEUMember": false
+  },
+  {
+    "code": "ZW",
+    "name": "Zimbabwe",
+    "cbamApplies": true,
+    "isEUMember": false
+  }
+]

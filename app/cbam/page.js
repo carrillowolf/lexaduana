@@ -159,6 +159,32 @@ export default async function CBAMPage() {
           )}
         </div>
 
+        {/* CTA Self-Assessment */}
+        <Link href="/cbam/assessment" className="block group">
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-6 hover:border-emerald-400 hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                  🔍
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">CBAM Self-Assessment</h3>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">NUEVO</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Verifica si tu importación está sujeta al CBAM. Informe gratuito con benchmarks, precursores y datos a solicitar al proveedor.
+                  </p>
+                  <p className="text-emerald-600 text-xs font-medium mt-1">573 códigos CN | 246 países | Benchmarks oficiales Reg. (UE) 2025/2620</p>
+                </div>
+              </div>
+              <svg className="w-6 h-6 text-emerald-600 group-hover:translate-x-1 transition-transform hidden md:block" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </div>
+        </Link>
+
         {/* Banner Novedades Diciembre 2025 */}
         <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
