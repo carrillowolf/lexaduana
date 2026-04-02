@@ -8,6 +8,17 @@ import {
   getCBAMApplicableCountries,
   CBAM_CN_CODES_FULL,
 } from '@/lib/cbamAssessmentData'
+import {
+  PRODUCTION_ROUTE_TRANSLATIONS,
+  PRECURSOR_TRANSLATIONS,
+  AGGREGATED_CATEGORY_TRANSLATIONS,
+  translateSector,
+  translateAggregatedCategory,
+  translateProductionRoute,
+  translatePrecursor,
+  translateCountry,
+  translateSpecialProvisions,
+} from '@/lib/cbamTranslations'
 
 // ============================================================
 // CONSTANTES
@@ -16,12 +27,12 @@ import {
 const IMPORT_TYPES = [
   { value: 'libre_practica', label: 'Despacho a libre práctica' },
   { value: 'devolucion_203', label: 'Devolución (Art. 203 UCC)' },
-  { value: 'otro', label: 'Otro régimen aduanero' },
+  { value: 'otro', label: 'Ninguna de las anteriores' },
 ]
 
 const VALUE_RANGES = [
-  { value: 'gt150', label: '> 150€' },
-  { value: 'lte150', label: '≤ 150€' },
+  { value: 'gt150', label: 'Más de 150 euros' },
+  { value: 'lte150', label: '150 euros o menos' },
 ]
 
 // ============================================================
@@ -50,7 +61,11 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
   }, [serverCountries])
 
   const cbamCountries = useMemo(() =>
-    countries.filter(c => c.cbamApplies).sort((a, b) => a.name.localeCompare(b.name)),
+    countries.filter(c => c.cbamApplies).sort((a, b) => {
+      const nameA = translateCountry(a.name)
+      const nameB = translateCountry(b.name)
+      return nameA.localeCompare(nameB, 'es')
+    }),
     [countries]
   )
 
@@ -133,7 +148,7 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
                 onChange={(e) => handleCnCodeChange(e.target.value)}
                 onFocus={() => cnSuggestions.length > 0 && setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                placeholder="Ej: 72061000"
+                placeholder="Introduce el código CN de 8 dígitos"
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-lg font-mono"
                 maxLength={8}
                 inputMode="numeric"
@@ -182,11 +197,11 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
                 <option value="">Seleccionar país...</option>
                 {cbamCountries.map(c => (
                   <option key={c.code} value={c.code}>
-                    {c.name} ({c.code})
+                    {translateCountry(c.name)} ({c.code})
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-400">Países donde CBAM aplica ({cbamCountries.length} países)</p>
+              <p className="mt-1 text-xs text-gray-400">Países donde el CBAM aplica ({cbamCountries.length} países)</p>
             </div>
 
             {/* Tipo de importación */}
@@ -291,7 +306,7 @@ function ExclusionResult({ result }) {
         <div className="flex items-center gap-3">
           <span className="text-3xl">✅</span>
           <div>
-            <h3 className="text-xl font-bold text-white">CBAM no aplica a esta importación</h3>
+            <h3 className="text-xl font-bold text-white">El CBAM no aplica a esta importación</h3>
             <p className="text-green-100 text-sm">
               {result.exclusionReasons.length} motivo{result.exclusionReasons.length !== 1 ? 's' : ''} de exclusión identificado{result.exclusionReasons.length !== 1 ? 's' : ''}
             </p>
@@ -343,7 +358,7 @@ function CBAMAppliesResult({ result }) {
           <div className="flex items-center gap-3">
             <span className="text-3xl">🌍</span>
             <div>
-              <h3 className="text-xl font-bold text-white">CBAM aplica a esta importación</h3>
+              <h3 className="text-xl font-bold text-white">El CBAM aplica a esta importación</h3>
               <p className="text-amber-100 text-sm">
                 Informe completo de obligaciones y requisitos
               </p>
@@ -356,13 +371,13 @@ function CBAMAppliesResult({ result }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <InfoCard
               label="Sector"
-              value={sector.name}
+              value={<BilingualText es={sector.name} en={requirements.sector} />}
               icon={sector.icon}
               accent="emerald"
             />
             <InfoCard
-              label="Categoría"
-              value={requirements.aggregatedCategory}
+              label="Categoría de producto agregada"
+              value={<BilingualText es={AGGREGATED_CATEGORY_TRANSLATIONS[requirements.aggregatedCategory]} en={requirements.aggregatedCategory} />}
               icon="📦"
               accent="blue"
             />
@@ -375,7 +390,7 @@ function CBAMAppliesResult({ result }) {
             />
             <InfoCard
               label="País"
-              value={country?.name || '—'}
+              value={country ? translateCountry(country.name) : '—'}
               icon="🌐"
               accent="teal"
             />
@@ -393,23 +408,29 @@ function CBAMAppliesResult({ result }) {
           <h4 className="font-bold text-amber-800 flex items-center gap-2 mb-3">
             <span>⚠️</span> Provisiones especiales
           </h4>
-          <p className="text-amber-700 text-sm leading-relaxed">{requirements.specialProvisions}</p>
+          <p className="text-amber-700 text-sm leading-relaxed">{translateSpecialProvisions(requirements.specialProvisions)}</p>
         </div>
       )}
 
       {/* Rutas de producción */}
       <SectionCard title="Rutas de producción" icon="🏭" description="Métodos de fabricación aplicables a este producto">
         <div className="flex flex-wrap gap-2 mb-4">
-          {requirements.productionRoutes.map((route, i) => (
-            <span key={i} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
-              {route}
-            </span>
-          ))}
+          {requirements.productionRoutes.map((route, i) => {
+            const esName = PRODUCTION_ROUTE_TRANSLATIONS[route]
+            return (
+              <span key={i} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+                {esName || route}
+                {esName && (
+                  <span className="text-blue-500 font-normal ml-1">({route})</span>
+                )}
+              </span>
+            )
+          })}
         </div>
         {requirements.productionRoutesDetail && (
           <details className="group">
             <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium">
-              Ver detalle de monitoring por ruta
+              Ver detalle de monitorización por ruta
             </summary>
             <div className="mt-3 p-4 bg-blue-50 rounded-xl text-sm text-blue-800 whitespace-pre-line leading-relaxed">
               {requirements.productionRoutesDetail}
@@ -430,10 +451,12 @@ function CBAMAppliesResult({ result }) {
                   {p.conditional ? '⚡' : '✓'}
                 </span>
                 <div>
-                  <p className="font-medium text-gray-800">{p.name}</p>
+                  <p className="font-medium text-gray-800">
+                    <TranslatedPrecursor name={p.name} />
+                  </p>
                   {p.conditional && (
                     <p className="text-xs text-amber-600 mt-1">
-                      Condicional: {p.condition}
+                      Condicional: {translateSpecialProvisions(p.condition)}
                     </p>
                   )}
                 </div>
@@ -484,18 +507,18 @@ function CBAMAppliesResult({ result }) {
 
       {/* Benchmarks */}
       {benchmarks && (
-        <SectionCard title="Benchmarks de referencia" icon="📊" description="Valores de asignación gratuita (Free Allocation Adjustment) según Reg. (UE) 2025/2620">
+        <SectionCard title="Valores de referencia (benchmarks)" icon="📊" description="Valores de asignación gratuita (Free Allocation Adjustment) según Reg. (UE) 2025/2620">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-gray-200">
                   <th className="py-3 px-4 text-left text-gray-500 font-medium">Ruta</th>
                   <th className="py-3 px-4 text-right text-gray-500 font-medium">
-                    <div>Column A</div>
+                    <div>Columna A</div>
                     <div className="text-xs font-normal text-green-600">Emisiones reales</div>
                   </th>
                   <th className="py-3 px-4 text-right text-gray-500 font-medium">
-                    <div>Column B</div>
+                    <div>Columna B</div>
                     <div className="text-xs font-normal text-amber-600">Valores por defecto</div>
                   </th>
                 </tr>
@@ -531,10 +554,10 @@ function CBAMAppliesResult({ result }) {
           </div>
 
           <div className="mt-4 p-4 bg-blue-50 rounded-xl text-sm text-blue-800 space-y-2">
-            <p><strong>Column A</strong> = Benchmark cuando el declarante usa emisiones reales verificadas (actual free allocation adjustment)</p>
-            <p><strong>Column B</strong> = Benchmark cuando el declarante usa valores por defecto (default free allocation adjustment)</p>
+            <p><strong>Columna A</strong> = Valor de referencia cuando el declarante usa emisiones reales verificadas (asignación gratuita efectiva)</p>
+            <p><strong>Columna B</strong> = Valor de referencia cuando el declarante usa valores por defecto (asignación gratuita por defecto)</p>
             {benchmarks.benchmarkValues.some(bv => bv.columnA === 0) && (
-              <p className="text-amber-700"><strong>Nota:</strong> Column A = 0 significa que no hay deducción por asignación gratuita cuando se usan emisiones reales para este producto.</p>
+              <p className="text-amber-700"><strong>Nota:</strong> Columna A = 0 significa que no hay deducción por asignación gratuita cuando se usan emisiones reales para este producto.</p>
             )}
           </div>
         </SectionCard>
@@ -570,7 +593,7 @@ function CBAMAppliesResult({ result }) {
             className="block p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
           >
             <span className="text-2xl mb-2 block">📧</span>
-            <h5 className="font-bold mb-1">Contactar proveedor</h5>
+            <h5 className="font-bold mb-1">Contactar al proveedor</h5>
             <p className="text-sm text-white/70">Genera un email profesional para solicitar datos de emisiones</p>
           </Link>
           <Link
@@ -598,6 +621,52 @@ function CBAMAppliesResult({ result }) {
 // ============================================================
 // SUB-COMPONENTES
 // ============================================================
+
+/** Busca traducción de precursor con coincidencia case-insensitive */
+function findPrecursorTranslation(name) {
+  if (PRECURSOR_TRANSLATIONS[name]) return PRECURSOR_TRANSLATIONS[name]
+  // Case-insensitive fallback
+  const key = Object.keys(PRECURSOR_TRANSLATIONS).find(k => k.toLowerCase() === name.toLowerCase())
+  return key ? PRECURSOR_TRANSLATIONS[key] : null
+}
+
+/** Traduce un nombre de precursor, soportando nombres compuestos como "pig iron, DRI" */
+function TranslatedPrecursor({ name }) {
+  // Direct match
+  const direct = findPrecursorTranslation(name)
+  if (direct) {
+    return (
+      <>
+        {direct}
+        <span className="text-gray-400 font-normal ml-1 text-sm">({name})</span>
+      </>
+    )
+  }
+  // Try splitting compound names (e.g. "pig iron, DRI")
+  const parts = name.split(',').map(s => s.trim()).filter(Boolean)
+  if (parts.length > 1 && parts.some(p => findPrecursorTranslation(p))) {
+    const esParts = parts.map(p => findPrecursorTranslation(p) || p)
+    return (
+      <>
+        {esParts.join(', ')}
+        <span className="text-gray-400 font-normal ml-1 text-sm">({name})</span>
+      </>
+    )
+  }
+  return <>{name}</>
+}
+
+/** Muestra texto bilingüe: español principal + inglés entre paréntesis en gris */
+function BilingualText({ es, en }) {
+  if (!es || es === en) return <span>{es || en}</span>
+  return (
+    <span>
+      {es}
+      {' '}
+      <span className="text-gray-400 text-xs font-normal">({en})</span>
+    </span>
+  )
+}
 
 function InfoCard({ label, value, icon, accent = 'gray', mono = false }) {
   const colors = {

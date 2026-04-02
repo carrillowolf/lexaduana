@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export const metadata = {
-  title: 'CBAM Self-Assessment | LexAduana',
+  title: 'Autoevaluación CBAM | LexAduana',
   description: 'Verifica si tu importación está sujeta al CBAM. Informe gratuito e instantáneo con requisitos, benchmarks y datos a solicitar al proveedor.',
 }
 
@@ -32,7 +32,7 @@ export default async function CBAMAssessmentPage() {
               </svg>
             </Link>
             <div>
-              <h1 className="font-bold text-gray-900">CBAM Self-Assessment</h1>
+              <h1 className="font-bold text-gray-900">Autoevaluación CBAM</h1>
               <p className="text-xs text-gray-500">Verificador gratuito de obligaciones CBAM</p>
             </div>
           </div>

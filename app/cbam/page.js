@@ -169,7 +169,7 @@ export default async function CBAMPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-gray-900">CBAM Self-Assessment</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Autoevaluación CBAM</h3>
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">NUEVO</span>
                   </div>
                   <p className="text-gray-600 text-sm">
