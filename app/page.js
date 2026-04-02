@@ -65,6 +65,9 @@ export default function HomePage() {
               <Link href="/cbam" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 CBAM
               </Link>
+              <Link href="/eudr" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
+                EUDR
+              </Link>
               <Link href="/comparador" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
                 Comparador
               </Link>
@@ -220,6 +223,30 @@ export default function HomePage() {
               </div>
             </Link>
           </div>
+
+          {/* EUDR Card */}
+          <Link href="/eudr" className="group block mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 hover:border-green-400 hover:shadow-md transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl">🌳</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">EUDR — Deforestación</h3>
+                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">NUEVO</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Verifica si tus importaciones de café, cacao, madera, soja, caucho, palma o ganado están afectadas.
+                  </p>
+                  <p className="text-green-600 text-xs font-medium mt-1">Aplicación desde diciembre 2026 — Reglamento (UE) 2023/1115</p>
+                </div>
+              </div>
+              <svg className="w-6 h-6 text-green-600 group-hover:translate-x-1 transition-transform hidden sm:block flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </Link>
 
           {/* Herramientas secundarias - 3 tarjetas compactas */}
           <div className="grid md:grid-cols-3 gap-4 mb-12">
@@ -436,6 +463,7 @@ export default function HomePage() {
                 <li><Link href="/calculadora" className="hover:text-white transition">Calculadora TARIC</Link></li>
                 <li><Link href="/clasificador" className="hover:text-white transition">Clasificador IA</Link></li>
                 <li><Link href="/cbam" className="hover:text-white transition">Modulo CBAM</Link></li>
+                <li><Link href="/eudr" className="hover:text-white transition">EUDR Deforestación</Link></li>
                 <li><Link href="/comparador" className="hover:text-white transition">Comparador</Link></li>
                 <li><Link href="/tipos-cambio" className="hover:text-white transition">Tipos de Cambio</Link></li>
                 <li><Link href="/despachos" className="hover:text-white transition">Despachos</Link></li>

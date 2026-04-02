@@ -872,6 +872,15 @@ export default async function CBAMPage() {
                   Comparador Multi-Origen
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/eudr"
+                  className="flex items-center gap-2 text-emerald-600 hover:text-emerald-800"
+                >
+                  <span>🌳</span>
+                  Regulación Deforestación (EUDR)
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.2.1-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.3.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -26,10 +26,39 @@ lexaduana.es
 ├── 🌍 Módulo CBAM              (disponible)
 │   ├── Verificador de códigos
 │   ├── Simulador de costes
+│   ├── Self-Assessment (573 CN)
 │   └── Alertas en calculadora
+├── 🌳 EUDR Deforestación       (informativo)
+│   └── Guía regulatoria completa
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.3.0 (Abril 2026)
+
+### 🌳 Página Informativa EUDR (`/eudr`)
+Página estática completa sobre el Reglamento de Deforestación de la UE (Reglamento (UE) 2023/1115):
+- **7 materias primas reguladas**: Ganado, cacao, café, palma, caucho, soja, madera
+- **Countdown dinámico**: Días restantes hasta aplicación (30/12/2026 operadores, 30/06/2027 pymes)
+- **Proceso de diligencia debida**: 3 fases visuales (recopilación, evaluación, mitigación)
+- **Sistema de clasificación de países**: 3 niveles de riesgo (bajo 1%, estándar 3%, alto 9%)
+- **Sanciones**: Hasta 4% facturación, confiscación, exclusión contratación pública
+- **Comparativa EUDR vs CBAM**: Tabla side-by-side para usuarios que conocen CBAM
+- **Timeline de implementación**: 6 hitos desde junio 2023 hasta junio 2027
+- **Recursos oficiales**: Links a EUR-Lex, TRACES, portal Comisión Europea
+- **Cross-navigation**: Links cruzados EUDR ↔ CBAM ↔ Home
+- **SEO optimizado**: Metadata, Open Graph, keywords para posicionamiento temprano
+- **Integrada en homepage**: Card EUDR al mismo nivel visual que CBAM
+
+### 🌐 CBAM Self-Assessment Localizado a Español
+Localización completa del Self-Assessment (`/cbam/assessment`) con formato bilingüe:
+- **`lib/cbamTranslations.js`**: 8 sectores, 20 categorías, 43 rutas de producción, 22 precursores, 101 países
+- **Formato bilingüe**: Término en español como principal + inglés entre paréntesis en gris
+- **Países en español**: Dropdown con 210 países traducidos (Turquía, Corea del Sur, etc.)
+- **Fix parser**: Rutas de producción con comas dentro de paréntesis, guiones en precursores
+- **Labels actualizados**: "Column A/B" → "Columna A/B", "Self-Assessment" → "Autoevaluación CBAM"
 
 ---
 
@@ -196,6 +225,16 @@ Propuesta COM(2025) 989 - Aplicación prevista 01/01/2028:
 - **FAQs interactivos**: 6 preguntas frecuentes
 - **Botón flotante**: Acceso rápido desde página principal
 
+#### 🆕 Self-Assessment Completo (`/cbam/assessment`)
+- **573 códigos CN**: Base de datos completa del CBAM Self Assessment Tool v1.1 (CE, marzo 2025)
+- **246 países**: Con estado CBAM (aplica/excluido/UE)
+- **Benchmarks oficiales**: Reg. (UE) 2025/2620 con 661 valores (Column A + Column B)
+- **Autocomplete inteligente**: Sugerencias por prefijo con icono de sector
+- **Informe completo**: Sector, categoría, rutas de producción, precursores, provisiones especiales
+- **Umbral de minimis**: Detección automática por sector
+- **Localización ES/EN**: UI en español, términos técnicos bilingües (español + inglés en gris)
+- **Traducciones**: 8 sectores, 20 categorías, 43 rutas, 22 precursores, 101 países
+
 #### Alertas Integradas
 - **En calculadora**: Badge CBAM junto al código HS
 - **En clasificador IA**: Alerta si código sugerido está afectado
@@ -313,6 +352,9 @@ lexaduana/
 │   ├── calculadora/              # Calculadora principal
 │   ├── clasificador/             # Clasificador IA
 │   ├── cbam/                     # Módulo CBAM completo
+│   │   ├── assessment/           # Self-Assessment (573 CN codes)
+│   │   └── guia/                 # Guía para principiantes
+│   ├── eudr/                     # EUDR Deforestación (informativo)
 │   ├── bulk/                     # Calculadora masiva
 │   ├── comparador/               # Comparador multi-origen
 │   ├── despachos/                # Gestor de despachos
@@ -329,7 +371,8 @@ lexaduana/
 │   ├── CBAMAlert.js              # Alertas CBAM
 │   ├── CBAMCostSimulator.js      # Simulador costes CBAM
 │   └── cbam/
-│       └── CBAMVerifier.js       # Verificador CBAM interactivo
+│       ├── CBAMVerifier.js       # Verificador CBAM interactivo
+│       └── CBAMSelfAssessment.js # Self-Assessment bilingüe ES/EN
 ├── 📁 lib/                       # Utilidades
 │   ├── supabase.js               # Cliente Supabase server
 │   ├── supabase-browser.js       # Cliente Supabase client
@@ -337,6 +380,8 @@ lexaduana/
 │   ├── rate-limit.js             # Rate limiting con Upstash
 │   ├── validation.js             # Validadores de entrada
 │   ├── cbamData.js               # Datos CBAM (códigos, sectores, timeline)
+│   ├── cbamAssessmentData.js     # Self-Assessment helpers + 573 CN codes
+│   ├── cbamTranslations.js       # Traducciones CBAM ES/EN (sectores, rutas, precursores, países)
 │   ├── taricTranslations.js      # Traducciones estáticas (fallback)
 │   ├── vatCalculator.js          # Lógica IVA variable
 │   ├── csvParser.js              # Parser CSV bulk
