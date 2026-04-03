@@ -881,6 +881,15 @@ export default async function CBAMPage() {
                   Regulación Deforestación (EUDR)
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/cbam/asesoria"
+                  className="flex items-center gap-2 text-emerald-600 hover:text-emerald-800"
+                >
+                  <span>📋</span>
+                  Asesoría CBAM Profesional
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

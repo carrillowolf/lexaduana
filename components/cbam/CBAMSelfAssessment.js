@@ -614,6 +614,21 @@ function CBAMAppliesResult({ result }) {
           </Link>
         </div>
       </div>
+
+      {/* CTA Asesoría profesional */}
+      <div className="mt-6 p-5 bg-blue-50 border border-blue-200 rounded-xl">
+        <p className="text-blue-800 font-medium mb-1">¿Necesitas un análisis profesional de tu exposición CBAM?</p>
+        <p className="text-sm text-blue-700 mb-3">
+          Nuestro equipo analiza tus importaciones, contacta a tus proveedores, y te entrega un informe
+          con el cálculo exacto de tus obligaciones y costes.
+        </p>
+        <Link href="/cbam/asesoria" className="inline-flex items-center gap-1 text-[#0A3D5C] hover:underline font-bold text-sm">
+          Solicitar asesoría profesional
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </Link>
+      </div>
     </div>
   )
 }

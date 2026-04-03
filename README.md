@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.3.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.4.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -27,11 +27,72 @@ lexaduana.es
 │   ├── Verificador de códigos
 │   ├── Simulador de costes
 │   ├── Self-Assessment (573 CN)
-│   └── Alertas en calculadora
+│   ├── Alertas en calculadora
+│   └── 🆕 Asesoría Premium (Phase 2)
+│       ├── Intake wizard (3 pasos)
+│       ├── Motor de cálculo
+│       └── Gestión solicitudes
 ├── 🌳 EUDR Deforestación       (informativo)
 │   └── Guía regulatoria completa
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
+```
+
+---
+
+## 🆕 Novedades v5.4.0 (Abril 2026)
+
+### 📋 CBAM Phase 2 — Servicio de Asesoría Premium
+Servicio profesional donde el importador envía sus datos y LexAduana genera un informe completo con análisis de exposición, cálculos de emisiones y coste estimado.
+
+#### Backend y motor de cálculo
+- **3 tablas nuevas Supabase**: `cbam_advisory_requests`, `cbam_advisory_products`, `cbam_advisory_documents`
+- **RLS completo**: Cada usuario solo ve sus propias solicitudes y documentos
+- **Motor de cálculo** (`cbamAdvisoryCalculator.js`): Detecta sector, obtiene benchmarks, calcula emisiones y coste
+- **Escenario dual**: Calcula coste con datos reales vs valores por defecto — muestra ahorro potencial
+- **Reutilización Phase 1**: Importa `checkCBAM`, `getBenchmarkDB`, `getCurrentETSPrice`, `getDefaultValueMarkupDB`, `getEmissionFactors`
+- **Storage privado**: Bucket `cbam-advisory-docs` para DUAs, facturas y datos de proveedores (10MB, RLS por usuario)
+
+#### 6 API routes nuevas
+| Endpoint | Métodos | Descripción |
+|----------|---------|-------------|
+| `/api/cbam/advisory` | GET, POST | Listar/crear solicitudes |
+| `/api/cbam/advisory/[id]` | GET, PATCH, DELETE | Detalle, actualizar, eliminar |
+| `/api/cbam/advisory/[id]/products` | GET, POST, PUT | Productos (individual + bulk) |
+| `/api/cbam/advisory/[id]/documents` | POST | Subida de documentos |
+| `/api/cbam/advisory/[id]/submit` | POST | Confirmar intake |
+| `/api/cbam/advisory/[id]/calculate` | POST | Ejecutar motor de cálculo |
+
+#### 3 páginas nuevas
+- **`/cbam/asesoria`**: Landing corporativa — cómo funciona, valor de datos reales, ejemplo de ahorro, CTAs
+- **`/cbam/asesoria/solicitud`**: Wizard de intake 3 pasos (empresa → productos → documentación)
+- **`/cbam/asesoria/mis-solicitudes`**: Listado de solicitudes del usuario con estado y costes
+
+#### 4 componentes nuevos
+- **`AdvisoryIntakeForm`**: Wizard multi-paso con validación, guardado de borrador, subida de archivos
+- **`ProductLineEditor`**: Editor de líneas de producto con selector de país, toggle de emisiones reales, rutas de producción
+- **`AdvisoryStatusBadge`**: Badge visual con 8 estados (draft → delivered)
+- **`AdvisorySummary`**: Resumen de solicitud con desglose de costes, toneladas, emisiones
+
+#### Cross-navigation
+- Enlace "Asesoría CBAM Profesional" añadido en Hub CBAM (Herramientas LexAduana)
+- CTA de asesoría profesional añadido al resultado "CBAM sí aplica" del Self-Assessment
+
+#### Diseño
+- Estilo sobrio y corporativo (paleta `#0A3D5C`, fondos blancos/grises)
+- Orientado a director financiero / responsable de compras de pyme industrial
+- Separado del estilo colorido de Phase 1
+
+#### Flujo del usuario
+```
+Phase 1 (gratuita)                    Phase 2 (premium)
+┌─────────────────┐                   ┌──────────────────────────────────────┐
+│ Autoevaluación  │──→ "Estás      ──→│ 1. Formulario de intake (3 pasos)    │
+│ /cbam/assessment│    afectado"      │ 2. Subida de documentos (DUAs, etc.) │
+└─────────────────┘                   │ 3. Motor de cálculo automático       │
+                                      │ 4. Escenario dual (real vs defaults) │
+                                      │ 5. Informe profesional (próx. fase)  │
+                                      └──────────────────────────────────────┘
 ```
 
 ---
@@ -235,10 +296,21 @@ Propuesta COM(2025) 989 - Aplicación prevista 01/01/2028:
 - **Localización ES/EN**: UI en español, términos técnicos bilingües (español + inglés en gris)
 - **Traducciones**: 8 sectores, 20 categorías, 43 rutas, 22 precursores, 101 países
 
+#### 🆕 Asesoría Premium — Phase 2 (`/cbam/asesoria`)
+Servicio profesional de análisis de exposición CBAM para importadores:
+- **Wizard de intake 3 pasos**: Datos empresa → Productos importados → Documentación
+- **Motor de cálculo**: Detección automática de sector, benchmarks UE, escenario dual
+- **Escenario dual**: Coste con datos reales vs valores por defecto → muestra ahorro potencial
+- **Gestión de solicitudes**: Draft → Enviada → Análisis → Informe listo → Entregado
+- **Upload de documentos**: DUAs, facturas, datos proveedor (Supabase Storage privado)
+- **6 API routes**: CRUD completo con autenticación y verificación de ownership
+- **Estilo corporativo**: Diseño sobrio orientado a decisores de negocio
+
 #### Alertas Integradas
 - **En calculadora**: Badge CBAM junto al código HS
 - **En clasificador IA**: Alerta si código sugerido está afectado
 - **Enlace directo**: A página de obligaciones CBAM
+- **En Self-Assessment**: CTA de asesoría profesional cuando resultado es "CBAM sí aplica"
 
 #### Timeline y Plazos (Actualizado Dic 2025)
 | Fecha | Evento |
@@ -351,9 +423,24 @@ lexaduana/
 │   ├── dashboard/                # Dashboard usuario
 │   ├── calculadora/              # Calculadora principal
 │   ├── clasificador/             # Clasificador IA
+│   │   └── cbam/                 # APIs CBAM
+│   │       ├── calculations/     # Historial cálculos usuario
+│   │       ├── ets-price/        # Precio EU ETS
+│   │       └── advisory/         # 🆕 Phase 2: Asesoría premium
+│   │           ├── route.js      # GET/POST solicitudes
+│   │           └── [id]/
+│   │               ├── route.js      # GET/PATCH/DELETE detalle
+│   │               ├── products/     # CRUD productos
+│   │               ├── documents/    # Subida documentos
+│   │               ├── submit/       # Confirmar intake
+│   │               └── calculate/    # Motor de cálculo
 │   ├── cbam/                     # Módulo CBAM completo
 │   │   ├── assessment/           # Self-Assessment (573 CN codes)
-│   │   └── guia/                 # Guía para principiantes
+│   │   ├── guia/                 # Guía para principiantes
+│   │   └── asesoria/             # 🆕 Phase 2: Asesoría premium
+│   │       ├── page.js           # Landing del servicio
+│   │       ├── solicitud/        # Wizard de intake (3 pasos)
+│   │       └── mis-solicitudes/  # Listado solicitudes usuario
 │   ├── eudr/                     # EUDR Deforestación (informativo)
 │   ├── bulk/                     # Calculadora masiva
 │   ├── comparador/               # Comparador multi-origen
@@ -372,7 +459,12 @@ lexaduana/
 │   ├── CBAMCostSimulator.js      # Simulador costes CBAM
 │   └── cbam/
 │       ├── CBAMVerifier.js       # Verificador CBAM interactivo
-│       └── CBAMSelfAssessment.js # Self-Assessment bilingüe ES/EN
+│       ├── CBAMSelfAssessment.js # Self-Assessment bilingüe ES/EN
+│       └── advisory/             # 🆕 Phase 2: Componentes asesoría
+│           ├── AdvisoryIntakeForm.js   # Wizard multi-paso
+│           ├── ProductLineEditor.js    # Editor líneas producto
+│           ├── AdvisoryStatusBadge.js  # Badge estado solicitud
+│           └── AdvisorySummary.js      # Resumen con costes
 ├── 📁 lib/                       # Utilidades
 │   ├── supabase.js               # Cliente Supabase server
 │   ├── supabase-browser.js       # Cliente Supabase client
@@ -380,6 +472,9 @@ lexaduana/
 │   ├── rate-limit.js             # Rate limiting con Upstash
 │   ├── validation.js             # Validadores de entrada
 │   ├── cbamData.js               # Datos CBAM (códigos, sectores, timeline)
+│   ├── cbamService.js            # Capa datos CBAM (Supabase + fallback)
+│   ├── cbamAdvisoryService.js    # 🆕 CRUD asesoría (requests, products, docs)
+│   ├── cbamAdvisoryCalculator.js # 🆕 Motor cálculo asesoría premium
 │   ├── cbamAssessmentData.js     # Self-Assessment helpers + 573 CN codes
 │   ├── cbamTranslations.js       # Traducciones CBAM ES/EN (sectores, rutas, precursores, países)
 │   ├── taricTranslations.js      # Traducciones estáticas (fallback)
@@ -387,13 +482,16 @@ lexaduana/
 │   ├── csvParser.js              # Parser CSV bulk
 │   ├── excelExporter.js          # Exportador Excel
 │   └── analytics.js              # GA4 trackEvent helper
-├── 📁 scripts/                   # Scripts migración TARIC
+├── 📁 scripts/                   # Scripts migración y schemas
 │   ├── bloque1-schema.sql        # Schema bloque 1 (master data)
 │   ├── loadBlock1.js             # Carga bloque 1 (5 tablas)
 │   ├── bloque2-schema.sql        # Schema bloque 2 (core data)
 │   ├── loadBlock2.js             # Carga bloque 2 (4 tablas)
 │   ├── bloque3-schema.sql        # Schema bloque 3 (lookup tables)
-│   └── loadBlock3.js             # Carga bloque 3 (5 tablas)
+│   ├── loadBlock3.js             # Carga bloque 3 (5 tablas)
+│   ├── cbam-schema.sql           # Schema CBAM Phase 1 (12 tablas)
+│   ├── cbam-assessment-schema.sql # Schema Self-Assessment
+│   └── cbam-advisory-schema.sql  # 🆕 Schema Phase 2 (3 tablas + RLS)
 ├── 📁 lexaduana-migration/       # Scripts legacy (compatibilidad)
 │   ├── import-all-taric.js       # Importador Excel → Supabase
 │   └── ACTUALIZACION_MENSUAL.md  # Guía de actualización
@@ -452,6 +550,32 @@ despachos               -- Gestión de despachos
 
 -- Tablas IA
 classification_examples -- Ejemplos para educar clasificador
+
+-- ══════════════════════════════════════════════
+-- CBAM Phase 1 (12 tablas de referencia)
+-- ══════════════════════════════════════════════
+cbam_sectors                    -- 6 sectores afectados
+cbam_cn_codes                   -- Códigos CN sujetos a CBAM
+cbam_cn_codes_full              -- 573 códigos Self-Assessment
+cbam_excluded_countries         -- Países excluidos (EEE, Suiza)
+cbam_emission_factors           -- Factores emisión por sector
+cbam_benchmarks                 -- Benchmarks UE
+cbam_benchmarks_official        -- Benchmarks oficiales (Column A/B)
+cbam_timeline                   -- Eventos y plazos CBAM
+cbam_certificates               -- Certificados DUA (Y128, Y134...)
+cbam_default_value_markup       -- Markup progresivo 2026-2028
+cbam_config                     -- Configuración clave-valor
+cbam_ets_prices                 -- Precios EU ETS
+cbam_countries                  -- 246 países con estado CBAM
+cbam_user_calculations          -- Historial cálculos usuario
+
+-- ══════════════════════════════════════════════
+-- 🆕 CBAM Phase 2: Asesoría Premium (3 tablas)
+-- ══════════════════════════════════════════════
+cbam_advisory_requests          -- Solicitudes de asesoría (empresa, estado, totales)
+cbam_advisory_products          -- Líneas de producto por solicitud
+cbam_advisory_documents         -- Documentos subidos (DUAs, facturas)
+-- + bucket Storage: cbam-advisory-docs (privado, RLS por usuario)
 ```
 
 ### Actualización mensual de datos TARIC
@@ -612,7 +736,19 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 - **Open Graph / Twitter Cards**: Actualizados con nuevo posicionamiento
 - **Schema.org**: Descripción actualizada como suite de herramientas
 
-### 🔜 Próximamente (v5.3 - Q2 2026)
+### ✅ Completado (v5.4.0 - Abril 2026)
+
+#### 📋 CBAM Phase 2 — Asesoría Premium
+- Servicio profesional de análisis de exposición CBAM
+- 3 tablas Supabase nuevas + Storage bucket privado
+- Motor de cálculo con escenario dual (real vs defaults)
+- Wizard de intake 3 pasos + gestión de solicitudes
+- 6 API routes con auth + 4 componentes + 3 páginas
+- Cross-navigation desde Hub CBAM y Self-Assessment
+
+---
+
+### 🔜 Próximamente (v5.5 - Q2 2026)
 
 #### 🎨 Renovación Frontend (páginas internas)
 - Visualización de footnotes y certificados enriquecidos
@@ -721,6 +857,7 @@ Ideas pendientes de priorizar y desarrollar:
 |----------|--------|-------------|
 | **IAV Express** | €150 | Tramitación IAV ante AEAT |
 | **Informe CBAM** | €200 | Preparación informe trimestral |
+| **Asesoría CBAM Premium** | Consultar | Análisis exposición + informe profesional |
 | **Consultoría clasificación** | €75/h | Asesoramiento experto |
 
 ---
@@ -849,5 +986,5 @@ Para consultas, colaboraciones o reportar bugs:
 
 **Desarrollado con ❤️ por Carlos para LexAduana**
 
-*Última actualización: Marzo 2026*
-*Versión: 5.2.1*
+*Última actualización: Abril 2026*
+*Versión: 5.4.0*
