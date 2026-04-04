@@ -67,36 +67,6 @@ export default async function CBAMPage() {
         </div>
       </Link>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
-              <div>
-                <h1 className="text-xl font-bold text-[#0A3D5C]">CBAM</h1>
-                <p className="text-xs text-gray-500">Mecanismo de Ajuste en Frontera</p>
-              </div>
-            </Link>
-
-            <div className="flex items-center space-x-3">
-              <Link
-                href="/calculadora"
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
-              >
-                Calculadora
-              </Link>
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 bg-[#0A3D5C] hover:bg-[#083049] text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* Hero + Alerta Deadline */}
@@ -915,20 +885,6 @@ export default async function CBAMPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-sm">
-            © {new Date().getFullYear()} LexAduana. Información basada en la legislación vigente de la UE.
-          </p>
-          <p className="text-xs mt-2">
-            Esta herramienta es informativa. Consulte siempre la legislación oficial y asesores especializados.
-          </p>
-          <p className="text-xs mt-1 text-gray-500">
-            Última actualización: Diciembre 2025 (Paquete regulatorio C(2025) 8552, C(2025) 8560, COM(2025) 989)
-          </p>
-        </div>
-      </footer>
     </div>
   )
 }

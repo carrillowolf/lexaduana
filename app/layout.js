@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from 'next/script'
+import AppShell from '@/components/layout/AppShell'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -98,7 +99,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} antialiased`}>
-        {children}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

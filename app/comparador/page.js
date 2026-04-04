@@ -144,52 +144,6 @@ export default function ComparadorPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-            {/* Header - Unificado con landing */}
-            <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        {/* Logo - clickable a inicio */}
-                        <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition">
-                            <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
-                            <span className="text-xl font-bold text-[#0A3D5C]">LexAduana</span>
-                        </Link>
-
-                        {/* Nav principal */}
-                        <nav className="hidden md:flex items-center space-x-1">
-                            <Link href="/calculadora" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
-                                Calculadora
-                            </Link>
-                            <Link href="/clasificador" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition flex items-center">
-                                <span className="mr-1">🤖</span> Clasificador IA
-                            </Link>
-                            <Link href="/comparador" className="px-4 py-2 text-sm font-medium text-[#0A3D5C] bg-blue-50 rounded-lg">
-                                Comparador
-                            </Link>
-                            <Link href="/despachos" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition flex items-center">
-                                Despachos
-                                <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded">β</span>
-                            </Link>
-                        </nav>
-
-                        {/* Auth buttons */}
-                        <div className="flex items-center space-x-3">
-                            <Link
-                                href="/auth/login"
-                                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
-                            >
-                                Iniciar Sesión
-                            </Link>
-                            <Link
-                                href="/auth/register"
-                                className="px-6 py-2 bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] hover:from-[#083049] hover:to-[#0A3D5C] text-white text-sm font-bold rounded-lg transition-all shadow-lg"
-                            >
-                                Registrarse
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
             {/* Contenido principal */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 

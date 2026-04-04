@@ -40,36 +40,6 @@ export default function GlosarioPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                📚 Glosario Aduanero
-              </h1>
-              <p className="text-gray-600">
-                Términos clave del comercio internacional y aduanas
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Link
-                href="/"
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition"
-              >
-                ← Calculadora
-              </Link>
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-12">
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Sidebar */}

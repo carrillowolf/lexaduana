@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { exportToPDF } from '../../components/ExportPDF'
 import HSCodeAutocomplete from '../../components/HSCodeAutocomplete'
 import QuickAccessButton from '../../components/QuickAccessButton'
-import UserMenu from '../../components/UserMenu'
+// UserMenu ahora en AppTopbar
 import { createClient } from '@/lib/supabase-browser'
 // import ExchangeRateWidget from '../../components/ExchangeRateWidget'
 import FavoriteButton from '../../components/FavoriteButton'
@@ -238,31 +238,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      {/* Header mejorado - Sin solapamiento */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition">
-              <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
-              <div>
-                <h1 className="text-xl font-bold text-[#0A3D5C]">LexAduana</h1>
-                <p className="text-xs text-gray-500">Calculadora TARIC</p>
-              </div>
-            </Link>
-            
-            <nav className="hidden md:flex items-center space-x-1">
-              <Link href="/calculadora" className="px-4 py-2 text-sm font-medium text-[#0A3D5C] bg-blue-50 rounded-lg transition">
-                Calculadora
-              </Link>
-              <Link href="/cbam" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition flex items-center">
-                <span className="mr-1">🌍</span> CBAM
-              </Link>
-            </nav>
-
-            <UserMenu />
-          </div>
-        </div>
-      </header>
       <ExchangeRateBanner />
 
       {/* Contenido principal - Calculadora */}

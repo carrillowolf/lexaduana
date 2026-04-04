@@ -30,34 +30,6 @@ export default function EUDRPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-              <img src="/logo.png" alt="LexAduana" className="h-8 w-8" />
-              <span className="text-lg font-bold text-[#0A3D5C]">LexAduana</span>
-            </Link>
-            <span className="text-gray-300">|</span>
-            <div>
-              <h1 className="font-bold text-gray-900 text-sm leading-tight">EUDR</h1>
-              <p className="text-xs text-gray-500">Reglamento de Deforestación</p>
-            </div>
-          </div>
-          <nav className="hidden md:flex items-center gap-1">
-            <Link href="/calculadora" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] rounded-lg transition">
-              Calculadora
-            </Link>
-            <Link href="/cbam" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] rounded-lg transition">
-              CBAM
-            </Link>
-            <Link href="/" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] rounded-lg transition">
-              Inicio
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-green-700 via-green-800 to-emerald-900 py-16 md:py-20">
         <div className="absolute inset-0 opacity-10">
@@ -549,29 +521,6 @@ export default function EUDRPage() {
         </section>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-[#0A3D5C] text-white py-10 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
-              <div>
-                <p className="font-bold">LexAduana</p>
-                <p className="text-blue-200 text-xs">Suite Profesional de Comercio Exterior</p>
-              </div>
-            </div>
-            <div className="text-center md:text-right">
-              <p className="text-blue-100 text-sm">&copy; 2026 LexAduana. Información basada en la legislación vigente de la UE.</p>
-              <p className="text-blue-200 text-xs mt-1">
-                Esta herramienta es informativa. Consulte siempre la legislación oficial y asesores especializados.
-              </p>
-              <p className="text-blue-300 text-xs mt-1">
-                Última actualización: Abril 2026 (Reglamento (UE) 2023/1115, modificado por Reglamento (UE) 2025/2650)
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

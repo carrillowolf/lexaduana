@@ -39,27 +39,6 @@ export default function CBAMGuiaPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/cbam" className="flex items-center space-x-3 text-gray-600 hover:text-emerald-600 transition">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="font-medium">Volver a CBAM</span>
-            </Link>
-
-            <Link
-              href="/calculadora"
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Calculadora
-            </Link>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
         {/* Hero */}
@@ -385,14 +364,6 @@ export default function CBAMGuiaPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-12">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-sm">
-            © {new Date().getFullYear()} LexAduana. Herramientas gratuitas para comercio exterior.
-          </p>
-        </div>
-      </footer>
     </div>
   )
 }
