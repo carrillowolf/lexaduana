@@ -1,0 +1,784 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { INCOTERMS_2020 } from '@/lib/incotermsData'
+import {
+  VALUATION_METHODS,
+  NUMERICAL_EXAMPLES,
+  DV1_INFO,
+  EXTENDED_DUA_H1_FIELDS,
+  ENHANCED_CAU_ADJUSTMENTS,
+  PROBLEMATIC_CASES,
+  GENERAL_NOTES,
+  DUTY_VS_VAT_COMPARISON,
+  PAGE_SECTIONS,
+} from '@/lib/customsValueData'
+
+/* ================================================================
+   MINI-TOC — navegación entre secciones
+   ================================================================ */
+
+function MiniTOC() {
+  return (
+    <nav className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">En esta guía</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        {PAGE_SECTIONS.map((s) => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-50 hover:bg-blue-50 hover:text-blue-700 transition-colors text-xs font-medium text-gray-600"
+          >
+            <span>{s.icon}</span>
+            <span className="truncate">{s.label}</span>
+          </a>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
+/* ================================================================
+   BLOQUE 1 — Métodos de valoración
+   ================================================================ */
+
+function ValuationMethods() {
+  const frequencyConfig = {
+    habitual: { bg: 'bg-emerald-100 text-emerald-800', icon: '✅' },
+    secundario: { bg: 'bg-blue-100 text-blue-700', icon: '🔄' },
+    excepcional: { bg: 'bg-amber-100 text-amber-800', icon: '⚠️' },
+  }
+
+  return (
+    <section id="metodos" className="scroll-mt-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        ¿Cómo se determina el valor en aduana?
+      </h2>
+      <p className="text-sm text-gray-600 mb-6">
+        El CAU establece 6 métodos <strong>secuenciales y subsidiarios</strong>: no se puede saltar al
+        Método 3 si el 1 y el 2 son aplicables. Excepción: los métodos 4 y 5 pueden invertirse a
+        petición del importador.
+      </p>
+
+      {/* Flecha visual de secuencia */}
+      <div className="hidden sm:flex items-center justify-center gap-1 mb-6 text-xs text-gray-400">
+        {VALUATION_METHODS.map((m, i) => (
+          <span key={m.number} className="flex items-center gap-1">
+            <span className={`px-2 py-1 rounded font-bold ${i === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
+              M{m.number}
+            </span>
+            {i < 5 && <span className="text-gray-300">→</span>}
+          </span>
+        ))}
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {VALUATION_METHODS.map((m) => {
+          const freq = frequencyConfig[m.frequency]
+          return (
+            <div key={m.number} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-[#0A3D5C] text-white flex items-center justify-center text-sm font-bold">
+                    {m.number}
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900">{m.title}</h3>
+                    <p className="text-[11px] text-gray-400">{m.article}</p>
+                  </div>
+                </div>
+              </div>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold mb-3 ${freq.bg}`}>
+                {freq.icon} {m.frequencyLabel}
+              </span>
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">{m.description}</p>
+              {m.keyChange && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800">
+                  <strong>Cambio CAU:</strong> {m.keyChange}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================
+   BLOQUE 2 — Ajustes por Incoterm (wizard interactivo)
+   ================================================================ */
+
+function IncotermWizard() {
+  const [selected, setSelected] = useState('CIF')
+  const item = INCOTERMS_2020.find((i) => i.code === selected)
+  const adj = item?.customsValueAdjustments
+
+  return (
+    <section id="ajustes-incoterm" className="scroll-mt-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        Ajustes según tu Incoterm
+      </h2>
+      <p className="text-sm text-gray-600 mb-6">
+        Selecciona el Incoterm de tu factura para ver qué gastos debes sumar o restar del precio
+        facturado para obtener el valor en aduana (base CIF frontera UE).
+      </p>
+
+      {/* Selector de Incoterm */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {INCOTERMS_2020.map((inc) => (
+          <button
+            key={inc.code}
+            onClick={() => setSelected(inc.code)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+              selected === inc.code
+                ? 'bg-[#0A3D5C] text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {inc.code}
+          </button>
+        ))}
+      </div>
+
+      {adj && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* Cabecera */}
+          <div className="bg-gradient-to-r from-[#0A3D5C] to-[#0D5A8A] px-5 py-4 text-white">
+            <h3 className="text-lg font-bold">{item.code} — {item.name}</h3>
+            <p className="text-sm text-blue-200">{item.nameEs}</p>
+          </div>
+
+          <div className="p-5 space-y-5">
+            {/* Adiciones */}
+            {adj.addToCustomsValue.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="text-sm font-bold text-red-800 mb-3 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-red-200 text-red-800 flex items-center justify-center text-xs">+</span>
+                  Sumar al precio facturado
+                </h4>
+                <div className="space-y-2">
+                  {adj.addToCustomsValue.map((a, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-red-500 font-bold mt-0.5">+</span>
+                      <div>
+                        <span className="font-medium text-gray-800">{a.concept}</span>
+                        {a.mandatory === false && (
+                          <span className="ml-1.5 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">condicional</span>
+                        )}
+                        {a.note && <p className="text-xs text-gray-500 mt-0.5">{a.note}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sin adiciones */}
+            {adj.addToCustomsValue.length === 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-500 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">+</span>
+                  No hay adiciones al precio facturado
+                </p>
+              </div>
+            )}
+
+            {/* Deducciones */}
+            {adj.deductFromCustomsValue.length > 0 && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <h4 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs">−</span>
+                  Restar del precio facturado
+                </h4>
+                <div className="space-y-2">
+                  {adj.deductFromCustomsValue.map((d, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-emerald-600 font-bold mt-0.5">−</span>
+                      <div>
+                        <span className="font-medium text-gray-800">{d.concept}</span>
+                        {d.condition && <p className="text-xs text-gray-500 mt-0.5">{d.condition}</p>}
+                        {d.note && <p className="text-xs text-amber-600 mt-0.5">{d.note}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sin deducciones */}
+            {adj.deductFromCustomsValue.length === 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-500 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">−</span>
+                  No hay deducciones del precio facturado
+                </p>
+              </div>
+            )}
+
+            {/* Fórmula */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Fórmula</p>
+              <p className="text-sm font-mono font-bold text-blue-900">{adj.formula}</p>
+              <p className="text-xs text-blue-600 mt-1">{adj.legalBasis}</p>
+            </div>
+
+            {/* Alerta */}
+            {item.dispatcherAlert && (
+              <div className={`rounded-lg p-3.5 text-sm flex items-start gap-2.5 ${
+                item.dispatcherAlert.type === 'critical'
+                  ? 'bg-red-50 border border-red-200 text-red-800'
+                  : item.dispatcherAlert.type === 'warning'
+                  ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                  : item.dispatcherAlert.type === 'success'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                  : 'bg-blue-50 border border-blue-200 text-blue-800'
+              }`}>
+                <span className="flex-shrink-0 text-base mt-0.5">
+                  {item.dispatcherAlert.type === 'critical' ? '🚨' : item.dispatcherAlert.type === 'warning' ? '⚠️' : item.dispatcherAlert.type === 'success' ? '✅' : 'ℹ️'}
+                </span>
+                <div>
+                  <p className="font-semibold text-xs uppercase tracking-wider mb-0.5">Alerta para el despachante</p>
+                  <p className="leading-relaxed">{item.dispatcherAlert.text}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Nota adicional */}
+            {(adj.note || adj.warning) && (
+              <p className="text-xs text-gray-500 italic">{adj.note || adj.warning}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Notas generales */}
+      <div className="mt-4 grid sm:grid-cols-2 gap-3">
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800">
+          <strong>Sobre el seguro:</strong> {GENERAL_NOTES.insurance}
+        </div>
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800">
+          <strong>Transporte aéreo:</strong> {GENERAL_NOTES.airFreight}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================
+   BLOQUE 3 — Ajustes obligatorios (art. 71/72 CAU)
+   ================================================================ */
+
+function MandatoryAdjustments() {
+  return (
+    <section id="ajustes-obligatorios" className="scroll-mt-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        Ajustes obligatorios independientes del Incoterm
+      </h2>
+      <p className="text-sm text-gray-600 mb-6">
+        Estos ajustes se aplican <strong>siempre que se den las circunstancias</strong>,
+        independientemente del Incoterm pactado. Son los elementos de los artículos 71 y 72 del CAU.
+      </p>
+
+      <div className="grid md:grid-cols-2 gap-5">
+        {/* Siempre sumar */}
+        <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+          <div className="bg-red-50 px-5 py-3 border-b border-red-200">
+            <h3 className="text-sm font-bold text-red-800">+ Lo que SIEMPRE se suma al valor en aduana</h3>
+            <p className="text-[11px] text-red-600">Art. 71 CAU</p>
+          </div>
+          <div className="p-4 space-y-4">
+            {ENHANCED_CAU_ADJUSTMENTS.alwaysAdd.map((item, i) => (
+              <div key={i} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                <div className="flex items-start gap-2">
+                  <span className="text-red-400 font-bold text-sm mt-0.5">+</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{item.concept}</p>
+                    <p className="text-xs text-gray-400 mb-1">{item.article}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{item.description}</p>
+                    {item.warning && (
+                      <p className="text-xs text-amber-700 bg-amber-50 rounded p-2 mt-2">⚠️ {item.warning}</p>
+                    )}
+                    {item.example && (
+                      <p className="text-xs text-blue-700 bg-blue-50 rounded p-2 mt-2">💡 <em>{item.example}</em></p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Nunca incluir */}
+        <div className="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
+          <div className="bg-emerald-50 px-5 py-3 border-b border-emerald-200">
+            <h3 className="text-sm font-bold text-emerald-800">− Lo que NUNCA se incluye en el valor en aduana</h3>
+            <p className="text-[11px] text-emerald-600">Art. 72 CAU</p>
+          </div>
+          <div className="p-4 space-y-4">
+            {ENHANCED_CAU_ADJUSTMENTS.neverInclude.map((item, i) => (
+              <div key={i} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold text-sm mt-0.5">−</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{item.concept}</p>
+                    <p className="text-xs text-gray-400 mb-1">{item.article}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{item.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================
+   BLOQUE 4 — Base arancel vs Base IVA + ejemplos numéricos
+   ================================================================ */
+
+function DutyVsVat() {
+  const [activeExample, setActiveExample] = useState('fob')
+  const example = NUMERICAL_EXAMPLES.find((e) => e.id === activeExample)
+
+  return (
+    <section id="base-arancel-iva" className="scroll-mt-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        Base del arancel vs Base del IVA
+      </h2>
+      <p className="text-sm text-gray-600 mb-6">
+        Son <strong>dos bases diferentes</strong> que producen importes distintos. El transporte
+        interior, los aranceles y otros gravámenes se suman a la base del IVA pero NO al valor en aduana.
+      </p>
+
+      {/* Dos cards de definición */}
+      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-blue-900 mb-1">{DUTY_VS_VAT_COMPARISON.dutyBasis.name}</h3>
+          <p className="text-xs text-blue-700 font-mono mb-2">{DUTY_VS_VAT_COMPARISON.dutyBasis.formula}</p>
+          <p className="text-[11px] text-blue-600">{DUTY_VS_VAT_COMPARISON.dutyBasis.legalBasis}</p>
+          <p className="text-[11px] text-blue-500 mt-1">{DUTY_VS_VAT_COMPARISON.dutyBasis.declaration}</p>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-amber-900 mb-1">{DUTY_VS_VAT_COMPARISON.vatBasis.name}</h3>
+          <p className="text-xs text-amber-700 font-mono mb-2">{DUTY_VS_VAT_COMPARISON.vatBasis.formula}</p>
+          <p className="text-[11px] text-amber-600">{DUTY_VS_VAT_COMPARISON.vatBasis.legalBasis}</p>
+          <p className="text-[11px] text-amber-500 mt-1">{DUTY_VS_VAT_COMPARISON.vatBasis.declaration}</p>
+        </div>
+      </div>
+
+      {/* Tabla comparativa */}
+      <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-8">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Concepto</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-blue-700 w-32">Base arancel</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-amber-700 w-32">Base IVA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {DUTY_VS_VAT_COMPARISON.comparison.map((row, i) => (
+              <tr key={i} className="border-b border-gray-100">
+                <td className="px-4 py-2.5 text-sm text-gray-700">{row.concept}</td>
+                <td className={`px-4 py-2.5 text-center text-sm font-bold ${row.inDutyBase ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'}`}>
+                  {row.inDutyBase ? '✅' : '—'}
+                </td>
+                <td className={`px-4 py-2.5 text-center text-sm font-bold ${row.inVatBase ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'}`}>
+                  {row.inVatBase ? '✅' : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Nota primer destino */}
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800 mb-6">
+        <strong>Primer lugar de destino:</strong> {GENERAL_NOTES.firstDestination}
+      </div>
+
+      {/* Ejemplos numéricos */}
+      <h3 className="text-lg font-bold text-gray-900 mb-4">Ejemplos numéricos</h3>
+
+      <div className="flex gap-2 mb-4">
+        {NUMERICAL_EXAMPLES.map((ex) => (
+          <button
+            key={ex.id}
+            onClick={() => setActiveExample(ex.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeExample === ex.id
+                ? 'bg-[#0A3D5C] text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {ex.incoterm.split(' ')[0]}
+          </button>
+        ))}
+      </div>
+
+      {example && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-gray-800 px-5 py-3">
+            <p className="text-sm font-bold text-white">{example.title}</p>
+            <p className="text-xs text-gray-400">
+              {example.product} ({example.hs}) — {example.incoterm} — Arancel: {example.dutyRate} — IVA: {example.vatRate} — Carta de porte: {example.cartaPorte}
+            </p>
+          </div>
+
+          <div className="p-5">
+            {/* Desglose DDP */}
+            {example.priceBreakdown && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-xs">
+                <p className="font-semibold text-amber-800 mb-1">Desglose factura DDP ({example.totalInvoice.toLocaleString('es-ES')} EUR):</p>
+                {example.priceBreakdown.map((b, i) => (
+                  <div key={i} className="flex justify-between text-amber-700">
+                    <span>{b.concept}</span>
+                    <span className="font-mono">{b.amount.toLocaleString('es-ES')} EUR</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Paso 1: Valor en aduana */}
+              <div className="bg-slate-50 rounded-lg p-4">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold mr-1">1</span>
+                  {example.steps.customsValue.label}
+                </p>
+                {example.steps.customsValue.items.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm py-0.5">
+                    <span className="text-gray-600">{item.sign ? `${item.sign} ` : ''}{item.concept}</span>
+                    <span className="font-mono font-semibold text-gray-900">{Math.abs(item.amount).toLocaleString('es-ES')} EUR</span>
+                  </div>
+                ))}
+                {example.steps.customsValue.note && (
+                  <p className="text-[11px] text-gray-400 italic mt-1">{example.steps.customsValue.note}</p>
+                )}
+                <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between text-sm font-bold">
+                  <span className="text-slate-700">= VALOR EN ADUANA</span>
+                  <span className="text-[#0A3D5C] font-mono">{example.steps.customsValue.total.toLocaleString('es-ES')} EUR</span>
+                </div>
+              </div>
+
+              {/* Paso 2: Arancel */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-2">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-200 text-blue-600 text-[10px] font-bold mr-1">2</span>
+                  Arancel
+                </p>
+                <p className="text-sm text-gray-600">{example.steps.duty.base.toLocaleString('es-ES')} EUR x {example.dutyRate}</p>
+                <p className="text-lg font-bold text-blue-800 mt-2">{example.steps.duty.amount.toLocaleString('es-ES')} EUR</p>
+              </div>
+
+              {/* Paso 3: Base IVA */}
+              <div className="bg-amber-50 rounded-lg p-4">
+                <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-200 text-amber-600 text-[10px] font-bold mr-1">3</span>
+                  {example.steps.vatBase.label}
+                </p>
+                {example.steps.vatBase.items.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm py-0.5">
+                    <span className="text-gray-600">{item.sign ? `${item.sign} ` : ''}{item.concept}</span>
+                    <span className="font-mono font-semibold text-gray-900">{item.amount.toLocaleString('es-ES')} EUR</span>
+                  </div>
+                ))}
+                {example.steps.vatBase.note && (
+                  <p className="text-[11px] text-gray-400 italic mt-1">{example.steps.vatBase.note}</p>
+                )}
+                <div className="border-t border-amber-300 mt-2 pt-2 flex justify-between text-sm font-bold">
+                  <span className="text-amber-700">= BASE IVA</span>
+                  <span className="text-amber-900 font-mono">{example.steps.vatBase.total.toLocaleString('es-ES')} EUR</span>
+                </div>
+              </div>
+
+              {/* Paso 4: Total tributos */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-200 text-emerald-600 text-[10px] font-bold mr-1">4</span>
+                  Total tributos importación
+                </p>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">IVA: {example.steps.vat.base.toLocaleString('es-ES')} x {example.vatRate}</span>
+                    <span className="font-mono">{example.steps.vat.amount.toLocaleString('es-ES')} EUR</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Arancel</span>
+                    <span className="font-mono">{example.steps.duty.amount.toLocaleString('es-ES')} EUR</span>
+                  </div>
+                </div>
+                <div className="border-t border-emerald-300 mt-2 pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-emerald-800">TOTAL</span>
+                    <span className="text-xl font-bold text-emerald-900 font-mono">{example.steps.totalTax.toLocaleString('es-ES')} EUR</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Alerta DDP: sobrepago */}
+            {example.wrongDeclaration && (
+              <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
+                <p className="font-bold mb-2">⚠️ Si se hubiera declarado {example.totalInvoice.toLocaleString('es-ES')} EUR como valor en aduana:</p>
+                <div className="grid sm:grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <p>Arancel incorrecto: {example.wrongDeclaration.wrongDuty.amount.toLocaleString('es-ES')} EUR</p>
+                    <p className="font-bold text-red-900">+{example.wrongDeclaration.overpayDuty.toLocaleString('es-ES')} EUR de más</p>
+                  </div>
+                  <div>
+                    <p>IVA incorrecto: {example.wrongDeclaration.wrongVat.toLocaleString('es-ES')} EUR</p>
+                    <p className="font-bold text-red-900">+{example.wrongDeclaration.overpayVat.toLocaleString('es-ES')} EUR de más</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base font-bold text-red-900">Sobrepago total: {example.wrongDeclaration.overpayTotal.toLocaleString('es-ES')} EUR</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Refs DUA */}
+            <div className="mt-3 text-[11px] text-gray-400 space-x-3">
+              {example.duaRefs.map((ref, i) => (
+                <span key={i}>{ref}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+/* ================================================================
+   BLOQUE 5 — DV1 y casillas DUA/H1
+   ================================================================ */
+
+function DV1AndFields() {
+  return (
+    <section id="dv1-casillas" className="scroll-mt-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        El DV1 y las casillas del H1/DUA
+      </h2>
+
+      {/* DV1 */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+        <h3 className="text-base font-bold text-gray-900 mb-3">¿Qué es el DV1?</h3>
+        <p className="text-sm text-gray-700 mb-3">{DV1_INFO.definition}</p>
+
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 mb-4">
+          <strong>Obligatorio</strong> cuando el valor supera {DV1_INFO.threshold} por envío.
+          Excepciones: {DV1_INFO.exceptions.join('; ')}.
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-3 mb-4">
+          {DV1_INFO.sections.map((s, i) => (
+            <div key={i} className={`rounded-lg p-3 border ${
+              i === 1 ? 'bg-red-50 border-red-200' : i === 2 ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">{s.label}</p>
+              <p className="text-sm font-semibold text-gray-900 mb-1">{s.title}</p>
+              <p className="text-xs text-gray-600">{s.content}</p>
+              {s.note && <p className="text-[11px] text-blue-600 mt-1 font-medium">{s.note}</p>}
+            </div>
+          ))}
+        </div>
+
+        {/* Fórmula operativa */}
+        <div className="bg-gray-800 rounded-lg p-4">
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Fórmula operativa fundamental</p>
+          <p className="text-sm font-mono text-emerald-400 mb-1">{DV1_INFO.formula}</p>
+          <p className="text-xs font-mono text-gray-500">En DUA: {DV1_INFO.formulaDUA}</p>
+        </div>
+      </div>
+
+      {/* Tabla de casillas */}
+      <h3 className="text-base font-bold text-gray-900 mb-3">Tabla de casillas DUA / Data Elements H1</h3>
+      <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-4">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600">Concepto</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">DUA (antiguo)</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-blue-700 whitespace-nowrap">H1 (vigente)</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 whitespace-nowrap">Grupo EUCDM</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600">Qué contiene</th>
+            </tr>
+          </thead>
+          <tbody>
+            {EXTENDED_DUA_H1_FIELDS.map((field, i) => (
+              <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="px-3 py-2.5 text-sm font-medium text-gray-800">{field.concept}</td>
+                <td className="px-3 py-2.5 text-center text-xs text-gray-500 font-mono">{field.dua}</td>
+                <td className="px-3 py-2.5 text-center text-xs text-blue-700 font-mono font-bold">{field.h1}</td>
+                <td className="px-3 py-2.5 text-center text-[11px] text-gray-400">{field.group}</td>
+                <td className="px-3 py-2.5 text-xs text-gray-600">{field.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-gray-400 italic">
+        Nota: Desde la migración al sistema H1 (CAU), los Data Elements del EUCDM sustituyen a las casillas del DUA.
+        Muchos operativos y software aún usan la numeración DUA por costumbre. Ambas referencias son válidas.
+      </p>
+    </section>
+  )
+}
+
+/* ================================================================
+   BLOQUE 6 — Casos problemáticos
+   ================================================================ */
+
+function ProblematicCases() {
+  const [expandedId, setExpandedId] = useState(null)
+
+  const severityStyles = {
+    critical: 'border-red-200 hover:border-red-300',
+    warning: 'border-amber-200 hover:border-amber-300',
+    info: 'border-blue-200 hover:border-blue-300',
+  }
+
+  return (
+    <section id="casos-problematicos" className="scroll-mt-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        Casos problemáticos
+      </h2>
+      <p className="text-sm text-gray-600 mb-6">
+        Escenarios reales que generan errores frecuentes en la declaración del valor en aduana.
+        Haz clic para desplegar la solución.
+      </p>
+
+      <div className="space-y-3">
+        {PROBLEMATIC_CASES.map((c) => {
+          const isExpanded = expandedId === c.id
+          return (
+            <div key={c.id} className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-colors ${severityStyles[c.severity]}`}>
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                className="w-full px-5 py-4 flex items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{c.icon}</span>
+                  <span className="text-sm font-semibold text-gray-900">{c.title}</span>
+                </div>
+                <svg
+                  className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+
+              {isExpanded && (
+                <div className="px-5 pb-5 space-y-3 animate-fadeIn">
+                  <div className="bg-red-50 rounded-lg p-3">
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">Problema</p>
+                    <p className="text-sm text-red-800">{c.problem}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Por qué ocurre</p>
+                    <p className="text-sm text-gray-700">{c.why}</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-lg p-3">
+                    <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Solución</p>
+                    <p className="text-sm text-emerald-800">{c.solution}</p>
+                  </div>
+                  <p className="text-xs text-gray-400">Referencia: {c.reference}</p>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================
+   CROSS-LINKS
+   ================================================================ */
+
+function CrossLinks() {
+  return (
+    <div className="grid sm:grid-cols-3 gap-4">
+      <Link href="/incoterms" className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
+        <span className="text-2xl mb-2 block">📦</span>
+        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Incoterms 2020</p>
+        <p className="text-xs text-gray-500 mt-1">Tabla interactiva con los 11 Incoterms, wizard de decisión y guía completa</p>
+      </Link>
+      <Link href="/calculadora" className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
+        <span className="text-2xl mb-2 block">🧮</span>
+        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Calculadora TARIC</p>
+        <p className="text-xs text-gray-500 mt-1">Calcula aranceles, IVA y costes totales de importación</p>
+      </Link>
+      <Link href="/cbam/assessment" className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
+        <span className="text-2xl mb-2 block">🌍</span>
+        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Verificador CBAM</p>
+        <p className="text-xs text-gray-500 mt-1">Verifica si tu producto está afectado por el Mecanismo de Ajuste en Frontera</p>
+      </Link>
+    </div>
+  )
+}
+
+/* ================================================================
+   PÁGINA PRINCIPAL
+   ================================================================ */
+
+export default function ValorEnAduanaPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0A3D5C] via-[#0D5A8A] to-[#1A6FA0] py-16 md:py-20">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 text-[200px] leading-none">⚖️</div>
+          <div className="absolute bottom-10 right-10 text-[150px] leading-none">📋</div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <span className="inline-block px-4 py-2 bg-white/15 backdrop-blur-sm text-blue-100 rounded-full text-sm font-medium mb-6 border border-white/20">
+            CAU — Reglamento (UE) 952/2013
+          </span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            Valor en Aduana:{' '}
+            <span className="text-blue-200">Guía Operativa</span>
+          </h1>
+          <p className="text-lg text-blue-100 max-w-2xl mx-auto mb-8 leading-relaxed">
+            Todo lo que necesitas para declarar correctamente el valor en aduana:
+            métodos de valoración, ajustes por Incoterm, DV1, casillas H1 y casos reales.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="#ajustes-incoterm"
+              className="px-7 py-3 bg-white text-[#0A3D5C] font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl text-sm hover:bg-blue-50"
+            >
+              Ajustes por Incoterm
+            </a>
+            <a
+              href="#casos-problematicos"
+              className="px-7 py-3 bg-transparent border border-white/30 hover:border-white/50 text-white rounded-lg transition-all text-sm"
+            >
+              Casos problemáticos
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Contenido principal */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
+        <MiniTOC />
+        <ValuationMethods />
+        <IncotermWizard />
+        <MandatoryAdjustments />
+        <DutyVsVat />
+        <DV1AndFields />
+        <ProblematicCases />
+        <CrossLinks />
+      </div>
+    </div>
+  )
+}

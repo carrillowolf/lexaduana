@@ -45,6 +45,7 @@ const NAV_SECTIONS = [
     items: [
       { href: '/glosario', icon: '📖', label: 'Glosario' },
       { href: '/incoterms', icon: '📦', label: 'Incoterms 2020' },
+      { href: '/valor-en-aduana', icon: '⚖️', label: 'Valor en Aduana' },
       { href: '/tipos-cambio', icon: '💱', label: 'Tipos de cambio' },
     ],
   },

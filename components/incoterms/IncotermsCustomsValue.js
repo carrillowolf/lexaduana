@@ -417,17 +417,17 @@ function CustomsValueCTA() {
     <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 flex flex-col sm:flex-row items-center gap-4">
       <div className="flex-1">
         <p className="text-sm font-bold text-amber-900 mb-1">
-          Próximamente en LexAduana: Calculadora de valor en aduana
+          Guía completa de Valor en Aduana
         </p>
         <p className="text-sm text-amber-700">
-          Ajustes automáticos por Incoterm, cálculo de base del arancel y base del IVA, y generación de casillas DUA/H1.
+          6 métodos de valoración, ajustes por Incoterm, diferencia base arancel vs IVA, casillas DUA/H1, DV1 y casos problemáticos reales.
         </p>
       </div>
       <Link
-        href="/calculadora"
+        href="/valor-en-aduana"
         className="flex-shrink-0 px-5 py-2.5 bg-[#0A3D5C] text-white font-semibold rounded-lg text-sm hover:bg-[#0D5A8A] transition-colors"
       >
-        Usa la calculadora TARIC
+        Ver guía de valoración
       </Link>
     </div>
   )
