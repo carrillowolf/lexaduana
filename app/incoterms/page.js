@@ -1,6 +1,7 @@
 'use client'
 
 import IncotermsTable from '@/components/incoterms/IncotermsTable'
+import IncotermsCustomsValue from '@/components/incoterms/IncotermsCustomsValue'
 import IncotermsWizard from '@/components/incoterms/IncotermsWizard'
 import IncotermsSEO from '@/components/incoterms/IncotermsSEO'
 
@@ -47,10 +48,13 @@ export default function IncotermsPage() {
         {/* Bloque 1 — Tabla interactiva */}
         <IncotermsTable />
 
-        {/* Bloque 2 — Wizard de decisión */}
+        {/* Bloque 2 — Valor en aduana */}
+        <IncotermsCustomsValue />
+
+        {/* Bloque 3 — Wizard de decisión */}
         <IncotermsWizard />
 
-        {/* Bloque 3 — Contenido SEO */}
+        {/* Bloque 4 — Contenido SEO */}
         <IncotermsSEO />
       </div>
     </div>

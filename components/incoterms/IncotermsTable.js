@@ -84,6 +84,27 @@ function DetailPanel({ item }) {
         </div>
       </div>
 
+      {/* Alerta despachante */}
+      {item.dispatcherAlert && (
+        <div className={`rounded-lg p-3.5 text-sm flex items-start gap-2.5 ${
+          item.dispatcherAlert.type === 'critical'
+            ? 'bg-red-50 border border-red-200 text-red-800'
+            : item.dispatcherAlert.type === 'warning'
+            ? 'bg-amber-50 border border-amber-200 text-amber-800'
+            : item.dispatcherAlert.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-blue-50 border border-blue-200 text-blue-800'
+        }`}>
+          <span className="flex-shrink-0 text-base mt-0.5">
+            {item.dispatcherAlert.type === 'critical' ? '🚨' : item.dispatcherAlert.type === 'warning' ? '⚠️' : item.dispatcherAlert.type === 'success' ? '✅' : 'ℹ️'}
+          </span>
+          <div>
+            <p className="font-semibold text-xs uppercase tracking-wider mb-0.5">Alerta para el despachante</p>
+            <p className="leading-relaxed">{item.dispatcherAlert.text}</p>
+          </div>
+        </div>
+      )}
+
       {/* Documentos */}
       <div>
         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Documentos típicos</p>
