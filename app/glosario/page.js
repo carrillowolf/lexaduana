@@ -39,8 +39,21 @@ export default function GlosarioPage() {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero */}
+      <section className="bg-[#0A3D5C] py-10 md:py-14 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+            Glosario de <span className="text-[#F4C542]">Comercio Exterior</span>
+          </h1>
+          <p className="text-white/60 max-w-xl mx-auto">
+            Más de {glossaryData.terms.length} términos de aduanas, logística y normativa europea explicados para profesionales.
+          </p>
+        </div>
+      </section>
+
+      <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
@@ -55,7 +68,7 @@ export default function GlosarioPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="ej: arancel, IVA..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A3D5C] focus:border-transparent"
                 />
               </div>
 
@@ -71,7 +84,7 @@ export default function GlosarioPage() {
                       onClick={() => setSelectedCategory(cat)}
                       className={`w-full text-left px-3 py-2 rounded-lg transition ${
                         selectedCategory === cat
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-[#0A3D5C] text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
@@ -103,7 +116,7 @@ export default function GlosarioPage() {
                         disabled={!hasTerms}
                         className={`p-2 text-sm rounded transition ${
                           hasTerms
-                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            ? 'bg-[#0A3D5C]/10 text-[#0A3D5C] hover:bg-[#0A3D5C]/20'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -115,9 +128,9 @@ export default function GlosarioPage() {
               </div>
 
               {/* Stats */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+              <div className="mt-6 p-4 bg-[#0A3D5C]/5 border border-[#0A3D5C]/10 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Total términos</p>
-                <p className="text-2xl font-bold text-blue-600">{filteredTerms.length}</p>
+                <p className="text-2xl font-bold text-[#0A3D5C]">{filteredTerms.length}</p>
               </div>
             </div>
           </div>
@@ -129,13 +142,13 @@ export default function GlosarioPage() {
               <div className="bg-white rounded-xl shadow-lg p-8">
                 <button
                   onClick={() => setSelectedTerm(null)}
-                  className="mb-4 text-blue-600 hover:text-blue-700 flex items-center"
+                  className="mb-4 text-[#0A3D5C] hover:text-blue-700 flex items-center"
                 >
                   ← Volver al glosario
                 </button>
 
                 <div className="mb-4">
-                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full mb-2">
+                  <span className="inline-block px-3 py-1 bg-[#0A3D5C]/10 text-[#0A3D5C] text-sm rounded-full mb-2">
                     {selectedTerm.category}
                   </span>
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">
@@ -162,7 +175,7 @@ export default function GlosarioPage() {
                             <button
                               key={relatedId}
                               onClick={() => setSelectedTerm(relatedTerm)}
-                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition text-sm"
+                              className="px-3 py-1 bg-[#0A3D5C]/10 text-[#0A3D5C] rounded-full hover:bg-[#0A3D5C]/20 transition text-sm"
                             >
                               {relatedTerm.term}
                             </button>
@@ -174,7 +187,7 @@ export default function GlosarioPage() {
                 </div>
 
                 {/* CTA Calculadora */}
-                <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className="mt-8 p-6 bg-[#0A3D5C]/5 border border-[#0A3D5C]/10 rounded-lg border border-blue-200">
                   <h3 className="font-semibold text-gray-800 mb-2">
                     🧮 ¿Necesitas calcular aranceles?
                   </h3>
@@ -183,7 +196,7 @@ export default function GlosarioPage() {
                   </p>
                   <Link
                     href="/"
-                    className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="inline-block px-6 py-3 bg-[#0A3D5C] text-white rounded-lg hover:bg-[#0A3D5C]/90 transition"
                   >
                     Ir a la Calculadora
                   </Link>
@@ -195,7 +208,7 @@ export default function GlosarioPage() {
                 {Object.keys(termsByLetter).sort().map(letter => (
                   <div key={letter} id={`letter-${letter}`} className="scroll-mt-4">
                     <div className="flex items-center mb-4">
-                      <div className="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-2xl font-bold mr-4">
+                      <div className="w-12 h-12 bg-[#0A3D5C] text-white rounded-lg flex items-center justify-center text-2xl font-bold mr-4">
                         {letter}
                       </div>
                       <div className="flex-1 h-px bg-gray-300"></div>
@@ -212,14 +225,14 @@ export default function GlosarioPage() {
                             <h3 className="font-semibold text-gray-800">
                               {term.term}
                             </h3>
-                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                            <span className="text-xs px-2 py-1 bg-[#0A3D5C]/10 text-[#0A3D5C] rounded">
                               {term.category}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 line-clamp-2">
                             {term.definition}
                           </p>
-                          <div className="mt-2 text-blue-600 text-sm flex items-center">
+                          <div className="mt-2 text-[#0A3D5C] text-sm flex items-center">
                             Ver más →
                           </div>
                         </button>
@@ -242,7 +255,7 @@ export default function GlosarioPage() {
                         setSearchTerm('')
                         setSelectedCategory('all')
                       }}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      className="px-6 py-2 bg-[#0A3D5C] text-white rounded-lg hover:bg-[#0A3D5C]/90 transition"
                     >
                       Limpiar filtros
                     </button>
