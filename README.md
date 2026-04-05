@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.4.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.5.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -34,9 +34,55 @@ lexaduana.es
 │       └── Gestión solicitudes
 ├── 🌳 EUDR Deforestación       (informativo)
 │   └── Guía regulatoria completa
+├── 📦 Incoterms 2020           (disponible)
+│   ├── Tabla interactiva (11 Incoterms)
+│   ├── Wizard de decisión ICC
+│   └── Guía de impacto aduanero
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.5.0 (Abril 2026)
+
+### 📦 Página Interactiva de Incoterms 2020 (`/incoterms`)
+Guía profesional completa de los 11 Incoterms 2020 con enfoque práctico para importadores y exportadores.
+
+#### Tabla interactiva
+- **11 Incoterms completos**: EXW, FCA, CPT, CIP, DAP, DPU, DDP, FAS, FOB, CFR, CIF
+- **Dos grupos visuales**: 7 multimodales + 4 marítimos, diferenciados con iconos
+- **7 columnas de responsabilidad**: Embalaje, carga, transporte interior, exportación, flete, seguro, importación
+- **Código de colores**: Verde (vendedor), azul (comprador), ámbar (según acuerdo)
+- **Filas expandibles**: Click para desplegar detalle completo con 4 secciones:
+  - Qué significa (descripción ICC)
+  - Impacto en el valor en aduana (fórmula + ajustes)
+  - Ejemplo práctico (con cifras reales)
+  - Consejo profesional (recomendaciones ICC)
+- **Metadatos adicionales**: Punto de transferencia de riesgo/costes, diferencia clave, documentos típicos
+- **Responsive**: Tabla en desktop, cards con mini-grid en móvil
+
+#### Wizard de decisión ICC
+- **Dos perspectivas**: Vendedor/exportador y comprador/importador
+- **Árboles de decisión**: Basados en diagramas oficiales ICC
+- **Preguntas Sí/No**: Flujo guiado de 3-5 pasos
+- **Resultado con alternativa**: Incoterm principal + alternativa con seguro cuando aplica
+- **Perspectiva contextual**: Descripción adaptada a vendedor o comprador
+- **Navegación**: Botón atrás, reiniciar, cambiar perspectiva
+
+#### Contenido SEO
+- **Qué son los Incoterms 2020**: Reglas ICC, reparto de costes/riesgos, cambios vs 2010
+- **Impacto en el valor en aduana**: Base CIF, ajustes por Incoterm, Código Aduanero de la Unión
+- **CTA integrado**: Enlace a calculadora TARIC para calcular aranceles
+- **Metadata optimizada**: Title, description, OpenGraph para posicionamiento SEO
+
+#### Arquitectura
+- **Datos**: `lib/incotermsData.js` — 11 Incoterms hardcoded con responsabilidades, descripciones, ejemplos y documentos
+- **Componentes modulares**: `IncotermsTable.js`, `IncotermsWizard.js`, `IncotermsSEO.js`
+- **Layout server**: `app/incoterms/layout.js` para metadata + `page.js` client para interactividad
+- **Sidebar**: Enlace añadido en sección RECURSOS (entre Glosario y Tipos de cambio)
+- **Sin dependencias nuevas**: Solo Tailwind CSS existente
+- **Sin backend**: Contenido 100% estático, sin API ni base de datos
 
 ---
 
