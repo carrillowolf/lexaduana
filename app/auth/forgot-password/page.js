@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
-  
+
   const supabase = createClientComponentClient()
 
   const handleSubmit = async (e) => {
@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
         throw error
       }
 
-      setMessage('Se ha enviado un enlace de recuperación a tu correo electrónico. Por favor, revisa tu bandeja de entrada.')
+      setMessage('Se ha enviado un enlace de recuperación a tu correo electrónico. Revisa tu bandeja de entrada.')
     } catch (err) {
       setError(err.message || 'Error al enviar el correo de recuperación')
     } finally {
@@ -36,52 +36,45 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#060d16] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[#0A3D5C]/20 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-[#F4C542]/8 rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center">
-              <span className="text-[#F4C542] font-bold text-xl">L</span>
-            </div>
-            <span className="text-2xl font-bold text-[#0A3D5C]">LexAduana</span>
+            <img src="/logo.png" alt="LexAduana" className="h-10 w-10 rounded-lg bg-white p-0.5" />
+            <span className="text-2xl font-bold text-white tracking-tight">LexAduana</span>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-2xl font-bold text-[#0A3D5C] text-center mb-2">
-            Recuperar contraseña
-          </h1>
-          <p className="text-gray-500 text-center mb-6">
-            Introduce tu email y te enviaremos un enlace para restablecer tu contraseña
-          </p>
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Recuperar contraseña
+            </h1>
+            <p className="text-white/50 text-sm">Te enviaremos un enlace para restablecer tu contraseña</p>
+          </div>
 
-          {/* Success Message */}
           {message && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
-              <div className="flex items-start gap-3">
-                <span className="text-green-500 text-xl">✅</span>
-                <p className="text-green-700 text-sm">{message}</p>
-              </div>
+            <div className="mb-5 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+              <p className="text-sm text-emerald-400">{message}</p>
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <div className="flex items-start gap-3">
-                <span className="text-red-500 text-xl">⚠️</span>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
+            <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
-          {/* Form */}
           {!message && (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-white/60 mb-2">
                   Correo electrónico
                 </label>
                 <input
@@ -91,14 +84,14 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="tu@email.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0A3D5C] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#F4C542]/50 focus:border-[#F4C542]/50 focus:outline-none transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#0A3D5C]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-[#F4C542] text-[#060d16] font-semibold py-3 px-6 rounded-xl hover:bg-[#F4C542]/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -109,19 +102,16 @@ export default function ForgotPasswordPage() {
                     Enviando...
                   </>
                 ) : (
-                  <>
-                    📧 Enviar enlace de recuperación
-                  </>
+                  'Enviar enlace de recuperación'
                 )}
               </button>
             </form>
           )}
 
-          {/* Back to login */}
           <div className="mt-6 text-center">
-            <Link 
-              href="/auth/login" 
-              className="text-[#0A3D5C] hover:underline font-medium inline-flex items-center gap-1"
+            <Link
+              href="/auth/login"
+              className="text-sm text-white/40 hover:text-white/60 transition-colors"
             >
               ← Volver al inicio de sesión
             </Link>
@@ -129,8 +119,8 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-gray-500 text-sm mt-6">
-          © 2025 LexAduana. Todos los derechos reservados.
+        <p className="text-center text-white/20 text-sm mt-6">
+          © 2024-2026 LexAduana. Todos los derechos reservados.
         </p>
       </div>
     </div>

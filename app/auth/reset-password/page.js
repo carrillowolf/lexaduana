@@ -13,29 +13,27 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState(null)
   const [isValidSession, setIsValidSession] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
-  
+
   const supabase = createClientComponentClient()
   const router = useRouter()
 
   useEffect(() => {
-    // Verificar si hay una sesión válida (el usuario llegó desde el email)
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      
+
       if (session) {
         setIsValidSession(true)
       } else {
-        // Intentar recuperar la sesión desde el hash de la URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const accessToken = hashParams.get('access_token')
         const refreshToken = hashParams.get('refresh_token')
-        
+
         if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           })
-          
+
           if (!error) {
             setIsValidSession(true)
           }
@@ -53,7 +51,6 @@ export default function ResetPasswordPage() {
     setError(null)
     setMessage(null)
 
-    // Validaciones
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres')
       setLoading(false)
@@ -76,8 +73,7 @@ export default function ResetPasswordPage() {
       }
 
       setMessage('¡Contraseña actualizada correctamente!')
-      
-      // Redirigir al login después de 2 segundos
+
       setTimeout(() => {
         router.push('/auth/login')
       }, 2000)
@@ -88,52 +84,54 @@ export default function ResetPasswordPage() {
     }
   }
 
-  // Mientras verifica la sesión
+  // Checking session state
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#060d16] flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-[#0A3D5C] border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando enlace...</p>
+          <div className="animate-spin h-8 w-8 border-4 border-[#F4C542] border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-white/50">Verificando enlace...</p>
         </div>
       </div>
     )
   }
 
-  // Si no hay sesión válida
+  // Invalid session state
   if (!isValidSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* Logo */}
-          <div className="text-center mb-8">
+      <div className="min-h-screen bg-[#060d16] flex items-center justify-center px-4 relative overflow-hidden">
+        <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[#0A3D5C]/20 rounded-full blur-[150px] pointer-events-none" />
+
+        <div className="w-full max-w-md relative z-10">
+          <div className="text-center mb-10">
             <Link href="/" className="inline-flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center">
-                <span className="text-[#F4C542] font-bold text-xl">L</span>
-              </div>
-              <span className="text-2xl font-bold text-[#0A3D5C]">LexAduana</span>
+              <img src="/logo.png" alt="LexAduana" className="h-10 w-10 rounded-lg bg-white p-0.5" />
+              <span className="text-2xl font-bold text-white tracking-tight">LexAduana</span>
             </Link>
           </div>
 
-          {/* Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="text-5xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-[#0A3D5C] mb-2">
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl text-center">
+            <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">
               Enlace inválido o expirado
             </h1>
-            <p className="text-gray-500 mb-6">
-              El enlace de recuperación no es válido o ha expirado. Por favor, solicita uno nuevo.
+            <p className="text-white/50 text-sm mb-6">
+              El enlace de recuperación no es válido o ha expirado. Solicita uno nuevo.
             </p>
-            <Link 
+            <Link
               href="/auth/forgot-password"
-              className="inline-block w-full py-3 px-4 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#0A3D5C]/90 transition-all text-center"
+              className="inline-block w-full py-3 px-4 bg-[#F4C542] text-[#060d16] font-semibold rounded-xl hover:bg-[#F4C542]/90 transition-all text-center"
             >
               Solicitar nuevo enlace
             </Link>
             <div className="mt-4">
-              <Link 
-                href="/auth/login" 
-                className="text-[#0A3D5C] hover:underline font-medium"
+              <Link
+                href="/auth/login"
+                className="text-sm text-white/40 hover:text-white/60 transition-colors"
               >
                 ← Volver al inicio de sesión
               </Link>
@@ -144,56 +142,50 @@ export default function ResetPasswordPage() {
     )
   }
 
+  // Valid session - show reset form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#060d16] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-[#0A3D5C]/20 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-[#F4C542]/8 rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#0A3D5C] rounded-xl flex items-center justify-center">
-              <span className="text-[#F4C542] font-bold text-xl">L</span>
-            </div>
-            <span className="text-2xl font-bold text-[#0A3D5C]">LexAduana</span>
+            <img src="/logo.png" alt="LexAduana" className="h-10 w-10 rounded-lg bg-white p-0.5" />
+            <span className="text-2xl font-bold text-white tracking-tight">LexAduana</span>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-2xl font-bold text-[#0A3D5C] text-center mb-2">
-            Nueva contraseña
-          </h1>
-          <p className="text-gray-500 text-center mb-6">
-            Introduce tu nueva contraseña
-          </p>
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Nueva contraseña
+            </h1>
+            <p className="text-white/50 text-sm">Introduce tu nueva contraseña</p>
+          </div>
 
-          {/* Success Message */}
           {message && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
-              <div className="flex items-start gap-3">
-                <span className="text-green-500 text-xl">✅</span>
-                <div>
-                  <p className="text-green-700 text-sm">{message}</p>
-                  <p className="text-green-600 text-xs mt-1">Redirigiendo al login...</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <div className="flex items-start gap-3">
-                <span className="text-red-500 text-xl">⚠️</span>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Form */}
-          {!message && (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="mb-5 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <p className="text-sm text-emerald-400">{message}</p>
+                <p className="text-xs text-emerald-400/60 mt-1">Redirigiendo al login...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {!message && (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-white/60 mb-2">
                   Nueva contraseña
                 </label>
                 <input
@@ -204,12 +196,12 @@ export default function ResetPasswordPage() {
                   required
                   minLength={6}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0A3D5C] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#F4C542]/50 focus:border-[#F4C542]/50 focus:outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/60 mb-2">
                   Confirmar contraseña
                 </label>
                 <input
@@ -219,14 +211,14 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="Repite la contraseña"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0A3D5C] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#F4C542]/50 focus:border-[#F4C542]/50 focus:outline-none transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#0A3D5C]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-[#F4C542] text-[#060d16] font-semibold py-3 px-6 rounded-xl hover:bg-[#F4C542]/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -237,9 +229,7 @@ export default function ResetPasswordPage() {
                     Actualizando...
                   </>
                 ) : (
-                  <>
-                    🔐 Actualizar contraseña
-                  </>
+                  'Actualizar contraseña'
                 )}
               </button>
             </form>
@@ -247,8 +237,8 @@ export default function ResetPasswordPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-gray-500 text-sm mt-6">
-          © 2025 LexAduana. Todos los derechos reservados.
+        <p className="text-center text-white/20 text-sm mt-6">
+          © 2024-2026 LexAduana. Todos los derechos reservados.
         </p>
       </div>
     </div>
