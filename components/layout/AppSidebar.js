@@ -44,6 +44,7 @@ const NAV_SECTIONS = [
     label: 'RECURSOS',
     items: [
       { href: '/glosario', icon: '📖', label: 'Glosario' },
+      { href: '/incoterms', icon: '📦', label: 'Incoterms 2020' },
       { href: '/tipos-cambio', icon: '💱', label: 'Tipos de cambio' },
     ],
   },
