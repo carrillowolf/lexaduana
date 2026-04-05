@@ -20,6 +20,8 @@ const PAGE_TITLES = {
   '/cbam/historial': 'Historial CBAM',
   '/eudr': 'EUDR - Deforestación',
   '/glosario': 'Glosario',
+  '/incoterms': 'Incoterms 2020',
+  '/valor-en-aduana': 'Valor en Aduana',
   '/tipos-cambio': 'Tipos de Cambio',
   '/dashboard': 'Dashboard',
   '/favoritos': 'Favoritos',

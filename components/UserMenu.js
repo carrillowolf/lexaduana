@@ -52,13 +52,13 @@ export default function UserMenu() {
         </Link>
         <Link
           href="/auth/login"
-          className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition"
+          className="px-4 py-2 text-[#0A3D5C] hover:text-[#083049] font-medium transition"
         >
           Iniciar Sesión
         </Link>
         <Link
           href="/auth/register"
-          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition"
+          className="px-4 py-2 bg-[#0A3D5C] text-white font-medium rounded-lg hover:bg-[#083049] transition"
         >
           Registrarse
         </Link>

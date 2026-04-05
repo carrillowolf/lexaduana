@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.7.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.8.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -52,7 +52,31 @@ lexaduana.es
 
 ---
 
-## 🆕 Novedades v5.7.0 (Abril 2026)
+## 🆕 Novedades v5.8.0 (Abril 2026)
+
+### 🎨 Rediseño visual completo — Dark Theme & Design System unificado
+
+Rediseño integral de toda la plataforma con un sistema de diseño coherente: navy `#0A3D5C`, gold `#F4C542`, dark `#060d16`.
+
+#### Páginas standalone (dark theme completo)
+- **Homepage** (`/`): Fondo oscuro continuo `#060d16`, tool showcase con tabs dinámicos, glassmorphism cards, números dorados animados, ambient glow effects
+- **Auth pages** (`/auth/*`): Login, registro, recuperar y resetear contraseña con glassmorphism, inputs oscuros, CTA dorado
+
+#### Páginas dentro del sidebar (heroes navy + body claro)
+- **CBAM Hub** (`/cbam`): Hero dark navy con deadline dorado, headers por sección (navy, rojo, esmeralda), stats con números dorados
+- **Incoterms** (`/incoterms`): Hero navy flat + CTA dorado, pattern overlay consistente
+- **Valor en Aduana** (`/valor-en-aduana`): Mismo tratamiento de hero unificado
+- **Glosario** (`/glosario`): Nuevo hero añadido + paleta actualizada de azul genérico a navy/gold
+
+#### Micro-mejoras UX
+- **Sidebar**: Logo con fondo blanco para consistencia visual
+- **UserMenu**: Botón registrarse navy sólido (sin gradiente azul/indigo)
+- **Topbar**: Títulos de página para Incoterms y Valor en Aduana
+- **Dashboard**: Fondo unificado `bg-slate-50`, welcome card navy con pattern overlay, accesos rápidos como cards blancas uniformes con hover suave (sin gradientes random), CTA corregido a `/calculadora`
+
+---
+
+## Novedades v5.7.0 (Abril 2026)
 
 ### ⚖️ Página de Valor en Aduana (`/valor-en-aduana`)
 Guía operativa completa de valoración aduanera para despachantes y profesionales de comercio exterior. 6 bloques de contenido, 100% estático, sin backend.

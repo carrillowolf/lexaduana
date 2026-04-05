@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#0A3D5C] border-t-transparent mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Cargando dashboard...</p>
@@ -86,22 +86,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Contenido principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* Welcome Card */}
-        <div className="bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] rounded-2xl shadow-xl p-8 text-white">
-          <div className="flex items-center justify-between">
+        <div className="bg-[#0A3D5C] rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <h2 className="text-3xl font-bold mb-2">¡Bienvenido de nuevo! 👋</h2>
-              <p className="text-blue-100">Aquí tienes un resumen de tu actividad</p>
+              <h2 className="text-2xl font-bold mb-1">¡Bienvenido de nuevo!</h2>
+              <p className="text-white/60 text-sm">Aquí tienes un resumen de tu actividad</p>
             </div>
-            <div className="hidden md:block">
-              <svg className="w-24 h-24 text-white/20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-              </svg>
-            </div>
+            <div className="hidden md:block text-4xl">📊</div>
           </div>
         </div>
 
@@ -171,7 +168,7 @@ export default function DashboardPage() {
         {/* Historial */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           {/* Header del historial */}
-          <div className="bg-gradient-to-r from-slate-50 to-gray-50 px-8 py-6 border-b border-gray-200">
+          <div className="px-8 py-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">Historial de Cálculos</h2>
@@ -206,8 +203,8 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay cálculos todavía</h3>
                 <p className="text-gray-600 mb-6">Comienza haciendo tu primer cálculo de aranceles</p>
                 <Link
-                  href="/"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] text-white font-semibold rounded-xl hover:from-[#083049] hover:to-[#0A3D5C] transition-all shadow-lg hover:shadow-xl"
+                  href="/calculadora"
+                  className="inline-flex items-center px-6 py-3 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#083049] transition-all shadow-lg hover:shadow-xl"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -260,101 +257,111 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Botones de acción */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <Link
-            href="/"
-            className="flex items-center justify-center px-6 py-4 bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] text-white font-bold rounded-xl hover:from-[#083049] hover:to-[#0A3D5C] transition-all shadow-lg hover:shadow-xl"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            <span>Calculadora</span>
-          </Link>
-
-          <Link
-            href="/comparador"
-            className="flex items-center justify-center px-6 py-4 bg-white border-2 border-[#0A3D5C] text-[#0A3D5C] font-bold rounded-xl hover:bg-[#0A3D5C] hover:text-white transition-all shadow-lg hover:shadow-xl"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span>Comparador</span>
-          </Link>
-
-          <Link
-            href="/cbam"
-            className="flex items-center space-x-4 p-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl text-white hover:shadow-2xl transition-all group"
-          >
-            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-              <span className="text-3xl">🌍</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">CBAM</h3>
-              <p className="text-sm text-emerald-100">Verificador y simulador</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/bulk"
-            className="flex items-center space-x-4 p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl text-white hover:shadow-2xl transition-all group"
-          >
-            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Calculadora Masiva</h3>
-              <p className="text-sm text-white/80">Procesa hasta 100 productos</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/clasificador"
-            className="flex items-center space-x-4 p-6 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl text-white hover:shadow-2xl transition-all group"
-          >
-            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Clasificador IA</h3>
-              <p className="text-sm text-pink-100">Claude Sonnet 4.5</p>
-            </div>
-          </Link>
-
-          {calculations.length > 0 && (
-            <button
-              onClick={() => exportBulkToExcel(calculations, user.email)}
-              className="flex items-center justify-center px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white font-bold rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all shadow-lg hover:shadow-xl"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>Exportar Excel</span>
-            </button>
-          )}
-
-          {/* Panel Admin - Solo visible para admin */}
-          {user?.email === ADMIN_EMAIL && (
+        {/* Accesos rápidos */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Accesos rápidos</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link
-              href="/admin/clasificaciones"
-              className="flex items-center space-x-4 p-6 bg-gradient-to-br from-gray-700 to-gray-900 rounded-2xl text-white hover:shadow-2xl transition-all group"
+              href="/calculadora"
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#0A3D5C]/30 hover:shadow-lg transition-all group"
             >
-              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+              <div className="p-3 bg-[#0A3D5C]/10 rounded-xl group-hover:bg-[#0A3D5C]/15 transition">
+                <span className="text-2xl">🧮</span>
               </div>
               <div>
-                <h3 className="font-bold text-lg">Panel Admin</h3>
-                <p className="text-sm text-gray-300">Gestionar IA</p>
+                <h3 className="font-semibold text-gray-800">Calculadora</h3>
+                <p className="text-sm text-gray-500">Aranceles e impuestos</p>
               </div>
             </Link>
-          )}
+
+            <Link
+              href="/comparador"
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#0A3D5C]/30 hover:shadow-lg transition-all group"
+            >
+              <div className="p-3 bg-[#0A3D5C]/10 rounded-xl group-hover:bg-[#0A3D5C]/15 transition">
+                <span className="text-2xl">⚖️</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Comparador</h3>
+                <p className="text-sm text-gray-500">Multi-origen</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/cbam"
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#F4C542]/40 hover:shadow-lg transition-all group"
+            >
+              <div className="p-3 bg-[#F4C542]/15 rounded-xl group-hover:bg-[#F4C542]/25 transition">
+                <span className="text-2xl">🏭</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">CBAM</h3>
+                <p className="text-sm text-gray-500">Verificador y simulador</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/clasificador"
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#0A3D5C]/30 hover:shadow-lg transition-all group"
+            >
+              <div className="p-3 bg-[#0A3D5C]/10 rounded-xl group-hover:bg-[#0A3D5C]/15 transition">
+                <span className="text-2xl">🤖</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Clasificador IA</h3>
+                <p className="text-sm text-gray-500">Claude Sonnet 4.5</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/bulk"
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#0A3D5C]/30 hover:shadow-lg transition-all group"
+            >
+              <div className="p-3 bg-[#0A3D5C]/10 rounded-xl group-hover:bg-[#0A3D5C]/15 transition">
+                <span className="text-2xl">📊</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Cálculo masivo</h3>
+                <p className="text-sm text-gray-500">Hasta 100 productos</p>
+              </div>
+            </Link>
+
+            {calculations.length > 0 && (
+              <button
+                onClick={() => exportBulkToExcel(calculations, user.email)}
+                className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-lg transition-all group text-left"
+              >
+                <div className="p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition">
+                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Exportar Excel</h3>
+                  <p className="text-sm text-gray-500">Descargar historial</p>
+                </div>
+              </button>
+            )}
+
+            {/* Panel Admin - Solo visible para admin */}
+            {user?.email === ADMIN_EMAIL && (
+              <Link
+                href="/admin/clasificaciones"
+                className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-gray-400 hover:shadow-lg transition-all group"
+              >
+                <div className="p-3 bg-gray-200 rounded-xl group-hover:bg-gray-300 transition">
+                  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Panel Admin</h3>
+                  <p className="text-sm text-gray-500">Gestionar IA</p>
+                </div>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>

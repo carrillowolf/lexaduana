@@ -168,7 +168,7 @@ export default function AppSidebar() {
       {/* Logo */}
       <div className="px-4 py-5 border-b border-gray-100">
         <Link href="/" className="flex items-center gap-3" onClick={handleNavigate}>
-          <img src="/logo.png" alt="LexAduana" className="h-9 w-9" />
+          <img src="/logo.png" alt="LexAduana" className="h-9 w-9 rounded-lg bg-white p-0.5" />
           <div className="min-w-0">
             <p className="text-base font-bold text-[#0A3D5C] truncate">LexAduana</p>
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Suite de Comercio</p>
@@ -233,7 +233,7 @@ export default function AppSidebar() {
 
       {/* Version */}
       <div className="px-4 py-2 border-t border-gray-50">
-        <p className="text-[10px] text-gray-300">v5.4.0</p>
+        <p className="text-[10px] text-gray-300">v5.8.0</p>
       </div>
     </div>
   )
