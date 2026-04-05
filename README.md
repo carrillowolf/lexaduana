@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.5.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.6.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -35,12 +35,38 @@ lexaduana.es
 ├── 🌳 EUDR Deforestación       (informativo)
 │   └── Guía regulatoria completa
 ├── 📦 Incoterms 2020           (disponible)
-│   ├── Tabla interactiva (11 Incoterms)
+│   ├── Tabla COSTE/RIESGO (10 etapas, estilo TIBA)
+│   ├── Valor en aduana e Incoterms
 │   ├── Wizard de decisión ICC
 │   └── Guía de impacto aduanero
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.6.0 (Abril 2026)
+
+### 📦 Rediseño tabla Incoterms estilo TIBA + Valor en aduana
+
+#### Tabla COSTE/RIESGO (rediseño completo)
+- **10 etapas logísticas**: Embalaje → Carga → Transp. interior → Aduana exp. → Manip. origen → Flete int. → Manip. destino → Aduana imp. → Transp. destino → Descarga
+- **Cabecera visual con emojis**: 📦📤🚛📋🏗️🚢🏗️🛃🚚📥 con etiquetas por etapa
+- **Línea de flujo**: "País de origen" → "Transporte" → "País de destino"
+- **Barras COSTE y RIESGO separadas**: Muestra cómo en Incoterms tipo C (CPT, CIP, CFR, CIF) el vendedor paga el flete pero el riesgo se transfiere antes
+- **Fila SEGURO**: Para CIP y CIF, tercera fila indicando cobertura del vendedor
+- **Colores TIBA**: Azul (vendedor) y ámbar (comprador) — más intuitivo visualmente
+- **Aviso interactivo pulsante**: Indica que las filas son expandibles
+- **Scroll horizontal**: Soporte para pantallas con sidebar abierto
+
+#### Valor en aduana e Incoterms (sección nueva)
+- **Tabla de ajustes**: Qué sumar/restar al precio facturado por Incoterm para llegar al valor CIF frontera UE
+- **Base arancel vs IVA**: Comparativa de 9 conceptos (el arancel ≠ la base del IVA)
+- **Casillas DUA/H1**: Mapeo de 12 casillas del DUA antiguo a Data Elements del H1 (CAU)
+- **Ejemplo numérico**: FOB Los Ángeles→Madrid, 45.000 EUR en 4 pasos → total tributos 12.917 EUR
+- **Ajustes CAU**: Arts. 71 (siempre sumar) y 72 (nunca incluir) en dos columnas
+- **Alertas del despachante**: En cada panel expandible (críticas para EXW/DDP, advertencias para CIP/CFR, etc.)
+- **CTA Próximamente**: Banner para futura página `/valor-en-aduana` con enlace a calculadora
 
 ---
 
@@ -52,15 +78,15 @@ Guía profesional completa de los 11 Incoterms 2020 con enfoque práctico para i
 #### Tabla interactiva
 - **11 Incoterms completos**: EXW, FCA, CPT, CIP, DAP, DPU, DDP, FAS, FOB, CFR, CIF
 - **Dos grupos visuales**: 7 multimodales + 4 marítimos, diferenciados con iconos
-- **7 columnas de responsabilidad**: Embalaje, carga, transporte interior, exportación, flete, seguro, importación
-- **Código de colores**: Verde (vendedor), azul (comprador), ámbar (según acuerdo)
+- **10 columnas de operaciones**: Cadena logística completa con barras COSTE/RIESGO
+- **Código de colores**: Azul (vendedor), ámbar (comprador)
 - **Filas expandibles**: Click para desplegar detalle completo con 4 secciones:
   - Qué significa (descripción ICC)
   - Impacto en el valor en aduana (fórmula + ajustes)
   - Ejemplo práctico (con cifras reales)
   - Consejo profesional (recomendaciones ICC)
 - **Metadatos adicionales**: Punto de transferencia de riesgo/costes, diferencia clave, documentos típicos
-- **Responsive**: Tabla en desktop, cards con mini-grid en móvil
+- **Responsive**: Tabla en desktop, cards con mini-barras en móvil
 
 #### Wizard de decisión ICC
 - **Dos perspectivas**: Vendedor/exportador y comprador/importador
@@ -77,8 +103,8 @@ Guía profesional completa de los 11 Incoterms 2020 con enfoque práctico para i
 - **Metadata optimizada**: Title, description, OpenGraph para posicionamiento SEO
 
 #### Arquitectura
-- **Datos**: `lib/incotermsData.js` — 11 Incoterms hardcoded con responsabilidades, descripciones, ejemplos y documentos
-- **Componentes modulares**: `IncotermsTable.js`, `IncotermsWizard.js`, `IncotermsSEO.js`
+- **Datos**: `lib/incotermsData.js` — 11 Incoterms con COSTE/RIESGO (10 etapas), ajustes valor en aduana, alertas despachante, DUA/H1, CAU
+- **Componentes modulares**: `IncotermsTable.js`, `IncotermsCustomsValue.js`, `IncotermsWizard.js`, `IncotermsSEO.js`
 - **Layout server**: `app/incoterms/layout.js` para metadata + `page.js` client para interactividad
 - **Sidebar**: Enlace añadido en sección RECURSOS (entre Glosario y Tipos de cambio)
 - **Sin dependencias nuevas**: Solo Tailwind CSS existente
