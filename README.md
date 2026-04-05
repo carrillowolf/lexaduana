@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.6.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.7.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -39,9 +39,71 @@ lexaduana.es
 │   ├── Valor en aduana e Incoterms
 │   ├── Wizard de decisión ICC
 │   └── Guía de impacto aduanero
+├── ⚖️ Valor en Aduana           (disponible)
+│   ├── 6 métodos de valoración CAU
+│   ├── Wizard ajustes por Incoterm
+│   ├── Ajustes obligatorios art. 71/72
+│   ├── Base arancel vs base IVA (3 ejemplos)
+│   ├── DV1 + tabla casillas DUA/H1
+│   └── 6 casos problemáticos reales
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.7.0 (Abril 2026)
+
+### ⚖️ Página de Valor en Aduana (`/valor-en-aduana`)
+Guía operativa completa de valoración aduanera para despachantes y profesionales de comercio exterior. 6 bloques de contenido, 100% estático, sin backend.
+
+#### Bloque 1 — Métodos de valoración
+- **6 métodos secuenciales del CAU** (arts. 70-74): Valor de transacción → Mercancías idénticas → Similares → Deductivo → Calculado → Último recurso
+- **Indicadores de frecuencia**: Uso habitual (~90%), subsidiarios, excepcional
+- **Flujo visual M1→M6**: Flechas secuenciales mostrando jerarquía obligatoria
+- **Condiciones y cambio clave** por método
+
+#### Bloque 2 — Wizard de ajustes por Incoterm
+- **11 botones de Incoterm**: Selector interactivo (EXW→CIF)
+- **Panel dinámico**: Adiciones (rojo), deducciones (verde), fórmula (azul)
+- **Alerta para el despachante**: Avisos específicos por Incoterm (críticos para EXW/DDP)
+- **Datos reutilizados** de `lib/incotermsData.js` (sin duplicación)
+
+#### Bloque 3 — Ajustes obligatorios CAU
+- **Art. 71 (adiciones)**: 6 conceptos que SIEMPRE se suman — comisiones, envases, assists, royalties, producto reventa, transporte/seguro
+- **Art. 72 (exclusiones)**: 7 conceptos que NUNCA se incluyen — transporte posterior, construcción/montaje, financiación, derechos reproducción, comisiones compra, gravámenes UE, pagos distribución
+- **Warnings y ejemplos reales**: Assists desde China, royalties vinculados a marca
+
+#### Bloque 4 — Base arancel vs Base IVA
+- **2 cards de definición**: Base arancel (A00, art. 70-72 CAU) vs Base IVA importación (B00, art. 83 LIVA)
+- **Tabla comparativa de 10 conceptos**: ✅/— para cada base (el arancel ≠ la base del IVA)
+- **3 ejemplos numéricos con tabs**: FOB (Shanghai→Madrid), CIF (Rotterdam→Barcelona), DDP (Shenzhen→Valencia)
+- **4 pasos por ejemplo**: Valor en aduana → Arancel → Base IVA → IVA → Resumen
+- **Warning DDP**: Muestra declaración incorrecta vs correcta con sobrepago real
+
+#### Bloque 5 — DV1 y casillas DUA/H1
+- **Qué es el DV1**: Declaración de Valor obligatoria >20.000 EUR, excepciones
+- **3 secciones del DV1**: Identificación (cas. 1-15), Adiciones (cas. 18), Deducciones (cas. 23)
+- **Fórmula operativa**: Estilo terminal oscuro — D.E. 14 01 ± D.E. 14 07 = Valor en aduana ≈ D.E. 14 06
+- **Tabla de 16 casillas DUA/H1**: 5 columnas (concepto, DUA antiguo, H1 vigente, grupo EUCDM, qué contiene)
+- **Nota migración**: Explicación DUA → H1 (EUCDM)
+
+#### Bloque 6 — Casos problemáticos
+- **6 escenarios reales expandibles**: DDP sin desglose, rechazo valor aduana, vinculación entre partes, royalties, Incoterm inconsistente, THC destino
+- **Estructura por caso**: Problema → Por qué ocurre → Solución → Referencia legal
+- **Bordes de severidad**: Colores según gravedad del caso
+
+#### Cross-links y navegación
+- **3 cards de enlace**: A /incoterms, /calculadora, /cbam/assessment
+- **Sidebar actualizado**: Enlace ⚖️ Valor en Aduana en sección RECURSOS
+- **CTA en /incoterms**: Actualizado de "Próximamente" a enlace directo a /valor-en-aduana
+
+#### Arquitectura
+- **Datos**: `lib/customsValueData.js` — 6 exports (VALUATION_METHODS, NUMERICAL_EXAMPLES, DV1_INFO, EXTENDED_DUA_H1_FIELDS, ENHANCED_CAU_ADJUSTMENTS, PROBLEMATIC_CASES, DUTY_VS_VAT_COMPARISON, PAGE_SECTIONS)
+- **Layout server**: `app/valor-en-aduana/layout.js` para metadata SEO
+- **Page client**: `app/valor-en-aduana/page.js` con 6 componentes de bloque + hero + mini-TOC
+- **Sin dependencias nuevas**: Solo Tailwind CSS existente
+- **Sin backend**: Contenido 100% hardcoded, sin API ni base de datos
 
 ---
 
@@ -66,7 +128,7 @@ lexaduana.es
 - **Ejemplo numérico**: FOB Los Ángeles→Madrid, 45.000 EUR en 4 pasos → total tributos 12.917 EUR
 - **Ajustes CAU**: Arts. 71 (siempre sumar) y 72 (nunca incluir) en dos columnas
 - **Alertas del despachante**: En cada panel expandible (críticas para EXW/DDP, advertencias para CIP/CFR, etc.)
-- **CTA Próximamente**: Banner para futura página `/valor-en-aduana` con enlace a calculadora
+- **CTA Valor en Aduana**: Banner con enlace directo a `/valor-en-aduana`
 
 ---
 
