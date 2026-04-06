@@ -38,6 +38,7 @@ const NAV_SECTIONS = [
         ],
       },
       { href: '/eudr', icon: '🌳', label: 'EUDR' },
+      { href: '/oea', icon: '🛡️', label: 'OEA' },
     ],
   },
   {

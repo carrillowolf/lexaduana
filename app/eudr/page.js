@@ -1,3 +1,4 @@
+import JsonLd from '@/components/JsonLd'
 import Link from 'next/link'
 
 export const dynamic = 'force-static'
@@ -28,8 +29,40 @@ export default function EUDRPage() {
   const daysToOperators = daysUntil(DEADLINE_OPERATORS)
   const daysToPymes = daysUntil(DEADLINE_PYMES)
 
+  const eudrFaqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: '¿Qué es el EUDR?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'El EUDR (Reglamento UE 2023/1115) es el Reglamento de Productos Libres de Deforestación de la UE. Exige que los productos importados no procedan de tierras deforestadas después del 31 de diciembre de 2020 y que se hayan producido legalmente según las leyes del país de origen.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Cuándo entra en vigor el EUDR?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'El EUDR se aplica desde el 30 de diciembre de 2026 para operadores grandes y medianos, y desde el 30 de junio de 2027 para pymes. Fue aplazado por el Reglamento UE 2025/2650.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Qué productos afecta el EUDR?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'El EUDR cubre 7 materias primas y sus derivados: ganado bovino (carne, cuero), cacao (chocolate), café, palma aceitera (aceite de palma), caucho (neumáticos), soja y madera (muebles, papel, celulosa).',
+        },
+      },
+    ],
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50">
+      <JsonLd data={eudrFaqSchema} />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-green-700 via-green-800 to-emerald-900 py-16 md:py-20">
         <div className="absolute inset-0 opacity-10">
@@ -513,6 +546,25 @@ export default function EUDRPage() {
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#0A3D5C] font-bold rounded-xl hover:bg-gray-100 transition-all shadow-lg"
             >
               Consultar obligaciones CBAM
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
+        {/* CTA → OEA */}
+        <section>
+          <div className="bg-gradient-to-r from-red-800 to-red-900 rounded-3xl shadow-xl p-8 md:p-10 text-white text-center">
+            <h3 className="text-2xl font-bold mb-3">¿Quieres menos controles y más agilidad?</h3>
+            <p className="text-red-200 mb-6 max-w-2xl mx-auto">
+              El OEA (Operador Económico Autorizado) es la certificación de confianza aduanera de la UE: garantías reducidas, reconocimiento mutuo internacional y tratamiento prioritario.
+            </p>
+            <Link
+              href="/oea"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-red-800 font-bold rounded-xl hover:bg-red-50 transition-all shadow-lg"
+            >
+              Consultar guía OEA
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>

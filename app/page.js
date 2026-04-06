@@ -73,16 +73,16 @@ const TOOLS = [
     icon: <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   },
   {
-    id: 'comparador',
-    title: 'Comparador Multi-Origen',
-    headline: 'Compara y decide',
-    description: 'Compara aranceles, preferencias y costes totales de importación entre hasta 5 países de origen simultáneamente. Optimiza tu cadena de suministro.',
-    features: ['Hasta 5 países', 'Comparativa visual', 'Preferencias incluidas', 'Exportar resultados'],
-    href: '/comparador',
-    cta: 'Comparar orígenes',
-    accent: '#0EA5E9',
-    accentBg: 'rgba(14, 165, 233, 0.15)',
-    icon: <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+    id: 'oea',
+    title: 'OEA',
+    headline: 'Operador autorizado',
+    description: 'Guía completa del Operador Económico Autorizado: modalidades OEAC/OEAS/OEAF, requisitos, procedimiento en España, beneficios y reconocimiento mutuo internacional.',
+    features: ['3 modalidades', '5 criterios', 'Procedimiento AEAT', 'Reconocimiento mutuo'],
+    href: '/oea',
+    cta: 'Consultar guía OEA',
+    accent: '#EF4444',
+    accentBg: 'rgba(239, 68, 68, 0.15)',
+    icon: <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>,
   },
   {
     id: 'eudr',
@@ -453,7 +453,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* CBAM */}
               <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-amber-500/30 transition-all duration-300 overflow-hidden group">
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
@@ -500,6 +500,32 @@ export default function HomePage() {
                 <Link href="/eudr"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-green-400 hover:text-green-300 transition-colors group/link">
                   Consultar guía EUDR
+                  <svg className="w-4 h-4 transition-transform duration-200 group-hover/link:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              </div>
+
+              {/* OEA */}
+              <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-red-500/30 transition-all duration-300 overflow-hidden group md:col-span-2 lg:col-span-1">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">OEA</h3>
+                    <p className="text-xs text-red-400 font-medium">Operador Económico Autorizado</p>
+                  </div>
+                </div>
+                <p className="text-sm text-white/40 leading-relaxed mb-6">
+                  Certificación de confianza aduanera: menos controles, garantías reducidas y reconocimiento internacional.
+                </p>
+                <Link href="/oea"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-red-400 hover:text-red-300 transition-colors group/link">
+                  Consultar guía OEA
                   <svg className="w-4 h-4 transition-transform duration-200 group-hover/link:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>

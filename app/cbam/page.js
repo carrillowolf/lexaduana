@@ -1,3 +1,27 @@
+export const metadata = {
+  title: 'CBAM — Mecanismo de Ajuste en Frontera por Carbono | LexAduana',
+  description:
+    'Hub completo del CBAM: autoevaluación, simulador de costes, guía operativa, plazos y asesoría. 573 códigos CN verificados. Todo sobre el mecanismo de ajuste en frontera por carbono de la UE.',
+  keywords: [
+    'CBAM',
+    'mecanismo ajuste frontera carbono',
+    'carbon border adjustment',
+    'CBAM España',
+    'importaciones carbono UE',
+    'certificados CBAM',
+  ],
+  openGraph: {
+    title: 'CBAM — Mecanismo de Ajuste en Frontera por Carbono | LexAduana',
+    description:
+      'Hub completo del CBAM: autoevaluación, simulador de costes, guía operativa y asesoría. 573 códigos CN verificados.',
+    url: 'https://lexaduana.es/cbam',
+    siteName: 'LexAduana',
+    locale: 'es_ES',
+    type: 'website',
+  },
+}
+
+import JsonLd from '@/components/JsonLd'
 import Link from 'next/link'
 import {
   getNextDeadlineDB,
@@ -48,8 +72,40 @@ export default async function CBAMPage() {
     })
   }
 
+  const cbamFaqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: '¿Qué es el CBAM?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'El CBAM (Carbon Border Adjustment Mechanism) es el Mecanismo de Ajuste en Frontera por Carbono de la UE. Desde enero de 2026, los importadores de productos intensivos en carbono (acero, aluminio, cemento, fertilizantes, electricidad e hidrógeno) deben comprar certificados CBAM para cubrir las emisiones de CO₂ embebidas en sus importaciones.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Qué productos están afectados por el CBAM?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'El CBAM afecta a 6 sectores: cemento, hierro y acero, aluminio, fertilizantes, electricidad e hidrógeno. En total, 573 códigos CN están cubiertos. Desde 2028, se prevé la extensión a productos downstream (productos fabricados con materiales CBAM).',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Hay un umbral mínimo para el CBAM?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Sí. Los importadores con un volumen anual inferior a 50 toneladas de mercancías CBAM están exentos de las obligaciones del mecanismo (Reglamento UE 2025/2083). Esta exención no aplica a electricidad ni hidrógeno.',
+        },
+      },
+    ],
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
+      <JsonLd data={cbamFaqSchema} />
       {/* Botón flotante "CBAM para Dummies" */}
       <Link href="/cbam/guia" className="fixed bottom-6 right-6 z-50 group">
         <div className="bg-[#0A3D5C] text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2 border border-white/10">
@@ -562,6 +618,7 @@ export default async function CBAMPage() {
                 { href: '/clasificador', icon: '🤖', label: 'Clasificador IA de Productos' },
                 { href: '/comparador', icon: '📊', label: 'Comparador Multi-Origen' },
                 { href: '/eudr', icon: '🌳', label: 'Regulación Deforestación (EUDR)' },
+                { href: '/oea', icon: '🛡️', label: 'OEA — Operador Económico Autorizado' },
                 { href: '/cbam/asesoria', icon: '📋', label: 'Asesoría CBAM Profesional' },
               ].map((link) => (
                 <li key={link.href}>
