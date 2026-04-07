@@ -8,8 +8,8 @@ import {
 } from '@/lib/cbamAdvisoryService'
 
 /** Helper para verificar que la solicitud pertenece al usuario */
-async function verifyOwnership(requestId, userId) {
-  const request = await getAdvisoryRequest(requestId)
+async function verifyOwnership(requestId, userId, client) {
+  const request = await getAdvisoryRequest(requestId, client)
   if (!request || request.userId !== userId) return null
   return request
 }
@@ -29,7 +29,7 @@ export async function GET(request, { params }) {
     }
 
     const { id } = await params
-    const advisory = await verifyOwnership(id, user.id)
+    const advisory = await verifyOwnership(id, user.id, supabase)
     if (!advisory) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
@@ -56,7 +56,7 @@ export async function PATCH(request, { params }) {
     }
 
     const { id } = await params
-    const advisory = await verifyOwnership(id, user.id)
+    const advisory = await verifyOwnership(id, user.id, supabase)
     if (!advisory) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
@@ -69,7 +69,7 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json()
-    const updated = await updateAdvisoryRequest(id, body)
+    const updated = await updateAdvisoryRequest(id, body, supabase)
     return NextResponse.json({ success: true, data: updated })
   } catch (error) {
     console.error('Error en /api/cbam/advisory/[id] PATCH:', error)
@@ -92,7 +92,7 @@ export async function DELETE(request, { params }) {
     }
 
     const { id } = await params
-    const advisory = await verifyOwnership(id, user.id)
+    const advisory = await verifyOwnership(id, user.id, supabase)
     if (!advisory) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
@@ -104,7 +104,7 @@ export async function DELETE(request, { params }) {
       )
     }
 
-    await deleteAdvisoryRequest(id)
+    await deleteAdvisoryRequest(id, supabase)
     return NextResponse.json({ success: true, message: 'Solicitud eliminada' })
   } catch (error) {
     console.error('Error en /api/cbam/advisory/[id] DELETE:', error)

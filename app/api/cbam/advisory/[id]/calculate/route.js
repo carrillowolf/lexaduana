@@ -22,7 +22,7 @@ export async function POST(request, { params }) {
     const { id } = await params
 
     // Verificar ownership
-    const advisory = await getAdvisoryRequest(id)
+    const advisory = await getAdvisoryRequest(id, supabase)
     if (!advisory || advisory.userId !== user.id) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
@@ -34,7 +34,7 @@ export async function POST(request, { params }) {
       )
     }
 
-    const result = await calculateAdvisoryRequest(id)
+    const result = await calculateAdvisoryRequest(id, supabase)
     return NextResponse.json({
       success: true,
       data: result,

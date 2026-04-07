@@ -292,6 +292,25 @@ export default function AdminCBAMPage() {
         {/* ===================== RESUMEN ===================== */}
         {activeTab === 'overview' && stats && (
           <div>
+            {/* Acceso a subpanel de Asesorías */}
+            <Link
+              href="/admin/cbam/asesoria"
+              className="block mb-6 group"
+            >
+              <div className="bg-gradient-to-r from-[#0A3D5C] to-[#1a5478] rounded-xl p-6 text-white hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm">Subpanel</p>
+                    <h3 className="text-xl font-bold mt-1">📋 Solicitudes de asesoría CBAM</h3>
+                    <p className="text-blue-100 text-sm mt-1">
+                      Gestión de solicitudes premium: revisión, cálculo, generación de informe y entrega.
+                    </p>
+                  </div>
+                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <StatCard label="Precio EU ETS" value={`€${stats.etsPrice}`} sub="por tCO₂" color="emerald" />
               <StatCard label="Códigos CN" value={stats.codes} sub="afectados por CBAM" color="blue" />

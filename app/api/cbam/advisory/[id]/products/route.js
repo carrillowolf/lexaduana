@@ -9,8 +9,8 @@ import {
 } from '@/lib/cbamAdvisoryService'
 
 /** Verifica ownership de la solicitud */
-async function verifyOwnership(requestId, userId) {
-  const request = await getAdvisoryRequest(requestId)
+async function verifyOwnership(requestId, userId, client) {
+  const request = await getAdvisoryRequest(requestId, client)
   if (!request || request.userId !== userId) return null
   return request
 }
@@ -30,12 +30,12 @@ export async function GET(request, { params }) {
     }
 
     const { id } = await params
-    const advisory = await verifyOwnership(id, user.id)
+    const advisory = await verifyOwnership(id, user.id, supabase)
     if (!advisory) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
 
-    const products = await getAdvisoryProducts(id)
+    const products = await getAdvisoryProducts(id, supabase)
     return NextResponse.json({ success: true, data: products })
   } catch (error) {
     console.error('Error en products GET:', error)
@@ -58,7 +58,7 @@ export async function POST(request, { params }) {
     }
 
     const { id } = await params
-    const advisory = await verifyOwnership(id, user.id)
+    const advisory = await verifyOwnership(id, user.id, supabase)
     if (!advisory) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
@@ -91,7 +91,7 @@ export async function POST(request, { params }) {
       hasRealEmissions: body.hasRealEmissions || false,
       emissionFactorReal: body.emissionFactorReal ? parseFloat(body.emissionFactorReal) : null,
       productionRoute: body.productionRoute || null,
-    })
+    }, supabase)
 
     return NextResponse.json({ success: true, data: product }, { status: 201 })
   } catch (error) {
@@ -115,7 +115,7 @@ export async function PUT(request, { params }) {
     }
 
     const { id } = await params
-    const advisory = await verifyOwnership(id, user.id)
+    const advisory = await verifyOwnership(id, user.id, supabase)
     if (!advisory) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
@@ -132,7 +132,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Se espera { products: [...] }' }, { status: 400 })
     }
 
-    const results = await bulkUpdateAdvisoryProducts(id, body.products)
+    const results = await bulkUpdateAdvisoryProducts(id, body.products, supabase)
     return NextResponse.json({ success: true, data: results })
   } catch (error) {
     console.error('Error en products PUT:', error)

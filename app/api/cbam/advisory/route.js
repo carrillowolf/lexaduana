@@ -17,7 +17,7 @@ export async function GET() {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const requests = await getAdvisoryRequests(user.id)
+    const requests = await getAdvisoryRequests(user.id, supabase)
     return NextResponse.json({ success: true, data: requests })
   } catch (error) {
     console.error('Error en /api/cbam/advisory GET:', error)
@@ -60,7 +60,7 @@ export async function POST(request) {
       hasIndirectRepresentative: body.hasIndirectRepresentative || false,
       representativeName: body.representativeName || null,
       clientNotes: body.clientNotes || null,
-    })
+    }, supabase)
 
     return NextResponse.json({ success: true, data: created }, { status: 201 })
   } catch (error) {

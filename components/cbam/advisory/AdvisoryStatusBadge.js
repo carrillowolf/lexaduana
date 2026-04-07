@@ -31,8 +31,26 @@ const STATUS_CONFIG = {
     text: 'text-indigo-700',
     dot: 'bg-indigo-400',
   },
+  reviewing: {
+    label: 'En revisión',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    dot: 'bg-amber-400',
+  },
   report_ready: {
     label: 'Informe listo',
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    dot: 'bg-purple-400',
+  },
+  pending_payment: {
+    label: 'Pendiente pago',
+    bg: 'bg-orange-50',
+    text: 'text-orange-700',
+    dot: 'bg-orange-400',
+  },
+  paid: {
+    label: 'Pagado',
     bg: 'bg-emerald-50',
     text: 'text-emerald-700',
     dot: 'bg-emerald-400',

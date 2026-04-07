@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getAdvisoryRequest, submitAdvisoryRequest } from '@/lib/cbamAdvisoryService'
+import { sendIntakeReceivedEmail, sendAdminNewRequestEmail } from '@/lib/cbamAdvisoryEmails'
 
 /**
  * POST /api/cbam/advisory/[id]/submit
@@ -20,12 +21,19 @@ export async function POST(request, { params }) {
     const { id } = await params
 
     // Verificar ownership
-    const advisory = await getAdvisoryRequest(id)
+    const advisory = await getAdvisoryRequest(id, supabase)
     if (!advisory || advisory.userId !== user.id) {
       return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
 
-    const updated = await submitAdvisoryRequest(id)
+    const updated = await submitAdvisoryRequest(id, supabase)
+
+    // Notificaciones (no bloqueantes)
+    await Promise.all([
+      sendIntakeReceivedEmail(updated),
+      sendAdminNewRequestEmail(updated),
+    ])
+
     return NextResponse.json({
       success: true,
       data: updated,
