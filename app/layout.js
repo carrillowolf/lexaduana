@@ -6,6 +6,7 @@ import AppShell from '@/components/layout/AppShell'
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
+  metadataBase: new URL("https://lexaduana.es"),
   title: "LexAduana | Suite Profesional de Comercio Exterior",
   description: "Plataforma de herramientas aduaneras para importaciones a la UE. Calculadora TARIC, clasificador con IA y modulo CBAM. Datos oficiales EUR-Lex actualizados mensualmente.",
   keywords: "aduanas, TARIC, aranceles, importaciones, CBAM, clasificacion arancelaria, comercio exterior, UE, calculadora aduanera, codigos HS, IVA importacion",
@@ -71,28 +72,22 @@ export default function RootLayout({ children }) {
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
         
-        {/* Schema.org para SEO */}
+        {/* Schema.org Organization — global */}
         <Script
           id="schema-org"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "WebApplication",
+              "@type": "Organization",
               name: "LexAduana",
-              description: "Suite profesional de herramientas aduaneras: calculadora TARIC, clasificador IA y modulo CBAM para importaciones a la UE",
               url: "https://lexaduana.es",
-              applicationCategory: "FinanceApplication",
-              operatingSystem: "Web",
+              description: "Suite profesional de comercio exterior para importadores en España y la Unión Europea",
+              logo: "https://lexaduana.es/logo.png",
+              sameAs: [],
               offers: {
                 "@type": "Offer",
-                price: "0",
-                priceCurrency: "EUR"
-              },
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: "4.8",
-                ratingCount: "127"
+                description: "Herramientas gratuitas de cálculo arancelario, clasificación IA y compliance CBAM"
               }
             })
           }}

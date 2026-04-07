@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { exportToPDF } from '../../components/ExportPDF'
 import HSCodeAutocomplete from '../../components/HSCodeAutocomplete'
 import QuickAccessButton from '../../components/QuickAccessButton'
@@ -14,11 +15,12 @@ import ExchangeRateBanner from '../../components/ExchangeRateBanner'
 import { trackEvent } from '@/lib/analytics'
 
 export default function Home() {
+  const searchParams = useSearchParams()
   const [user, setUser] = useState(null)
   const supabase = createClient()
-  const [hsCode, setHsCode] = useState('')
-  const [cifValue, setCifValue] = useState('')
-  const [countryCode, setCountryCode] = useState('ERGA OMNES')
+  const [hsCode, setHsCode] = useState(() => searchParams.get('hsCode') || '')
+  const [cifValue, setCifValue] = useState(() => searchParams.get('cifValue') || '')
+  const [countryCode, setCountryCode] = useState(() => searchParams.get('countryCode') || 'ERGA OMNES')
   const [countries, setCountries] = useState([])
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -59,6 +61,18 @@ export default function Home() {
     fetchCountries()
     loadRecentSearches()
   }, [])
+
+  // Auto-calcular si llegamos desde el Clasificador con parámetros en la URL
+  useEffect(() => {
+    const urlHsCode = searchParams.get('hsCode')
+    if (urlHsCode && urlHsCode.length >= 8) {
+      // Pequeño delay para asegurar que el estado ya se inicializó
+      const timer = setTimeout(() => {
+        calculate(null)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadRecentSearches = () => {
     if (typeof window !== 'undefined') {

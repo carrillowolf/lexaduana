@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
-import Link from 'next/link'
 import { parseCSV, generateSampleCSV } from '@/lib/csvParser'
 import { exportBulkToExcel } from '@/lib/excelExporter'
 
@@ -184,31 +183,6 @@ export default function BulkCalculatorPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
-              <div>
-                <h1 className="text-xl font-bold text-[#0A3D5C]">Calculadora Masiva</h1>
-                <p className="text-xs text-gray-500">Procesa múltiples productos</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition flex items-center space-x-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span>Dashboard</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Contenido principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -584,15 +558,35 @@ export default function BulkCalculatorPage() {
                           <tr key={index} className="hover:bg-gray-50">
                             {item.status === 'success' ? (
                               <>
-                                <td className="px-4 py-3 text-sm font-mono text-gray-900">{item.result.hsCode}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{item.result.country.name}</td>
-                                <td className="px-4 py-3 text-sm text-right text-gray-900">{formatCurrency(item.result.cifValue)}</td>
-                                <td className="px-4 py-3 text-sm text-right text-gray-900">{formatCurrency(item.result.duty.amount)}</td>
-                                <td className="px-4 py-3 text-sm text-right text-gray-900">{formatCurrency(item.result.vat.amount)}</td>
-                                <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">{formatCurrency(item.result.total)}</td>
+                                <td className="px-4 py-3 text-sm font-mono text-gray-900">
+                                  {item.hsCode}
+                                  {item.savings > 0 && (
+                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                      -{item.savings > 0 ? formatCurrency(item.savings) : ''} ahorro
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">
+                                  {item.countryName}
+                                  {item.agreement && (
+                                    <span className="block text-[10px] text-blue-600 font-medium">{item.agreement}</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-right text-gray-900">{formatCurrency(item.cifValue)}</td>
+                                <td className="px-4 py-3 text-sm text-right text-gray-900">
+                                  {formatCurrency(item.dutyAmount)}
+                                  <span className="block text-[10px] text-gray-500">
+                                    {item.appliedRate}%{item.appliedRate !== item.standardRate && ` (ERGA: ${item.standardRate}%)`}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-right text-gray-900">
+                                  {formatCurrency(item.vatAmount)}
+                                  <span className="block text-[10px] text-gray-500">{item.vatRate}% {item.vatType}</span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">{formatCurrency(item.total)}</td>
                                 <td className="px-4 py-3 text-center">
                                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                    ✓ Exitoso
+                                    ✓ OK
                                   </span>
                                 </td>
                               </>
@@ -600,12 +594,12 @@ export default function BulkCalculatorPage() {
                               <>
                                 <td className="px-4 py-3 text-sm font-mono text-gray-900">{item.hsCode}</td>
                                 <td className="px-4 py-3 text-sm text-gray-900">{item.countryCode}</td>
-                                <td className="px-4 py-3 text-sm text-right text-gray-900">{formatCurrency(item.cifValue)}</td>
+                                <td className="px-4 py-3 text-sm text-right text-gray-900">-</td>
                                 <td className="px-4 py-3 text-sm text-right text-gray-400">-</td>
                                 <td className="px-4 py-3 text-sm text-right text-gray-400">-</td>
                                 <td className="px-4 py-3 text-sm text-right text-gray-400">-</td>
                                 <td className="px-4 py-3 text-center">
-                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800" title={item.error}>
                                     ✗ Error
                                   </span>
                                 </td>
