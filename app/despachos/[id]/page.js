@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { logActivity, getDispatchAlerts } from '@/lib/dispatchActivity'
 import DispatchChecklist from '@/components/DispatchChecklist'
+import ActivityTimeline from '@/components/despachos/ActivityTimeline'
+import CommentThread from '@/components/despachos/CommentThread'
 import Link from 'next/link'
 
 export default function DespachoDetalle() {
@@ -12,11 +15,19 @@ export default function DespachoDetalle() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('info') // info, checklist, docs, timeline
+  const [stateChanges, setStateChanges] = useState({})
+  const [activeTab, setActiveTab] = useState('info') // info, checklist, comentarios, docs, timeline
   
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+
+  // Si la URL trae #comentarios, abrir esa pestaña
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#comentarios') {
+      setActiveTab('comentarios')
+    }
+  }, [])
 
   // Verificar usuario
   useEffect(() => {
@@ -48,6 +59,24 @@ export default function DespachoDetalle() {
 
       if (fetchError) throw fetchError
       setDispatch(data)
+
+      // Cargar timestamps relevantes para alertas precisas
+      const { data: tlRows } = await supabase
+        .from('dispatch_timeline')
+        .select('event_type, new_value, created_at')
+        .eq('dispatch_id', params.id)
+        .in('event_type', ['stage_docs', 'dua_status'])
+        .order('created_at', { ascending: false })
+      const ch = {}
+      ;(tlRows || []).forEach(row => {
+        if (row.event_type === 'stage_docs' && row.new_value === 'ok' && !ch.docs_ok_at) {
+          ch.docs_ok_at = row.created_at
+        }
+        if (row.event_type === 'dua_status' && row.new_value === 'mrn' && !ch.mrn_at) {
+          ch.mrn_at = row.created_at
+        }
+      })
+      setStateChanges(ch)
     } catch (err) {
       console.error('Error cargando despacho:', err)
       setError('Despacho no encontrado')
@@ -59,14 +88,26 @@ export default function DespachoDetalle() {
   const updateField = async (field, value) => {
     setSaving(true)
     try {
+      const oldValue = dispatch ? dispatch[field] : null
+
       const { error: updateError } = await supabase
         .from('dispatches')
         .update({ [field]: value, updated_at: new Date().toISOString() })
         .eq('id', params.id)
 
       if (updateError) throw updateError
-      
+
       setDispatch(prev => ({ ...prev, [field]: value }))
+
+      if (user?.id) {
+        void logActivity(supabase, {
+          dispatchId: params.id,
+          userId: user.id,
+          field,
+          oldValue,
+          newValue: value
+        })
+      }
     } catch (err) {
       console.error('Error actualizando:', err)
       alert('Error al guardar')
@@ -158,6 +199,7 @@ export default function DespachoDetalle() {
 
   const isImport = dispatch.operation_type?.startsWith('import')
   const isExport = dispatch.operation_type?.startsWith('export')
+  const activeAlerts = getDispatchAlerts(dispatch, stateChanges)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -211,6 +253,34 @@ export default function DespachoDetalle() {
             </div>
           </div>
         </div>
+
+        {/* Alertas activas */}
+        {activeAlerts.length > 0 && (
+          <div className="mb-6 bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+            <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <span>⚠️</span> Alertas activas <span className="text-gray-400 font-normal">({activeAlerts.length})</span>
+              </h3>
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {activeAlerts.map((a, i) => (
+                <li key={i} className="px-5 py-3 flex items-center gap-3">
+                  <span className={`inline-block w-2 h-2 rounded-full ${
+                    a.type === 'critical' ? 'bg-red-500' :
+                    a.type === 'warning' ? 'bg-orange-500' :
+                    'bg-blue-400'
+                  }`} />
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${
+                    a.type === 'critical' ? 'bg-red-100 text-red-700' :
+                    a.type === 'warning' ? 'bg-orange-100 text-orange-700' :
+                    'bg-blue-50 text-blue-700'
+                  }`}>{a.text}</span>
+                  {a.detail && <span className="text-sm text-gray-600">— {a.detail}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Cards resumen */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
@@ -385,6 +455,16 @@ export default function DespachoDetalle() {
               Checklist
             </button>
             <button
+              onClick={() => setActiveTab('comentarios')}
+              className={`pb-4 px-2 font-medium text-sm border-b-2 transition ${
+                activeTab === 'comentarios'
+                  ? 'border-[#0A3D5C] text-[#0A3D5C]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Comentarios
+            </button>
+            <button
               onClick={() => setActiveTab('docs')}
               className={`pb-4 px-2 font-medium text-sm border-b-2 transition ${
                 activeTab === 'docs'
@@ -494,6 +574,13 @@ export default function DespachoDetalle() {
           />
         )}
 
+        {activeTab === 'comentarios' && (
+          <div id="comentarios" className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Comentarios</h3>
+            <CommentThread dispatchId={dispatch.id} />
+          </div>
+        )}
+
         {activeTab === 'docs' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Documentos</h3>
@@ -503,8 +590,8 @@ export default function DespachoDetalle() {
 
         {activeTab === 'timeline' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Timeline</h3>
-            <p className="text-gray-600">Próximamente: Historial de cambios</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Historial de actividad</h3>
+            <ActivityTimeline dispatchId={dispatch.id} />
           </div>
         )}
       </div>

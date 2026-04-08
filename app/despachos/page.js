@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { logActivity, getDispatchAlerts } from '@/lib/dispatchActivity'
+import KanbanView from '@/components/despachos/KanbanView'
 import Link from 'next/link'
 
 export default function DespachosTableV2() {
@@ -15,8 +17,12 @@ export default function DespachosTableV2() {
   const [search, setSearch] = useState('')
   const [openParaDropdown, setOpenParaDropdown] = useState(null)
   const [editingETA, setEditingETA] = useState(null)
-  const [editingNotes, setEditingNotes] = useState(null)
-  
+  const [viewMode, setViewMode] = useState('table')
+  // Mapa { dispatchId: { 'docs_ok_at': Date, 'mrn_at': Date } } para alertas precisas
+  const [stateChanges, setStateChanges] = useState({})
+  // Mapa { dispatchId: { count, last } } para resumen de comentarios en la tabla
+  const [commentSummary, setCommentSummary] = useState({})
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -47,6 +53,42 @@ export default function DespachosTableV2() {
 
       if (error) throw error
       setDispatches(data || [])
+
+      // Cargar timestamps relevantes desde dispatch_timeline para alertas precisas
+      const { data: timelineRows } = await supabase
+        .from('dispatch_timeline')
+        .select('dispatch_id, event_type, new_value, created_at')
+        .in('event_type', ['stage_docs', 'dua_status', 'stage_levante'])
+        .order('created_at', { ascending: false })
+
+      const changes = {}
+      ;(timelineRows || []).forEach(row => {
+        if (!changes[row.dispatch_id]) changes[row.dispatch_id] = {}
+        const bucket = changes[row.dispatch_id]
+        // El primero que vemos por (dispatch, key) es el más reciente porque venimos ordenados desc
+        if (row.event_type === 'stage_docs' && row.new_value === 'ok' && !bucket.docs_ok_at) {
+          bucket.docs_ok_at = row.created_at
+        }
+        if (row.event_type === 'dua_status' && row.new_value === 'mrn' && !bucket.mrn_at) {
+          bucket.mrn_at = row.created_at
+        }
+      })
+      setStateChanges(changes)
+
+      // Resumen de comentarios por despacho
+      const { data: commentRows } = await supabase
+        .from('dispatch_comments')
+        .select('dispatch_id, content, created_at')
+        .order('created_at', { ascending: false })
+
+      const summary = {}
+      ;(commentRows || []).forEach(row => {
+        if (!summary[row.dispatch_id]) {
+          summary[row.dispatch_id] = { count: 0, last: row.content }
+        }
+        summary[row.dispatch_id].count += 1
+      })
+      setCommentSummary(summary)
     } catch (error) {
       console.error('Error cargando despachos:', error)
     } finally {
@@ -58,9 +100,13 @@ export default function DespachosTableV2() {
   const updateField = async (dispatchId, field, value) => {
     setSaving(true)
     try {
+      // Capturar valor anterior para el log de actividad
+      const currentDispatch = dispatches.find(d => d.id === dispatchId)
+      const oldValue = currentDispatch ? currentDispatch[field] : null
+
       const { error } = await supabase
         .from('dispatches')
-        .update({ 
+        .update({
           [field]: value,
           updated_at: new Date().toISOString()
         })
@@ -68,9 +114,20 @@ export default function DespachosTableV2() {
 
       if (error) throw error
 
-      setDispatches(prev => prev.map(d => 
+      setDispatches(prev => prev.map(d =>
         d.id === dispatchId ? { ...d, [field]: value } : d
       ))
+
+      // Log de actividad (fire & forget — no bloquea ni rompe el guardado)
+      if (user?.id) {
+        void logActivity(supabase, {
+          dispatchId,
+          userId: user.id,
+          field,
+          oldValue,
+          newValue: value
+        })
+      }
     } catch (error) {
       console.error('Error actualizando:', error)
     } finally {
@@ -90,35 +147,8 @@ export default function DespachosTableV2() {
     return cycle[current] || 'in_progress'
   }
 
-  // Detectar alertas
-  const getAlert = (dispatch) => {
-    const now = new Date()
-    const updated = new Date(dispatch.updated_at)
-    const hoursSinceUpdate = (now - updated) / (1000 * 60 * 60)
-    
-    const hasStuckStage = ['stage_docs', 'stage_sumaria', 'stage_despacho', 'stage_dua', 'stage_levante'].some(stage => {
-      return (dispatch[stage] === 'in_progress' || dispatch[stage] === 'blocked') && hoursSinceUpdate > 24
-    })
-
-    const isImport = dispatch.operation_type?.startsWith('import')
-    const isExport = dispatch.operation_type?.startsWith('export')
-    const eta = dispatch.eta ? new Date(dispatch.eta) : null
-    const etaDays = eta ? Math.ceil((eta - now) / (1000 * 60 * 60 * 24)) : null
-    
-    if (isImport && eta && etaDays <= 0 && dispatch.stage_sumaria !== 'ok') {
-      return { type: 'critical', text: 'ETA CUMPLIDA' }
-    }
-    
-    if (isExport && eta && etaDays <= 1 && etaDays >= 0) {
-      return { type: 'warning', text: 'ETD MAÑANA' }
-    }
-
-    if (hasStuckStage) {
-      return { type: 'warning', text: '24H SIN CAMBIOS' }
-    }
-
-    return null
-  }
+  // Detectar alertas — usa el helper compartido
+  const getAlerts = (dispatch) => getDispatchAlerts(dispatch, stateChanges[dispatch.id])
 
   // Badge con estado
   const StatusBadge = ({ status, onClick }) => {
@@ -203,21 +233,27 @@ export default function DespachosTableV2() {
   const groups = groupedDispatches()
   const totalDispatches = groups.imports.length + groups.exports.length + groups.transits.length
 
-  const criticalCount = dispatches.filter(d => getAlert(d)?.type === 'critical').length
-  const warningCount = dispatches.filter(d => getAlert(d)?.type === 'warning').length
+  const allAlerts = dispatches.flatMap(d => getAlerts(d))
+  const criticalCount = allAlerts.filter(a => a.type === 'critical').length
+  const warningCount = allAlerts.filter(a => a.type === 'warning').length
 
   // Fila de despacho
   const DispatchRow = ({ dispatch }) => {
-    const alert = getAlert(dispatch)
+    const alerts = getAlerts(dispatch)
+    const significantAlerts = alerts.filter(a => a.type !== 'info')
+    const topType = significantAlerts.find(a => a.type === 'critical')?.type
+      || significantAlerts.find(a => a.type === 'warning')?.type
+      || null
+    const alert = significantAlerts[0] || null
     const isImport = dispatch.operation_type?.startsWith('import')
     const eta = dispatch.eta ? new Date(dispatch.eta) : null
     const etaDays = eta ? Math.ceil((eta - new Date()) / (1000 * 60 * 60 * 24)) : null
 
     return (
-      <tr 
+      <tr
         className={`border-b border-gray-200 hover:bg-blue-50 transition ${
-          alert?.type === 'critical' ? 'border-l-4 border-l-red-500 bg-red-50' :
-          alert?.type === 'warning' ? 'border-l-4 border-l-orange-500 bg-orange-50' :
+          topType === 'critical' ? 'border-l-4 border-l-red-500 bg-red-50' :
+          topType === 'warning' ? 'border-l-4 border-l-orange-500 bg-orange-50' :
           ''
         }`}
       >
@@ -598,54 +634,64 @@ export default function DespachosTableV2() {
           />
         </td>
 
-        {/* Notas - Campo libre editable */}
+        {/* Notas / Alertas / Comentarios */}
         <td className="px-2 py-3">
-          {editingNotes === dispatch.id ? (
-            <input
-              type="text"
-              defaultValue={dispatch.notes || ''}
-              placeholder="Añadir nota..."
-              onBlur={(e) => {
-                updateField(dispatch.id, 'notes', e.target.value || null)
-                setEditingNotes(null)
-              }}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  updateField(dispatch.id, 'notes', e.target.value || null)
-                  setEditingNotes(null)
-                }
-              }}
-              className="w-full px-2 py-1 text-xs border border-[#0A3D5C] rounded focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none"
-              autoFocus
-            />
-          ) : (
+          {(() => {
+            const summary = commentSummary[dispatch.id]
+            return (
             <div className="flex items-center space-x-2">
-              {/* Alerta automática */}
-              {alert && (
-                <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
-                  alert.type === 'critical' ? 'bg-red-100 text-red-700' :
-                  'bg-orange-100 text-orange-700'
-                }`}>
-                  {alert.text}
-                </span>
+              {/* Alertas automáticas (hasta 2 + badge "+N") */}
+              {alerts.length > 0 && (
+                <div className="flex flex-wrap gap-1 max-w-[260px]">
+                  {alerts.slice(0, 2).map((a, i) => (
+                    <span
+                      key={i}
+                      title={a.detail || a.text}
+                      className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
+                        a.type === 'critical' ? 'bg-red-100 text-red-700' :
+                        a.type === 'warning' ? 'bg-orange-100 text-orange-700' :
+                        'bg-blue-50 text-blue-700'
+                      }`}
+                    >
+                      {a.text}
+                    </span>
+                  ))}
+                  {alerts.length > 2 && (
+                    <span
+                      className="text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-700"
+                      title={alerts.slice(2).map(a => a.text).join(', ')}
+                    >
+                      +{alerts.length - 2}
+                    </span>
+                  )}
+                </div>
               )}
-              
-              {/* Nota manual */}
+
+              {/* Resumen del hilo de comentarios — clic abre el detalle */}
               <button
-                onClick={() => setEditingNotes(dispatch.id)}
+                onClick={() => router.push(`/despachos/${dispatch.id}#comentarios`)}
                 className={`flex-1 text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${
-                  dispatch.notes ? 'text-gray-700' : 'text-gray-400'
+                  summary?.last ? 'text-gray-700' : 'text-gray-400'
                 }`}
-                title={dispatch.notes || 'Añadir nota'}
+                title={summary?.last || 'Añadir comentario'}
               >
-                {dispatch.notes ? (
-                  <span>📝 {dispatch.notes}</span>
+                {summary?.last ? (
+                  <span className="flex items-center gap-1">
+                    <span>💬</span>
+                    <span className="truncate max-w-[180px] inline-block align-bottom">{summary.last}</span>
+                    {summary.count > 1 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded text-[10px] font-semibold">
+                        {summary.count}
+                      </span>
+                    )}
+                  </span>
                 ) : (
-                  <span>💬 Añadir nota...</span>
+                  <span>💬 Añadir comentario...</span>
                 )}
               </button>
             </div>
-          )}
+            )
+          })()}
         </td>
       </tr>
     )
@@ -718,6 +764,29 @@ export default function DespachosTableV2() {
                 <option value="expediente">Por Expediente</option>
               </select>
 
+              <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition ${
+                    viewMode === 'table'
+                      ? 'bg-white text-[#0A3D5C] shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Tabla
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition ${
+                    viewMode === 'kanban'
+                      ? 'bg-white text-[#0A3D5C] shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Kanban
+                </button>
+              </div>
+
               <Link
                 href="/despachos/nuevo"
                 className="px-4 py-1 bg-[#0A3D5C] text-white text-sm font-bold rounded-lg hover:bg-[#083049] transition"
@@ -729,8 +798,16 @@ export default function DespachosTableV2() {
         </div>
       </header>
 
-      {/* Tablas */}
+      {/* Tablas / Kanban */}
       <div className="max-w-[1800px] mx-auto px-4 py-4">
+        {viewMode === 'kanban' ? (
+          <KanbanView
+            dispatches={[...groups.imports, ...groups.exports, ...groups.transits]}
+            getAlerts={getAlerts}
+            onNavigate={(id) => router.push(`/despachos/${id}`)}
+          />
+        ) : (
+        <>
         {/* IMPORTACIONES */}
         {groups.imports.length > 0 && (
           <div className="mb-6">
@@ -838,6 +915,8 @@ export default function DespachosTableV2() {
               + Crear primer despacho
             </Link>
           </div>
+        )}
+        </>
         )}
       </div>
 
