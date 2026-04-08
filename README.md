@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.8.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.9.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -52,7 +52,49 @@ lexaduana.es
 
 ---
 
-## 🆕 Novedades v5.8.0 (Abril 2026)
+## 🆕 Novedades v5.9.0 (Abril 2026)
+
+### 📋 CBAM Phase 3 — Panel Admin + Informes PDF + Emails transaccionales
+
+Cierre del ciclo completo del servicio de Asesoría Premium CBAM: del intake del cliente al informe entregado, con panel administrativo, generación de informes PDF versionados y notificaciones bilingües.
+
+#### Panel administrativo (`/admin/cbam/asesoria`)
+- **Listado** con filtros por estado, búsqueda y paginación
+- **Detalle con 5 pestañas**: Cliente, Productos, Documentos, Cálculos, Informe
+- **Acciones admin**: Ejecutar cálculo, generar informe, marcar como pagado, entregar al cliente
+- **Gating de estados**: `draft → submitted → in_review → report_ready → pending_payment → paid → delivered`
+
+#### Generación de informes PDF
+- **`@react-pdf/renderer`** con plantilla profesional bilingüe
+- **Snapshots versionados**: Cada informe se almacena inmutable en Supabase Storage
+- **Descarga desde vista cliente** cuando el informe está `delivered`
+- **Release manual del admin**: El cliente solo ve el informe tras pago confirmado
+
+#### Emails transaccionales (Resend, ES + EN)
+- **Intake received**: Confirmación al cliente + notificación al admin
+- **Report ready / Invoice**: Cuando el admin marca listo para pago
+- **Delivery**: Entrega del PDF al cliente tras pago confirmado
+- **Plantillas bilingües** con branding LexAduana
+
+#### Fix crítico Phase 2 — RLS con sesión del usuario
+- **Dependency injection** en `lib/cbamAdvisoryService.js`: cada función acepta un `client` Supabase opcional
+- **Route handlers** propagan el cliente con sesión (`createRouteHandlerClient`) → respeta RLS por `auth.uid()`
+- **Admin endpoints** inyectan `supabaseAdmin` (service_role) explícitamente
+- **Backward compatible**: sin cliente se usa el singleton anónimo (no rompe código existente)
+- **Lazy `supabaseAdmin`** via Proxy: defiere la validación de env vars a runtime para no romper el build de Next.js
+
+#### Actualizaciones de datos
+- **Precio ETS Q1 2026**: `75,36€/tCO₂e` (official CBAM price, 2026-04-08) cargado en `cbam_ets_prices` como `is_current`
+- Impacto inmediato en calculadora, simulador y motor de asesoría
+
+#### SEO layouts + sitemap
+- **`app/sitemap.js`** y **`app/robots.js`** dinámicos
+- **Layouts SEO por sección** (CBAM, EUDR, OEA, Calculadora, Incoterms, Valor en Aduana) con metadata rica
+- **`components/JsonLd.js`** para structured data en páginas clave
+
+---
+
+## Novedades v5.8.0 (Abril 2026)
 
 ### 🎨 Rediseño visual completo — Dark Theme & Design System unificado
 
