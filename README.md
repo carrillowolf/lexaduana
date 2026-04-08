@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.9.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.10.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -22,7 +22,7 @@ lexaduana.es
 ├── 🧮 Calculadora TARIC        (disponible)
 ├── 🤖 Clasificador IA          (disponible)
 ├── ⚖️ Comparador Multi-Origen  (disponible)
-├── 📋 Gestor de Despachos      (beta)
+├── 📋 Gestor de Despachos      (disponible)
 ├── 🌍 Módulo CBAM              (disponible)
 │   ├── Verificador de códigos
 │   ├── Simulador de costes
@@ -49,6 +49,55 @@ lexaduana.es
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.10.0 (Abril 2026)
+
+### 📋 Gestor de Despachos v2 — Historial, comentarios, alertas inteligentes y Kanban
+
+Salto del módulo de despachos de "tabla editable" a herramienta de trabajo diario real: trazabilidad completa de cambios, colaboración por despacho, alertas accionables y una vista Kanban por fase.
+
+#### Historial de actividad por despacho
+- **Auto-log fire-and-forget** de cada cambio de estado/campo en `dispatch_timeline` — nunca bloquea el guardado del usuario
+- **Helper compartido** `lib/dispatchActivity.js` con `logActivity`, `FIELD_LABELS`, `VALUE_LABELS` y `formatRelativeTime` traducidos al español
+- **Nuevo componente** `<ActivityTimeline />` en la pestaña Timeline del detalle: timeline vertical, colapsable a 10, muestra `antes → después` con etiquetas humanas
+- **Reuso** de la tabla `dispatch_timeline` existente en lugar de duplicar esquema
+
+#### Comentarios por despacho
+- **Nueva tabla** `dispatch_comments` con RLS completa (view/insert/delete)
+- **Migración SQL con seed**: las notas (`dispatches.notes`) previas se copian automáticamente como primer comentario del hilo
+- **`<CommentThread />`**: textarea con Cmd/Ctrl+Enter, borrado propio, colapso "Ver anteriores", formato relativo
+- **Columna "Notas/Alertas"** de la tabla principal muestra el último comentario + contador, clic enlaza a `/despachos/{id}#comentarios`
+
+#### Alertas inteligentes (array, no singular)
+- **8 reglas activas** — cada despacho puede tener varias alertas simultáneas:
+  1. `ETA CUMPLIDA` (import con ETA ≤ hoy sin sumaria activada)
+  2. `ETD MAÑANA` (export con ETD en ≤1 día)
+  3. `DUA PENDIENTE +48h` — medido desde el timestamp real del cambio `stage_docs → ok` en `dispatch_timeline`, no desde `updated_at`
+  4. `PARAADUANEROS` (ETA inminente + entradas sin nº de expediente)
+  5. `LEVANTE PENDIENTE +48h` — medido desde el timestamp real del cambio `dua_status → mrn`
+  6. `BLOQUEADO +24h` (cualquier stage en estado `blocked`)
+  7. `EUR.1 PENDIENTE` (export con EUR.1 requerido y ETD ≤2 días)
+  8. `SIN FECHA` (informativa)
+- **Contadores en cabecera** (`Críticos: N` / `Atención: N`) usan `flatMap` para sumar todas las alertas por tipo
+- **Filas apilan hasta 2 chips + badge `+N`** con tooltip de detalle
+- **Banner "Alertas activas"** en la página de detalle entre hero y cards
+
+#### Vista Kanban con toggle Tabla ↔ Kanban
+- **5 columnas**: Documentación · Sumaria/Gastos · DUA · Levante · Cierre
+- **`getKanbanColumn()` por prioridad** (de la fase más avanzada hacia atrás) — garantiza que todo despacho cae en **exactamente una** columna, sin huecos ni solapes
+- **Tarjetas** con expediente, cliente, ETA con días relativos, iconos de tipo de operación y alertas apiladas
+- **Borde rojo** para tarjetas con alertas críticas, navegación a detalle con clic
+
+#### Fix de zonas horarias
+- **`parseSupabaseDate`** trata las columnas `timestamp without time zone` como UTC añadiendo `Z` cuando falta — corrige los "hace Xh" y las reglas de +48h en Europe/Madrid (antes mostraba "hace 2h" para un evento recién creado)
+
+**Cambios técnicos:**
+- 6 ficheros tocados (2 páginas modificadas + 4 componentes/helpers nuevos)
+- 0 dependencias nuevas
+- Build limpio (`npm run build`) — `/despachos` 7.54 kB · `/despachos/[id]` 8.31 kB
+- Verificado end-to-end con Claude Preview (migración de notas, log de cambios, Kanban, timezone)
 
 ---
 
