@@ -502,7 +502,7 @@ function TableOfContents() {
     ['4', 'Escenario Dual / Dual Scenario'],
     ['5', 'Cálculo de Certificados / Certificate Calculation'],
     ['6', 'Recomendaciones / Recommendations'],
-    ['7', 'Marco Legal y Aviso / Legal Framework & Disclaimer'],
+    ['7', 'Metodología y Marco Legal / Methodology & Legal Framework'],
   ]
   return (
     <>
@@ -571,15 +571,32 @@ function ExecutiveSummary({ snapshot }) {
 
       <Text style={styles.h2}>Parámetros de cálculo / Calculation parameters</Text>
       <Text style={styles.body}>
-        Precio CO₂ utilizado / CO₂ price used:{' '}
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtNum(snapshot.meta.co2Price, 2)} EUR/tCO₂e</Text>
-        {'   '}|{'   '}
         Año fiscal / Fiscal year:{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>{snapshot.meta.reportYear}</Text>
         {'   '}|{'   '}
         Líneas analizadas / Lines analyzed:{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>{totals.linesCount}</Text>
       </Text>
+      {snapshot.meta.regulatoryParams && (
+        <Text style={styles.body}>
+          Precio certificado CBAM / CBAM certificate price:{' '}
+          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+            {fmtNum(snapshot.meta.regulatoryParams.certificatePrice, 2)} EUR/tCO₂e
+          </Text>{' '}
+          ({snapshot.meta.regulatoryParams.certificatePriceDate})
+          {'   '}|{'   '}
+          F_CBAM:{' '}
+          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+            {fmtNum(snapshot.meta.regulatoryParams.cbamFactor, 3)}
+          </Text>{' '}
+          ({fmtNum(snapshot.meta.regulatoryParams.cbamFactorPct, 1)}% obligación)
+          {'   '}|{'   '}
+          FCI:{' '}
+          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+            {fmtNum(snapshot.meta.regulatoryParams.fci, 3)}
+          </Text>
+        </Text>
+      )}
 
       {totals.exceedsDeMinimis ? (
         <Text style={styles.body}>
@@ -758,6 +775,11 @@ function DualScenarioSection({ snapshot }) {
 // ============================================================
 function CertificatesSection({ snapshot }) {
   const { totals, meta } = snapshot
+  const reg = meta.regulatoryParams
+  const price = reg?.certificatePrice ?? meta.co2Price
+  const priceDate = reg?.certificatePriceDate
+
+  const widths = ['55%', '45%']
 
   return (
     <>
@@ -766,17 +788,78 @@ function CertificatesSection({ snapshot }) {
 
       <Text style={styles.body}>
         Resumen del cálculo de certificados CBAM aplicable al ejercicio {meta.reportYear},
-        considerando el factor de obligación gradual establecido por el Reglamento (UE) 2023/956.
+        considerando el factor de obligación gradual (F_CBAM) y el factor de corrección
+        intersectorial (FCI) establecidos por el Reglamento (UE) 2023/956 y el Reglamento
+        de Ejecución (UE) 2025/2620.
       </Text>
       <Text style={styles.bodyEn}>
-        Summary of CBAM certificate calculation for fiscal year {meta.reportYear},
-        considering the gradual obligation factor set by Regulation (EU) 2023/956.
+        Summary of CBAM certificate calculation for fiscal year {meta.reportYear}, applying
+        the gradual obligation factor (F_CBAM) and the cross-sectoral correction factor (FCI)
+        set by Regulation (EU) 2023/956 and Implementing Regulation (EU) 2025/2620.
       </Text>
+
+      <Text style={styles.h3}>Fórmula aplicada / Applied formula</Text>
+      <View style={styles.legalBox}>
+        <Text style={styles.legalText}>
+          Certificados = Σ Toneladas × max(0, FE − F_CBAM × FCI × BM)
+        </Text>
+        <Text style={styles.legalText}>
+          Coste = Certificados × Precio certificado CBAM
+        </Text>
+        <Text style={styles.legalText}>
+          FE = factor de emisión aplicado (real o default + markup) · BM = benchmark EU del
+          sector · F_CBAM = {fmtNum(reg?.cbamFactor ?? 0.975, 3)} ({fmtNum(reg?.cbamFactorPct ?? 2.5, 1)}% obligación en {meta.reportYear}) · FCI = {fmtNum(reg?.fci ?? 1, 3)}
+        </Text>
+      </View>
+
+      <Text style={styles.h3}>Desglose / Breakdown</Text>
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>Concepto / Concept</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Valor / Value</Text>
+        </View>
+        <View style={styles.tableRow}>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>
+            Emisiones incorporadas totales (Tn × FE){'\n'}
+            Total incorporated emissions
+          </Text>
+          <Text style={[styles.tableCellRight, { width: widths[1] }]}>
+            {fmtNum(totals.totalIncorporatedEmissions ?? 0, 2)} tCO₂e
+          </Text>
+        </View>
+        <View style={styles.tableRowAlt}>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>
+            (−) Asignación gratuita implícita (AGIE = Tn × F_CBAM × FCI × BM){'\n'}
+            Implicit free allocation
+          </Text>
+          <Text style={[styles.tableCellRight, { width: widths[1] }]}>
+            − {fmtNum(totals.totalFreeAllocation ?? 0, 2)} tCO₂e
+          </Text>
+        </View>
+        <View style={styles.tableRow}>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>
+            (=) Certificados CBAM a entregar{'\n'}
+            CBAM certificates to surrender
+          </Text>
+          <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Helvetica-Bold' }]}>
+            {fmtNum(totals.totalCertificates, 2)} tCO₂e
+          </Text>
+        </View>
+        <View style={styles.tableRowAlt}>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>
+            (×) Precio certificado CBAM{priceDate ? ` (${priceDate})` : ''}{'\n'}
+            CBAM certificate price
+          </Text>
+          <Text style={[styles.tableCellRight, { width: widths[1] }]}>
+            {fmtNum(price, 2)} EUR/tCO₂e
+          </Text>
+        </View>
+      </View>
 
       <View style={styles.kpiRow}>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalCertificates, 1)}</Text>
-          <Text style={styles.kpiLabel}>Certificados estimados{'\n'}Estimated certificates</Text>
+          <Text style={styles.kpiLabel}>Certificados a entregar{'\n'}Certificates to surrender</Text>
         </View>
         <View style={styles.kpiCardEmerald}>
           <Text style={styles.kpiNumGreen}>{fmtEUR(totals.totalCostReal)}</Text>
@@ -785,14 +868,15 @@ function CertificatesSection({ snapshot }) {
       </View>
 
       <Text style={styles.body}>
-        Precio CO₂ aplicado / CO₂ price applied:{' '}
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtNum(meta.co2Price, 2)} EUR/tCO₂e</Text>
-      </Text>
-      <Text style={styles.body}>
-        El coste real dependerá del precio efectivo del EU ETS en el momento de la compra de los certificados.
+        El precio del certificado CBAM se calcula y publica semanalmente por la Comisión Europea
+        como media de los precios de cierre EUA de la semana anterior, conforme al Reglamento
+        de Ejecución (UE) 2025/2548. El coste final podrá variar según el precio vigente en
+        el trimestre de declaración.
       </Text>
       <Text style={styles.bodyEn}>
-        The actual cost will depend on the effective EU ETS price at the time of certificate purchase.
+        The CBAM certificate price is calculated and published weekly by the European Commission
+        as the average of the previous week&apos;s EUA closing prices, per Implementing Regulation
+        (EU) 2025/2548. The final cost may vary based on the price in force in the declaration quarter.
       </Text>
     </>
   )
@@ -836,24 +920,117 @@ function RecommendationsSection({ snapshot }) {
 // ============================================================
 // SECCIÓN: MARCO LEGAL Y AVISO
 // ============================================================
-function LegalSection() {
+function LegalSection({ snapshot }) {
+  const reg = snapshot?.meta?.regulatoryParams
+  const sources = reg?.sources || {}
+  const sourceList = Object.values(sources)
+
+  const methWidths = ['32%', '22%', '46%']
+
   return (
     <>
-      <Text style={styles.h1}>7. MARCO LEGAL Y AVISO / LEGAL FRAMEWORK & DISCLAIMER</Text>
+      <Text style={styles.h1}>7. METODOLOGÍA Y MARCO LEGAL / METHODOLOGY & LEGAL FRAMEWORK</Text>
       <View style={styles.h1Underline} />
 
+      {reg && (
+        <>
+          <Text style={styles.h3}>Parámetros regulatorios aplicados / Applied regulatory parameters</Text>
+          <Text style={styles.body}>
+            Todos los valores empleados en el cálculo proceden de fuentes oficiales publicadas
+            por la Comisión Europea. Cada parámetro se cita con el acto jurídico que lo establece
+            para garantizar la trazabilidad del informe.
+          </Text>
+          <Text style={styles.bodyEn}>
+            All values used in the calculation come from official sources published by the
+            European Commission. Each parameter is cited with its establishing legal act to
+            guarantee traceability.
+          </Text>
+
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderCell, { width: methWidths[0] }]}>
+                Parámetro{'\n'}Parameter
+              </Text>
+              <Text style={[styles.tableHeaderCell, { width: methWidths[1] }]}>
+                Valor{'\n'}Value
+              </Text>
+              <Text style={[styles.tableHeaderCell, { width: methWidths[2] }]}>
+                Fuente / Source
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, { width: methWidths[0] }]}>
+                F_CBAM (factor de obligación gradual){'\n'}Gradual obligation factor
+              </Text>
+              <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
+                {fmtNum(reg.cbamFactor, 3)}{'\n'}({fmtNum(reg.cbamFactorPct, 1)}% obligación)
+              </Text>
+              <Text style={[styles.tableCell, { width: methWidths[2] }]}>
+                {reg.cbamFactorSource}
+              </Text>
+            </View>
+            <View style={styles.tableRowAlt}>
+              <Text style={[styles.tableCell, { width: methWidths[0] }]}>
+                FCI (factor corrección intersectorial){'\n'}Cross-sectoral correction factor
+              </Text>
+              <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
+                {fmtNum(reg.fci, 3)}
+              </Text>
+              <Text style={[styles.tableCell, { width: methWidths[2] }]}>
+                {reg.fciSource}
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, { width: methWidths[0] }]}>
+                Precio certificado CBAM{'\n'}CBAM certificate price
+              </Text>
+              <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
+                {fmtNum(reg.certificatePrice, 2)} €/tCO₂e{'\n'}({reg.certificatePriceDate})
+              </Text>
+              <Text style={[styles.tableCell, { width: methWidths[2] }]}>
+                {reg.certificatePriceSource}
+              </Text>
+            </View>
+            <View style={styles.tableRowAlt}>
+              <Text style={[styles.tableCell, { width: methWidths[0] }]}>
+                Valores por defecto sectoriales{'\n'}Sectoral default values
+              </Text>
+              <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
+                Anexo II{'\n'}Annex II
+              </Text>
+              <Text style={[styles.tableCell, { width: methWidths[2] }]}>
+                {sources.DEFAULT_VALUES?.title || 'Reg. Ejecución (UE) 2025/2621'}
+              </Text>
+            </View>
+          </View>
+
+          {reg.certificatePriceNote && (
+            <Text style={[styles.body, { fontSize: 8, color: COLORS.gray600, marginTop: 4 }]}>
+              Nota / Note: {reg.certificatePriceNote}
+            </Text>
+          )}
+        </>
+      )}
+
       <Text style={styles.h3}>Marco normativo de referencia / Reference regulatory framework</Text>
-      <Text style={styles.body}>
-        • Reglamento (UE) 2023/956 del Parlamento Europeo y del Consejo, de 10 de mayo de 2023,
-        por el que se establece un Mecanismo de Ajuste en Frontera por Carbono (CBAM).
-      </Text>
-      <Text style={styles.body}>
-        • Reglamento de Ejecución (UE) 2023/1773 de la Comisión sobre las normas de aplicación
-        durante el período transitorio.
-      </Text>
-      <Text style={styles.body}>
-        • Decisión de Ejecución (UE) 2023/1772 sobre el Registro CBAM.
-      </Text>
+      {sourceList.length > 0 ? (
+        sourceList.map((src) => (
+          <Text key={src.id} style={styles.body}>
+            • {src.fullTitle}
+          </Text>
+        ))
+      ) : (
+        <>
+          <Text style={styles.body}>
+            • Reglamento (UE) 2023/956 del Parlamento Europeo y del Consejo, de 10 de mayo de 2023,
+            por el que se establece un Mecanismo de Ajuste en Frontera por Carbono (CBAM).
+          </Text>
+          <Text style={styles.body}>
+            • Reglamento de Ejecución (UE) 2023/1773 de la Comisión sobre las normas de aplicación
+            durante el período transitorio.
+          </Text>
+        </>
+      )}
 
       <Text style={styles.h3}>Aviso legal / Legal disclaimer</Text>
       <View style={styles.legalBox}>
@@ -924,7 +1101,7 @@ function CbamReportDocument({ snapshot }) {
       </ContentPage>
 
       <ContentPage snapshot={snapshot}>
-        <LegalSection />
+        <LegalSection snapshot={snapshot} />
       </ContentPage>
     </Document>
   )

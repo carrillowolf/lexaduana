@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.10.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.11.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -49,6 +49,66 @@ lexaduana.es
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.11.0 (Abril 2026)
+
+### 🧾 Factura OCR + 🌍 Motor CBAM regulatorio v2
+
+Doble frente: nueva herramienta de extracción de datos de facturas con IA para acelerar la preparación de despachos, y reescritura del motor de cálculo CBAM para alinearlo 100% con los reglamentos de ejecución publicados en diciembre 2025, con trazabilidad legal completa en el PDF.
+
+#### 🧾 Factura OCR (`/factura-ocr`) — Nueva herramienta
+
+Módulo completo de extracción estructurada de datos de facturas (PDF, JPG, PNG) con IA, pensado como paso previo al despacho: sube una factura, obtén un JSON limpio listo para exportar a Excel.
+
+- **Extracción con Claude Sonnet** (`app/api/extract-invoice/route.js`): cabecera (proveedor, país, nº factura, incoterm, moneda, totales) + líneas (descripción, cantidad, precio, peso, total). 353 líneas de orquestación con prompts específicos por layout.
+- **Validador estructural** (`lib/invoiceValidator.js`, 286 líneas): detecta errores de decimales, totales que no cuadran, incoterms faltantes, moneda inconsistente. Bloquea el guardado con mensajes accionables al usuario.
+- **UI estilo Excel**: transformación de las tarjetas originales en filas densas tipo hoja de cálculo con celdas navegables, pie sticky con totales (Cantidad, Total, Peso) y footer de agregados en la tabla de resultados.
+- **Clasificación TARIC inline** (`/api/extract-invoice/classify`): para cada línea, sugerencia de código CN con `classifyProduct()` del módulo clasificador IA — sin salir de la pantalla.
+- **Exportación Excel** (`lib/excelExporter.js`, 383 líneas): plantilla multi-hoja (Cabecera, Líneas, Totales) con estilos corporativos, autoanchos y fórmulas vivas; reutilizable para otros flujos.
+- **Historial con soft-delete** (`app/api/extract-invoice/history/route.js`): tabla `invoice_extractions` con RLS estricta por `user_id`, recuperación de extracciones antiguas, re-descarga de Excel sobre el snapshot JSON guardado y borrado reversible (`deleted_at`). Nunca se persiste el archivo original — solo el JSON estructurado (GDPR-friendly).
+- **Seguridad de subida** (`lib/fileSecurity.js`): validación MIME/tamaño, anti-CSRF por `Origin`, rate limiting per-user con Upstash (`lib/rate-limit.js`) y cabeceras `SECURE_RESPONSE_HEADERS` en todas las rutas.
+- **Acceso rápido desde dashboard**: card con badge `NUEVO` enlazando a `/factura-ocr`.
+- **Set de facturas de prueba** (`test-invoices/`) con casos cubiertos: FOB perfecta, factura con errores de decimales, proforma sin incoterm.
+
+#### 🌍 Motor CBAM regulatorio v2 — Alineación total con Reg. 2025/2548, 2620 y 2621
+
+Tras revisión crítica del documento de referencia externo (Noatum) se detectaron errores matemáticos en el ejemplo. Nuestro motor se ha reescrito siguiendo **exclusivamente** los reglamentos primarios, y el PDF ahora cita cada parámetro con su acto jurídico.
+
+**Nuevo módulo `lib/cbamRegulatoryParams.js` (199 líneas)** — fuente única de verdad con:
+- **F_CBAM por año** (Art. 36(2)(b) Reg. (UE) 2023/956): 2026=0,975 · 2027=0,95 · 2028=0,90 · 2029=0,775 · 2030=0,515 · 2031=0,39 · 2032=0,265 · 2033=0,14 · 2034=0,0
+- **FCI** (Reg. Ejecución (UE) 2025/2620): 1,0 provisional 2026 pendiente de publicación CE
+- **Precio certificado CBAM**: 74,76 €/tCO₂e (Q1 2026), Reg. Ejecución (UE) 2025/2548 — ya no usa precio EU ETS spot
+- **`REGULATORY_SOURCES`** con título, URL oficial BOE/EUR-Lex e ID de cada reglamento para citación dinámica
+- **`getRegulatoryParamsForYear(year)`** — devuelve objeto completo con valores + fuentes listo para incrustar en snapshots
+
+**Calculadora (`lib/cbamAdvisoryCalculator.js`) — fórmula corregida:**
+
+```
+Emisiones declaradas   = Toneladas × max(0, FE − BM)
+Certificados a entregar = Toneladas × max(0, FE − F_CBAM × FCI × BM)
+Coste                  = Certificados × Precio certificado CBAM
+```
+
+Mientras F_CBAM < 1 el importador conserva una parte de asignación gratuita implícita (AGIE). Validación cruzada: reproduciendo el ejemplo Noatum con nuestra fórmula, el escenario "defaults" da **51.060,87 €** (coincide exactamente) y "reales con BM correcto" da 24.120,36 € (52,8% de ahorro) — confirmando que el incentivo regulatorio a obtener datos reales del proveedor funciona.
+
+**Snapshot v2 (`lib/cbamReportSnapshot.js`):**
+- Nuevos campos por línea: `incorporatedEmissions` (Tn × FE), `effectiveBenchmark` (F_CBAM × FCI × BM), `freeAllocationImplicit` (AGIE), `certificatesAfterAdjustment`
+- Nuevos totales: `totalIncorporatedEmissions`, `totalFreeAllocation`
+- **`meta.regulatoryParams`** con F_CBAM, FCI, precio, fecha, fuentes y `version: 2` — **cada informe es reproducible** con los valores vigentes en el momento de su emisión aunque mañana cambien las constantes
+
+**PDF del informe (`lib/cbamReportGenerator.jsx`) — Trazabilidad legal visible:**
+- **Sección 5 reescrita**: nueva caja con la fórmula oficial, tabla de desglose `Emisiones incorporadas − AGIE = Certificados a entregar × Precio`, citas a Reg. 2023/956 + 2025/2620 + 2025/2548. Eliminada frase obsoleta "precio efectivo del EU ETS".
+- **Sección 7 ahora "Metodología y Marco Legal"**: tabla de parámetros regulatorios aplicados (F_CBAM, FCI, precio, valores por defecto) con fuente jurídica en cada fila, listado de reglamentos generado dinámicamente desde `REGULATORY_SOURCES`.
+- **Resumen ejecutivo**: la línea "Parámetros de cálculo" cita explícitamente precio CBAM + F_CBAM + FCI en vez del genérico "Precio CO₂".
+- Cualquier cliente puede abrir el informe y verificar línea a línea **qué valor se usó y qué artículo lo establece** — defensa directa ante objeciones técnicas.
+
+**Cambios técnicos:**
+- 8 ficheros modificados + 7 ficheros nuevos
+- 0 dependencias nuevas (aprovecha `@react-pdf/renderer`, Claude SDK, Upstash ya presentes)
+- Build limpio (`npm run build`) — `/factura-ocr` 12 kB · `/cbam/asesoria/*` sin impacto medible
+- Backward compatible: snapshots `version: 1` antiguos se siguen renderizando correctamente
 
 ---
 

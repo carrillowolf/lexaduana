@@ -22,6 +22,7 @@ import {
   rateLimitHeaders
 } from '@/lib/rate-limit'
 import { validateClassificationInput } from '@/lib/validation'
+import { isAdminEmail } from '@/lib/cbamAdminAuth'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -30,26 +31,7 @@ const anthropic = new Anthropic({
 export async function POST(request) {
   try {
     // =========================================
-    // 1. RATE LIMITING POR IP
-    // =========================================
-    const rateLimit = await checkRateLimit(request, aiClassifierLimiter)
-
-    if (!rateLimit.success) {
-      const resetInMinutes = Math.ceil((rateLimit.reset - Date.now()) / 1000 / 60)
-      return NextResponse.json(
-        {
-          error: 'Has excedido el límite de clasificaciones por hora. Intenta de nuevo más tarde.',
-          retryAfterMinutes: resetInMinutes,
-        },
-        {
-          status: 429,
-          headers: rateLimitHeaders(rateLimit),
-        }
-      )
-    }
-
-    // =========================================
-    // 2. AUTENTICACIÓN
+    // 1. AUTENTICACIÓN (necesaria para detectar admin antes del rate limit)
     // =========================================
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
@@ -63,23 +45,52 @@ export async function POST(request) {
       )
     }
 
-    // =========================================
-    // 3. LÍMITE DIARIO POR USUARIO
-    // =========================================
-    const dailyLimit = await checkDailyAILimit(user.id)
+    const isAdmin = isAdminEmail(user.email)
 
-    if (!dailyLimit.allowed) {
-      return NextResponse.json(
-        {
-          error: `Has alcanzado tu límite de ${dailyLimit.limit} clasificaciones diarias. Se reinicia en 24 horas.`,
-          usage: {
-            used: dailyLimit.used,
-            limit: dailyLimit.limit,
-            remaining: 0,
+    // =========================================
+    // 2. RATE LIMITING POR IP (admin lo salta)
+    // =========================================
+    let rateLimit = { success: true, configured: false, limit: 0, remaining: 0, reset: 0 }
+    if (!isAdmin) {
+      rateLimit = await checkRateLimit(request, aiClassifierLimiter)
+
+      if (!rateLimit.success) {
+        const resetInMinutes = Math.ceil((rateLimit.reset - Date.now()) / 1000 / 60)
+        return NextResponse.json(
+          {
+            error: 'Has excedido el límite de clasificaciones por hora. Intenta de nuevo más tarde.',
+            retryAfterMinutes: resetInMinutes,
           },
-        },
-        { status: 429 }
-      )
+          {
+            status: 429,
+            headers: rateLimitHeaders(rateLimit),
+          }
+        )
+      }
+    }
+
+    // =========================================
+    // 3. LÍMITE DIARIO POR USUARIO (admin sin límite)
+    // =========================================
+    let dailyLimit
+    if (isAdmin) {
+      dailyLimit = { allowed: true, used: 0, limit: -1, remaining: -1 }
+    } else {
+      dailyLimit = await checkDailyAILimit(user.id)
+
+      if (!dailyLimit.allowed) {
+        return NextResponse.json(
+          {
+            error: `Has alcanzado tu límite de ${dailyLimit.limit} clasificaciones diarias. Se reinicia en 24 horas.`,
+            usage: {
+              used: dailyLimit.used,
+              limit: dailyLimit.limit,
+              remaining: 0,
+            },
+          },
+          { status: 429 }
+        )
+      }
     }
 
     // =========================================

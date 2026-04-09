@@ -16,6 +16,7 @@ const NAV_SECTIONS = [
     items: [
       { href: '/calculadora', icon: '🧮', label: 'Calculadora' },
       { href: '/clasificador', icon: '🤖', label: 'Clasificador IA' },
+      { href: '/factura-ocr', icon: '📄', label: 'Extractor Facturas', badge: 'Nuevo' },
       { href: '/comparador', icon: '⚖️', label: 'Comparador' },
       { href: '/despachos', icon: '📋', label: 'Despachos' },
       { href: '/bulk', icon: '📊', label: 'Cálculo masivo' },
@@ -61,7 +62,7 @@ const AUTH_ITEMS = [
 // COMPONENTS
 // ============================================================
 
-function NavItem({ href, icon, label, isActive, onClick }) {
+function NavItem({ href, icon, label, badge, isActive, onClick }) {
   return (
     <Link
       href={href}
@@ -73,7 +74,12 @@ function NavItem({ href, icon, label, isActive, onClick }) {
       }`}
     >
       <span className="text-base flex-shrink-0 w-5 text-center">{icon}</span>
-      <span className="truncate">{label}</span>
+      <span className="truncate flex-1">{label}</span>
+      {badge && (
+        <span className="text-[10px] font-bold bg-[#F4C542] text-[#0A3D5C] px-1.5 py-0.5 rounded">
+          {badge}
+        </span>
+      )}
     </Link>
   )
 }
@@ -199,6 +205,7 @@ export default function AppSidebar() {
                     href={item.href}
                     icon={item.icon}
                     label={item.label}
+                    badge={item.badge}
                     isActive={isActive(item.href)}
                     onClick={handleNavigate}
                   />

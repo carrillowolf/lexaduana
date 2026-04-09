@@ -314,6 +314,20 @@ export default function DashboardPage() {
             </Link>
 
             <Link
+              href="/factura-ocr"
+              className="relative flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#F4C542]/40 hover:shadow-lg transition-all group"
+            >
+              <span className="absolute top-2 right-2 text-[10px] font-bold px-1.5 py-0.5 bg-[#F4C542] text-[#0A3D5C] rounded">NUEVO</span>
+              <div className="p-3 bg-[#F4C542]/15 rounded-xl group-hover:bg-[#F4C542]/25 transition">
+                <span className="text-2xl">📄</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Extractor Facturas</h3>
+                <p className="text-sm text-gray-500">OCR + TARIC + aranceles</p>
+              </div>
+            </Link>
+
+            <Link
               href="/bulk"
               className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#0A3D5C]/30 hover:shadow-lg transition-all group"
             >
