@@ -72,7 +72,7 @@ const CBAM_PHASE_IN_RATES = {
 // Fuente: Comisión Europea — actualizar manualmente cuando se publiquen
 // Para actualizar: cambiar null por el precio en €/tCO₂ y el panel se actualizará solo
 const CBAM_QUARTERLY_PRICES_2026 = {
-  Q1: null,  // Se publica 7 abril 2026
+  Q1: 75.36, // Publicado 8 abril 2026 — media trimestral EU ETS Q1 2026
   Q2: null,  // Se publica 6 julio 2026
   Q3: null,  // Se publica 5 octubre 2026
   Q4: null,  // Se publica 4 enero 2027

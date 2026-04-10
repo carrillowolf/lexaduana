@@ -739,76 +739,87 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Desglose de costes */}
-                    <div className="space-y-4 pt-4">
-                      <div className="flex justify-between items-center py-3 border-b-2 border-gray-100">
-                        <span className="text-gray-600 font-medium">Valor CIF:</span>
-                        <span className="font-bold text-xl text-gray-900">{formatCurrency(result.cifValue)}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center py-3 border-b-2 border-gray-100">
-                        <div>
-                          <span className="text-gray-600 font-medium">Arancel </span>
-                          {result.duty.standardRate !== result.duty.appliedRate && (
-                            <span className="text-xs text-gray-400 line-through ml-1">
-                              ({result.duty.standardRate}%)
-                            </span>
-                          )}
-                          <span className="text-gray-600 font-medium"> → {result.duty.appliedRate}%:</span>
-                        </div>
-                        <span className="font-bold text-xl text-gray-900">
-                          {formatCurrency(result.duty.amount)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center py-3 border-b-2 border-gray-100">
-                        <span className="text-gray-600 font-medium">Base imponible IVA:</span>
-                        <span className="font-semibold text-lg text-gray-900">{formatCurrency(result.customsBase)}</span>
-                      </div>
-                      
-                      <div className="py-3 border-b-2 border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600 font-medium">IVA ({result.vat.rate}%):</span>
-                            {result.vat.type && result.vat.type !== 'general' && (
-                              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                result.vat.type === 'superreducido'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-blue-100 text-blue-700'
-                              }`}>
-                                {result.vat.type === 'superreducido' ? '4% Superreducido' : '10% Reducido'}
+                    {/* ═══ BLOQUE 1: Liquidación aduanera (tributos) ═══ */}
+                    <div className="pt-4">
+                      <h3 className="text-sm font-bold text-[#0A3D5C] uppercase tracking-wider mb-3">Liquidación aduanera</h3>
+                      <div className="bg-white border-2 border-[#0A3D5C]/10 rounded-2xl p-5 space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <div>
+                            <span className="text-gray-600 font-medium">Derechos de arancel </span>
+                            {result.duty.standardRate !== result.duty.appliedRate && (
+                              <span className="text-xs text-gray-400 line-through ml-1">
+                                ({result.duty.standardRate}%)
                               </span>
                             )}
+                            <span className="text-gray-600 font-medium"> {result.duty.appliedRate}%</span>
                           </div>
-                          <span className="font-bold text-xl text-gray-900">
-                            {formatCurrency(result.vat.amount)}
+                          <span className="font-bold text-lg text-gray-900">
+                            {formatCurrency(result.duty.amount)}
                           </span>
                         </div>
-                        {result.vat.type && result.vat.type !== 'general' && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            {result.vat.type === 'superreducido'
-                              ? '📦 Productos básicos de primera necesidad'
-                              : '🍽️ Alimentos y servicios esenciales'}
+
+                        <div className="py-2 border-b border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 font-medium">IVA importación ({result.vat.rate}%)</span>
+                              {result.vat.type && result.vat.type !== 'general' && (
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                  result.vat.type === 'superreducido'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {result.vat.type === 'superreducido' ? '4% Superreducido' : '10% Reducido'}
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-bold text-lg text-gray-900">
+                              {formatCurrency(result.vat.amount)}
+                            </span>
+                          </div>
+                          {result.vat.type && result.vat.type !== 'general' && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {result.vat.type === 'superreducido'
+                                ? '📦 Productos básicos de primera necesidad'
+                                : '🍽️ Alimentos y servicios esenciales'}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Total suplidos */}
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="text-lg font-bold text-[#0A3D5C]">Total suplidos</span>
+                          <span className="text-2xl font-bold text-[#0A3D5C]">
+                            {formatCurrency(result.duty.amount + result.vat.amount)}
+                          </span>
+                        </div>
+                        {result.duty.savings > 0 && (
+                          <p className="text-xs text-emerald-600 font-medium">
+                            Ahorro de {formatCurrency(result.duty.savings)} por acuerdo comercial
                           </p>
                         )}
+                        <p className="text-xs text-gray-400 mt-1">*IVA deducible para empresas dadas de alta en el ROI</p>
                       </div>
-                      
-                      {/* Total destacado */}
-                      <div className="mt-6 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl p-6 shadow-xl">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="text-lg font-bold text-white">
-                              TOTAL A PAGAR
-                            </span>
-                            {result.duty.savings > 0 && (
-                              <p className="text-xs text-emerald-100 mt-1">
-                                💰 Ahorro de {formatCurrency(result.duty.savings)} por acuerdo comercial
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-3xl font-bold text-white">
-                            {formatCurrency(result.total)}
-                          </span>
+                    </div>
+
+                    {/* ═══ BLOQUE 2: Coste total de la importación ═══ */}
+                    <div className="pt-4">
+                      <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Coste total de la importación</h3>
+                      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-2">
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-gray-500 text-sm">Valor CIF mercancía</span>
+                          <span className="font-semibold text-gray-700">{formatCurrency(result.cifValue)}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-gray-500 text-sm">Derechos de arancel</span>
+                          <span className="font-semibold text-gray-700">{formatCurrency(result.duty.amount)}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200 pb-3">
+                          <span className="text-gray-500 text-sm">IVA importación</span>
+                          <span className="font-semibold text-gray-700">{formatCurrency(result.vat.amount)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="font-semibold text-gray-600">Coste total importación</span>
+                          <span className="text-xl font-bold text-gray-900">{formatCurrency(result.total)}</span>
                         </div>
                       </div>
                     </div>

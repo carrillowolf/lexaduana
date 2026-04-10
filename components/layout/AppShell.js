@@ -34,7 +34,7 @@ export default function AppShell({ children }) {
         <AppSidebar />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <AppTopbar />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden md:pl-4">
             {children}
           </main>
         </div>

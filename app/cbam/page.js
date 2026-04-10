@@ -106,17 +106,6 @@ export default async function CBAMPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <JsonLd data={cbamFaqSchema} />
-      {/* Botón flotante "CBAM para Dummies" */}
-      <Link href="/cbam/guia" className="fixed bottom-6 right-6 z-50 group">
-        <div className="bg-[#0A3D5C] text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2 border border-white/10">
-          <span className="text-xl">📚</span>
-          <span className="font-bold">¿Qué es el CBAM?</span>
-          <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-      </Link>
-
       {/* ═══ HERO DARK ═══ */}
       <div className="bg-[#0A3D5C] relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
@@ -176,6 +165,47 @@ export default async function CBAMPage() {
           </div>
         </div>
       </div>
+
+      {/* ═══ BLOQUE INTRODUCTORIO ═══ */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold text-[#0A3D5C] mb-4 flex items-center gap-2">
+              <span className="text-2xl">🏭</span> ¿Qué es el CBAM?
+            </h2>
+            <div className="space-y-3 text-gray-600 leading-relaxed">
+              <p>
+                El <strong className="text-gray-900">Mecanismo de Ajuste en Frontera por Carbono (CBAM)</strong> es la nueva regulación de la UE
+                que establece un precio al CO₂ incorporado en productos importados de sectores intensivos en emisiones:
+                acero, aluminio, cemento, fertilizantes, electricidad e hidrógeno.
+              </p>
+              <p>
+                Desde enero de 2026, los importadores deben registrarse como declarantes autorizados, declarar las emisiones
+                de sus importaciones y comprar certificados CBAM al precio del mercado EU ETS (actualmente ~75 €/tCO₂e).
+              </p>
+              <p className="font-medium text-gray-800">
+                Si importas productos de estos sectores desde fuera de la UE, el CBAM te afecta directamente.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-6 mt-6">
+              <Link
+                href="/cbam/guia"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#083049] transition-colors"
+              >
+                Guía completa para principiantes
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+              </Link>
+              <div className="flex items-center gap-4 text-sm text-gray-400 font-medium">
+                <span>6 sectores</span>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <span>573 códigos CN</span>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <span>Obligatorio desde 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 

@@ -249,7 +249,7 @@ export default function AppSidebar() {
   // Desktop: sidebar fija
   if (!isMobile) {
     return (
-      <aside className="hidden md:flex w-[220px] flex-shrink-0 border-r border-gray-200 h-screen sticky top-0">
+      <aside className="hidden md:flex w-[220px] flex-shrink-0 border-r border-gray-200 h-screen sticky top-0 bg-white z-10 shadow-[2px_0_8px_rgba(0,0,0,0.08)]">
         {sidebarContent}
       </aside>
     )
