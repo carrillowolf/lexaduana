@@ -2,42 +2,23 @@
 
 import { usePathname } from 'next/navigation'
 import UserMenu from '@/components/UserMenu'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useSidebar } from './SidebarContext'
+import { useTranslation } from '@/lib/i18n'
+import { commonDict } from '@/lib/i18n/common'
 
-// Mapa de rutas a títulos de página
-const PAGE_TITLES = {
-  '/calculadora': 'Calculadora TARIC',
-  '/clasificador': 'Clasificador IA',
-  '/comparador': 'Comparador Multi-Origen',
-  '/despachos': 'Gestor de Despachos',
-  '/bulk': 'Cálculo Masivo',
-  '/cbam': 'CBAM',
-  '/cbam/assessment': 'Autoevaluación CBAM',
-  '/cbam/guia': 'Guía CBAM',
-  '/cbam/asesoria': 'Asesoría CBAM',
-  '/cbam/asesoria/solicitud': 'Nueva Solicitud',
-  '/cbam/asesoria/mis-solicitudes': 'Mis Solicitudes',
-  '/cbam/historial': 'Historial CBAM',
-  '/eudr': 'EUDR - Deforestación',
-  '/glosario': 'Glosario',
-  '/incoterms': 'Incoterms 2020',
-  '/valor-en-aduana': 'Valor en Aduana',
-  '/tipos-cambio': 'Tipos de Cambio',
-  '/dashboard': 'Dashboard',
-  '/favoritos': 'Favoritos',
-  '/monitor': 'Monitor',
-  '/admin/cbam': 'Admin CBAM',
-  '/admin/clasificaciones': 'Admin Clasificaciones',
-}
+function getPageTitle(pathname, t) {
+  // Try exact match first
+  const exact = t(`topbar.${pathname}`)
+  if (exact && !exact.startsWith('topbar.')) return exact
 
-function getPageTitle(pathname) {
-  // Match exacto primero
-  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname]
-
-  // Match por prefijo (para subrutas de despachos, etc.)
-  const sorted = Object.keys(PAGE_TITLES).sort((a, b) => b.length - a.length)
-  for (const route of sorted) {
-    if (pathname.startsWith(route)) return PAGE_TITLES[route]
+  // Match by prefix (for dispatch sub-routes, etc.)
+  const routes = Object.keys(commonDict.es.topbar).sort((a, b) => b.length - a.length)
+  for (const route of routes) {
+    if (pathname.startsWith(route)) {
+      const val = t(`topbar.${route}`)
+      if (val && !val.startsWith('topbar.')) return val
+    }
   }
 
   return 'LexAduana'
@@ -46,7 +27,8 @@ function getPageTitle(pathname) {
 export default function AppTopbar() {
   const pathname = usePathname()
   const { toggleSidebar, isMobile } = useSidebar()
-  const title = getPageTitle(pathname)
+  const t = useTranslation(commonDict)
+  const title = getPageTitle(pathname, t)
 
   return (
     <header className="h-14 flex-shrink-0 sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center px-4 gap-3">
@@ -67,6 +49,11 @@ export default function AppTopbar() {
       <h1 className="text-sm font-semibold text-gray-800 truncate flex-1">
         {title}
       </h1>
+
+      {/* Language Switcher */}
+      <div className="flex-shrink-0">
+        <LanguageSwitcher />
+      </div>
 
       {/* UserMenu */}
       <div className="flex-shrink-0">

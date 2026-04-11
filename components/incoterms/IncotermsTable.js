@@ -8,6 +8,20 @@ import {
   getMultimodal,
   getMaritimo,
 } from '@/lib/incotermsData'
+import { useTranslation, useLocale } from '@/lib/i18n'
+import { incotermsDict, incotermsDataLabels, incotermsContentDict } from '@/lib/i18n/incoterms'
+
+// ── Helper: get translated content for an incoterm ─────────
+function useIncotermContent() {
+  const { locale } = useLocale()
+  return (code, field) => {
+    const localeData = incotermsContentDict[locale]?.[code]
+    if (localeData?.[field]) return localeData[field]
+    // Fallback to Spanish data from the original object
+    const item = INCOTERMS_2020.find(i => i.code === code)
+    return item?.[field] ?? ''
+  }
+}
 
 // ── Barra de responsabilidad ────────────────────────────────
 
@@ -23,7 +37,7 @@ function Bar({ who }) {
 
 // ── Cabecera con iconos y línea de flujo ────────────────────
 
-function StageHeader() {
+function StageHeader({ t, stageLabels }) {
   return (
     <div className="pt-4 pb-2 px-3 border-b border-gray-100 min-w-[700px]">
       {/* Fila de iconos */}
@@ -37,7 +51,7 @@ function StageHeader() {
           <div key={stage.key} className="text-center">
             <div className="text-base md:text-lg leading-none mb-1">{stage.icon}</div>
             <p className="text-[7px] md:text-[8px] font-semibold text-gray-500 leading-tight">
-              {stage.shortLabel}
+              {stageLabels[stage.key + 'Short'] || stage.shortLabel}
             </p>
           </div>
         ))}
@@ -50,24 +64,21 @@ function StageHeader() {
       >
         <div />
         <div />
-        {/* País de origen (4 cols: embalaje, carga, transp, aduana exp) */}
         <div className="col-span-4 bg-blue-50 border border-blue-200 rounded-full py-[3px] text-center">
           <span className="text-[7px] md:text-[8px] font-bold text-blue-600 uppercase tracking-wider">
-            País de origen
+            {t('table.originCountry')}
           </span>
         </div>
-        {/* Transporte internacional (2 cols: manip origen, flete) */}
         <div className="col-span-2 flex items-center justify-center gap-1">
           <div className="h-px flex-1 bg-gray-300" />
           <span className="text-[7px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap px-0.5">
-            Transporte
+            {t('table.transport')}
           </span>
           <div className="h-px flex-1 bg-gray-300" />
         </div>
-        {/* País de destino (4 cols: manip dest, aduana imp, transp dest, descarga) */}
         <div className="col-span-4 bg-amber-50 border border-amber-200 rounded-full py-[3px] text-center">
           <span className="text-[7px] md:text-[8px] font-bold text-amber-600 uppercase tracking-wider">
-            País de destino
+            {t('table.destCountry')}
           </span>
         </div>
       </div>
@@ -77,60 +88,56 @@ function StageHeader() {
 
 // ── Panel de detalle expandido ──────────────────────────────
 
-function DetailPanel({ item }) {
+function DetailPanel({ item, t, getContent }) {
   return (
     <div className="bg-gradient-to-br from-slate-50 to-white p-5 md:p-6 space-y-5 border-t border-gray-200 animate-fadeIn">
       <div className="grid md:grid-cols-2 gap-5">
-        {/* Qué significa */}
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
           <h4 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">1</span>
-            Qué significa
+            {t('table.detail.meaning')}
           </h4>
-          <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{getContent(item.code, 'description') || item.description}</p>
         </div>
 
-        {/* Impacto en valor en aduana */}
         <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
           <h4 className="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">2</span>
-            Impacto en el valor en aduana
+            {t('table.detail.customsImpact')}
           </h4>
-          <p className="text-sm text-gray-700 leading-relaxed">{item.customsImpact}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{getContent(item.code, 'customsImpact') || item.customsImpact}</p>
         </div>
 
-        {/* Ejemplo práctico */}
         <div className="bg-white rounded-xl p-4 border border-green-200 shadow-sm">
           <h4 className="text-sm font-bold text-green-800 mb-2 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold">3</span>
-            Ejemplo práctico
+            {t('table.detail.example')}
           </h4>
-          <p className="text-sm text-gray-700 leading-relaxed">{item.practicalExample}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{getContent(item.code, 'practicalExample') || item.practicalExample}</p>
         </div>
 
-        {/* Consejo */}
         <div className="bg-white rounded-xl p-4 border border-purple-200 shadow-sm">
           <h4 className="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold">4</span>
-            Consejo profesional
+            {t('table.detail.advice')}
           </h4>
-          <p className="text-sm text-gray-700 leading-relaxed">{item.advice}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{getContent(item.code, 'advice') || item.advice}</p>
         </div>
       </div>
 
       {/* Meta-info row */}
       <div className="grid sm:grid-cols-3 gap-4 pt-2">
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Transferencia de riesgo</p>
-          <p className="text-sm text-gray-800">{item.riskTransferPoint}</p>
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('table.detail.riskTransfer')}</p>
+          <p className="text-sm text-gray-800">{getContent(item.code, 'riskTransferPoint') || item.riskTransferPoint}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Transferencia de costes</p>
-          <p className="text-sm text-gray-800">{item.costTransferPoint}</p>
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('table.detail.costTransfer')}</p>
+          <p className="text-sm text-gray-800">{getContent(item.code, 'costTransferPoint') || item.costTransferPoint}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Diferencia clave</p>
-          <p className="text-sm text-gray-800">{item.keyDifference}</p>
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">{t('table.detail.keyDifference')}</p>
+          <p className="text-sm text-gray-800">{getContent(item.code, 'keyDifference') || item.keyDifference}</p>
         </div>
       </div>
 
@@ -149,15 +156,15 @@ function DetailPanel({ item }) {
             {item.dispatcherAlert.type === 'critical' ? '🚨' : item.dispatcherAlert.type === 'warning' ? '⚠️' : item.dispatcherAlert.type === 'success' ? '✅' : 'ℹ️'}
           </span>
           <div>
-            <p className="font-semibold text-xs uppercase tracking-wider mb-0.5">Alerta para el despachante</p>
-            <p className="leading-relaxed">{item.dispatcherAlert.text}</p>
+            <p className="font-semibold text-xs uppercase tracking-wider mb-0.5">{t('table.detail.dispatcherAlert')}</p>
+            <p className="leading-relaxed">{getContent(item.code, 'dispatcherAlertText') || item.dispatcherAlert.text}</p>
           </div>
         </div>
       )}
 
       {/* Documentos */}
       <div>
-        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Documentos típicos</p>
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('table.detail.typicalDocs')}</p>
         <div className="flex flex-wrap gap-2">
           {item.typicalDocuments.map((doc) => (
             <span key={doc} className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
@@ -170,15 +177,15 @@ function DetailPanel({ item }) {
   )
 }
 
-// ── Filas de Incoterm (desktop — barras COSTE / RIESGO / SEGURO) ─
+// ── Filas de Incoterm (desktop) ─────────────────────────────
 
-function IncotermRows({ item, isExpanded, onToggle }) {
+function IncotermRows({ item, isExpanded, onToggle, t }) {
   const rows = [
-    { label: 'COSTE', data: item.responsibilities.cost },
-    { label: 'RIESGO', data: item.responsibilities.risk },
+    { label: t('table.cost'), data: item.responsibilities.cost },
+    { label: t('table.risk'), data: item.responsibilities.risk },
   ]
   if (item.hasInsuranceRow) {
-    rows.push({ label: 'SEGURO', data: item.insuranceRow })
+    rows.push({ label: t('table.insurance'), data: item.insuranceRow })
   }
 
   return (
@@ -196,7 +203,6 @@ function IncotermRows({ item, isExpanded, onToggle }) {
           } ${idx === rows.length - 1 ? 'pb-2.5' : 'pb-0.5'}`}
           style={{ gridTemplateColumns: '130px 58px repeat(10, 1fr)' }}
         >
-          {/* Columna 1: nombre del Incoterm (solo en la primera fila) */}
           {idx === 0 ? (
             <div className="flex items-center gap-1.5 min-w-0">
               <svg
@@ -220,10 +226,8 @@ function IncotermRows({ item, isExpanded, onToggle }) {
             <div />
           )}
 
-          {/* Columna 2: etiqueta COSTE / RIESGO / SEGURO */}
           <span className="text-[9px] font-bold text-gray-400 tracking-wider">{row.label}</span>
 
-          {/* Columnas 3-12: barras de responsabilidad */}
           {row.data.map((who, i) => (
             <Bar key={i} who={who} />
           ))}
@@ -235,13 +239,13 @@ function IncotermRows({ item, isExpanded, onToggle }) {
 
 // ── Card para móvil ─────────────────────────────────────────
 
-function IncotermCard({ item, isExpanded, onToggle }) {
+function IncotermCard({ item, isExpanded, onToggle, t, getContent }) {
   const barRows = [
-    { label: 'COSTE', data: item.responsibilities.cost },
-    { label: 'RIESGO', data: item.responsibilities.risk },
+    { label: t('table.cost'), data: item.responsibilities.cost },
+    { label: t('table.risk'), data: item.responsibilities.risk },
   ]
   if (item.hasInsuranceRow) {
-    barRows.push({ label: 'SEGURO', data: item.insuranceRow })
+    barRows.push({ label: t('table.insurance'), data: item.insuranceRow })
   }
 
   return (
@@ -265,7 +269,6 @@ function IncotermCard({ item, isExpanded, onToggle }) {
         </svg>
       </button>
 
-      {/* Mini bar chart */}
       <div className="px-4 pb-3 space-y-1.5">
         {barRows.map((row) => (
           <div key={row.label} className="flex items-center gap-2">
@@ -282,20 +285,19 @@ function IncotermCard({ item, isExpanded, onToggle }) {
             </div>
           </div>
         ))}
-        {/* Mini leyenda en mobile */}
         <div className="flex items-center gap-3 pt-1 text-[8px] text-gray-400">
           <div className="flex items-center gap-1">
             <div className="w-3 h-2 rounded-[1px] bg-blue-600" />
-            <span>Vendedor</span>
+            <span>{t('table.seller')}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-2 rounded-[1px] bg-amber-400" />
-            <span>Comprador</span>
+            <span>{t('table.buyer')}</span>
           </div>
         </div>
       </div>
 
-      {isExpanded && <DetailPanel item={item} />}
+      {isExpanded && <DetailPanel item={item} t={t} getContent={getContent} />}
     </div>
   )
 }
@@ -304,6 +306,10 @@ function IncotermCard({ item, isExpanded, onToggle }) {
 
 export default function IncotermsTable() {
   const [expandedCode, setExpandedCode] = useState(null)
+  const t = useTranslation(incotermsDict)
+  const { locale } = useLocale()
+  const stageLabels = incotermsDataLabels[locale] || incotermsDataLabels.es
+  const getContent = useIncotermContent()
 
   function handleToggle(code) {
     setExpandedCode((prev) => (prev === code ? null : code))
@@ -316,12 +322,10 @@ export default function IncotermsTable() {
     <section id="tabla-incoterms">
       <div className="text-center mb-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-          Tabla de Incoterms 2020
+          {t('table.title')}
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto text-sm">
-          Los 11 Incoterms organizados por modo de transporte con distribución de
-          costes y riesgos en cada etapa logística. Haz clic en cualquier fila
-          para ver el detalle completo.
+          {t('table.subtitle')}
         </p>
       </div>
 
@@ -329,11 +333,11 @@ export default function IncotermsTable() {
       <div className="flex items-center justify-center gap-6 mb-6 text-sm">
         <div className="flex items-center gap-2">
           <span className="inline-block w-8 h-4 rounded bg-blue-600" />
-          <span className="text-gray-600 font-medium">= Vendedor</span>
+          <span className="text-gray-600 font-medium">{t('table.legendSeller')}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-8 h-4 rounded bg-amber-400" />
-          <span className="text-gray-600 font-medium">= Comprador</span>
+          <span className="text-gray-600 font-medium">{t('table.legendBuyer')}</span>
         </div>
       </div>
 
@@ -342,84 +346,62 @@ export default function IncotermsTable() {
         <svg className="w-4 h-4 text-gray-300 animate-pulse" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
         </svg>
-        <span>Haz clic en cualquier Incoterm para desplegar su información detallada</span>
+        <span>{t('table.clickHint')}</span>
       </div>
 
       <div className="space-y-10">
-        {/* ── Grupo 1: Cualquier modo de transporte ──── */}
+        {/* Grupo 1: Cualquier modo de transporte */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">🚛</span>
             <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-              Cualquier modo de transporte
+              {t('table.groupMultimodal')}
             </h3>
           </div>
 
-          {/* Desktop */}
           <div className="hidden md:block rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
-            <StageHeader />
+            <StageHeader t={t} stageLabels={stageLabels} />
             <div className="divide-y divide-gray-100">
               {multimodal.map((item) => (
                 <React.Fragment key={item.code}>
-                  <IncotermRows
-                    item={item}
-                    isExpanded={expandedCode === item.code}
-                    onToggle={handleToggle}
-                  />
-                  {expandedCode === item.code && <DetailPanel item={item} />}
+                  <IncotermRows item={item} isExpanded={expandedCode === item.code} onToggle={handleToggle} t={t} />
+                  {expandedCode === item.code && <DetailPanel item={item} t={t} getContent={getContent} />}
                 </React.Fragment>
               ))}
             </div>
           </div>
 
-          {/* Mobile */}
           <div className="md:hidden space-y-3">
             {multimodal.map((item) => (
-              <IncotermCard
-                key={item.code}
-                item={item}
-                isExpanded={expandedCode === item.code}
-                onToggle={() => handleToggle(item.code)}
-              />
+              <IncotermCard key={item.code} item={item} isExpanded={expandedCode === item.code} onToggle={() => handleToggle(item.code)} t={t} getContent={getContent} />
             ))}
           </div>
         </div>
 
-        {/* ── Grupo 2: Solo marítimo ──── */}
+        {/* Grupo 2: Solo marítimo */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">🚢</span>
             <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-              Solo transporte marítimo y vías navegables
+              {t('table.groupMaritime')}
             </h3>
           </div>
 
-          {/* Desktop */}
           <div className="hidden md:block rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
-            <StageHeader />
+            <StageHeader t={t} stageLabels={stageLabels} />
             <div className="divide-y divide-gray-100">
               {maritimo.map((item) => (
                 <React.Fragment key={item.code}>
-                  <IncotermRows
-                    item={item}
-                    isExpanded={expandedCode === item.code}
-                    onToggle={handleToggle}
-                  />
-                  {expandedCode === item.code && <DetailPanel item={item} />}
+                  <IncotermRows item={item} isExpanded={expandedCode === item.code} onToggle={handleToggle} t={t} />
+                  {expandedCode === item.code && <DetailPanel item={item} t={t} getContent={getContent} />}
                 </React.Fragment>
               ))}
             </div>
           </div>
 
-          {/* Mobile */}
           <div className="md:hidden space-y-3">
             {maritimo.map((item) => (
-              <IncotermCard
-                key={item.code}
-                item={item}
-                isExpanded={expandedCode === item.code}
-                onToggle={() => handleToggle(item.code)}
-              />
+              <IncotermCard key={item.code} item={item} isExpanded={expandedCode === item.code} onToggle={() => handleToggle(item.code)} t={t} getContent={getContent} />
             ))}
           </div>
         </div>
@@ -427,12 +409,12 @@ export default function IncotermsTable() {
 
       {/* Notas */}
       <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-800">
-        <p className="font-semibold mb-1">Notas sobre la tabla:</p>
+        <p className="font-semibold mb-1">{t('table.notes.title')}</p>
         <ul className="list-disc list-inside space-y-1 text-amber-700">
-          <li><strong>FCA:</strong> La carga y el transporte interior dependen del lugar de entrega acordado. Si es en las instalaciones del vendedor, este carga. Si es en otro lugar, el comprador descarga del vehículo del vendedor.</li>
-          <li><strong>CIP:</strong> Desde Incoterms 2020, el vendedor debe contratar seguro con cobertura máxima (ICC-A). CIF mantiene solo cobertura mínima (ICC-C).</li>
-          <li><strong>CPT / CIP / CFR / CIF:</strong> En estos Incoterms tipo &ldquo;C&rdquo;, el punto de transferencia de coste y el de riesgo son distintos. El vendedor paga el transporte pero el riesgo se transfiere antes (al entregar al primer porteador o a bordo del buque).</li>
-          <li><strong>DAP / DPU:</strong> El vendedor asume transporte hasta destino pero la aduana de importación es responsabilidad del comprador. El transporte a destino &ldquo;salta&rdquo; la aduana de importación.</li>
+          <li><strong>FCA:</strong> {t('table.notes.fca')}</li>
+          <li><strong>CIP:</strong> {t('table.notes.cip')}</li>
+          <li><strong>CPT / CIP / CFR / CIF:</strong> {t('table.notes.cTerms')}</li>
+          <li><strong>DAP / DPU:</strong> {t('table.notes.dapDpu')}</li>
         </ul>
       </div>
     </section>

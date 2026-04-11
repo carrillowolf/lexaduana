@@ -2,12 +2,13 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.11.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.12.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
 [![Claude](https://img.shields.io/badge/Claude-4.5-purple.svg)](https://anthropic.com)
-[![TARIC](https://img.shields.io/badge/TARIC-Marzo_2026-orange.svg)](https://taxation-customs.ec.europa.eu)
+[![TARIC](https://img.shields.io/badge/TARIC-Abril_2026-orange.svg)](https://taxation-customs.ec.europa.eu)
+[![i18n](https://img.shields.io/badge/i18n-ES%20%7C%20EN-blueviolet.svg)](https://lexaduana.es)
 
 🌐 **En producción:** [lexaduana.es](https://lexaduana.es)
 
@@ -46,9 +47,63 @@ lexaduana.es
 │   ├── Base arancel vs base IVA (3 ejemplos)
 │   ├── DV1 + tabla casillas DUA/H1
 │   └── 6 casos problemáticos reales
+├── 🌐 Soporte bilingüe ES/EN    (disponible)
+│   └── 10 páginas públicas traducidas
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.12.0 (Abril 2026)
+
+### 🌐 Soporte bilingüe ES/EN — Páginas públicas e internacionales
+
+Implementación completa de internacionalización (i18n) en todas las páginas orientadas al público internacional, manteniendo las herramientas internas (calculadora, CBAM, comparador, despachos, bulk) en español.
+
+#### Infraestructura i18n
+
+- **`lib/i18n.js`**: Core del sistema — `LocaleProvider` (React Context), hooks `useLocale()` y `useTranslation(dict)` con acceso por clave anidada (`t('hero.title')`)
+- **`components/LanguageSwitcher.js`**: Toggle ES/EN con persistencia en `localStorage`, integrado en sidebar (`AppTopbar`) y páginas standalone (auth, landing)
+- **`components/layout/AppShell.js`**: `LocaleProvider` envuelve toda la app (rutas bare y sidebar)
+- **Detección automática**: Idioma persistido entre sesiones vía `localStorage`
+
+#### Páginas traducidas (10 páginas, ~600 strings)
+
+| Página | Diccionario | Strings | Notas |
+|--------|-------------|---------|-------|
+| Landing (`/`) | `lib/i18n/landing.js` | ~120 | Header, hero, 5 tools, stats, resources, audience, compliance, footer |
+| Login (`/auth/login`) | `lib/i18n/auth.js` | ~12 | Formulario completo + links |
+| Register (`/auth/register`) | `lib/i18n/auth.js` | ~15 | Validaciones traducidas |
+| Forgot password (`/auth/forgot-password`) | `lib/i18n/auth.js` | ~10 | Flujo de recuperación |
+| Reset password (`/auth/reset-password`) | `lib/i18n/auth.js` | ~18 | 3 estados: verificando, inválido, formulario |
+| EUDR (`/eudr`) | `lib/i18n/eudr.js` | ~120 | Convertida de Server a Client Component, metadata en layout.js |
+| Clasificador IA (`/clasificador`) | `lib/i18n/clasificador.js` | ~45 | Resultados, confianza, disclaimer |
+| Incoterms (`/incoterms`) | `lib/i18n/incoterms.js` | ~80 | Tabla, wizard, SEO, customs value |
+| OEA (`/oea`) | `lib/i18n/oea.js` | ~90 | Metadata en layout.js |
+| Valor en Aduana (`/valor-en-aduana`) | `lib/i18n/valor-en-aduana.js` + `lib/customsValueData.en.js` | ~250 | Traducción completa: 6 métodos, 3 ejemplos numéricos, DV1, 16 campos DUA/H1, ajustes art.71/72, 6 casos problemáticos |
+
+#### Enfoque de datos bilingües (Valor en Aduana)
+
+- **`lib/customsValueData.en.js`** (~490 líneas): Versión inglesa completa de todos los datos estructurados — métodos de valoración, ejemplos numéricos, DV1, campos DUA/H1, ajustes CAU, casos problemáticos, notas generales, tabla comparativa
+- **Hook `useLocalizedData()`**: Selecciona automáticamente datos ES/EN según locale activo
+- **Números formateados por locale**: `toLocaleString('en-GB')` vs `toLocaleString('es-ES')`
+
+#### Sidebar y navegación bilingüe
+
+- **`components/layout/AppSidebar.js`**: Todas las secciones (Herramientas, Regulaciones UE, Recursos), labels y tooltips traducidos
+- **`components/layout/AppTopbar.js`**: Títulos de página, botones de acción, `LanguageSwitcher` integrado
+- **FAQ schemas dinámicos**: Generación de JSON-LD según locale para SEO (EUDR)
+
+#### Decisiones de diseño
+- **Opción B**: Solo páginas públicas/internacionales traducidas — herramientas internas quedan en español (son de uso profesional en España)
+- **Glosario**: Pendiente para versión futura (200+ definiciones técnicas)
+- **Server → Client**: EUDR y OEA convertidas de Server Components a Client Components para soportar hooks de traducción; metadata movida a `layout.js`
+
+**Cambios técnicos:**
+- 21 ficheros modificados + 12 ficheros nuevos (diccionarios i18n, layouts, LanguageSwitcher, datos EN)
+- 0 dependencias nuevas (i18n implementada con React Context + localStorage)
+- Build limpio — sin impacto en bundle size significativo (tree-shaking de diccionarios no usados por página)
 
 ---
 
@@ -542,7 +597,7 @@ Mecanismo de Ajuste en Frontera por Carbono - **Obligatorio desde 01/01/2026**
 
 #### Simulador de Coste de Certificados
 - **Valores por defecto UE**: Factores de emisión oficiales (tCO2/t)
-- **Precio EU ETS actual**: ~€68.50/tCO2 (actualizable)
+- **Precio certificado CBAM**: 74,76 €/tCO₂e (Q1 2026, Reg. 2025/2548)
 - **Cálculo instantáneo**: Toneladas × Factor × Precio
 - **Ajuste FAA (Free Allocation Adjustment)**: Phase-in progresivo 2026-2034 aplicado al cálculo
 - **Selector de año visual**: 9 botones (2026-2034) con % phase-in y markup
@@ -562,7 +617,7 @@ Según Reglamento C(2025) 8560:
 Panel integrado en la calculadora que muestra los precios oficiales de certificados CBAM publicados por la Comisión Europea:
 | Trimestre | Fecha de publicación | Estado |
 |-----------|---------------------|--------|
-| Q1 2026 | 7 abril 2026 | Pendiente |
+| Q1 2026 | 7 abril 2026 | ✅ 74,76 €/tCO₂e |
 | Q2 2026 | 6 julio 2026 | Pendiente |
 | Q3 2026 | 5 octubre 2026 | Pendiente |
 | Q4 2026 | 4 enero 2027 | Pendiente |
@@ -697,6 +752,7 @@ Servicio profesional de análisis de exposición CBAM para importadores:
 - **Row Level Security**: Aislamiento total de datos
 
 ### 🎨 Experiencia de Usuario
+- **Bilingüe ES/EN**: 10 páginas públicas con toggle de idioma y persistencia en localStorage
 - **Diseño premium**: Colores corporativos (#0A3D5C navy, #F4C542 gold)
 - **Responsive**: Optimizado móvil y desktop (Tailwind CSS v4)
 - **Landing como suite**: 3 herramientas principales con igual peso visual (no calculadora embebida)
@@ -750,16 +806,17 @@ lexaduana/
 │   │       ├── page.js           # Landing del servicio
 │   │       ├── solicitud/        # Wizard de intake (3 pasos)
 │   │       └── mis-solicitudes/  # Listado solicitudes usuario
-│   ├── eudr/                     # EUDR Deforestación (informativo)
+│   ├── eudr/                     # EUDR Deforestación (informativo, bilingüe)
 │   ├── bulk/                     # Calculadora masiva
 │   ├── comparador/               # Comparador multi-origen
 │   ├── despachos/                # Gestor de despachos
 │   ├── favoritos/                # Gestión favoritos
 │   ├── tipos-cambio/             # Tipos de cambio
 │   ├── glosario/                 # Glosario términos
-│   ├── page.js                   # Landing page (Hero + Features + CTA inline)
+│   ├── page.js                   # Landing page (Hero + Features + CTA inline, bilingüe)
 │   └── layout.js                 # Layout global (SEO, GA4, Schema.org)
 ├── 📁 components/                # Componentes React
+│   ├── LanguageSwitcher.js       # 🆕 Toggle ES/EN con localStorage
 │   ├── UserMenu.js               # Menú autenticación
 │   ├── HSCodeAutocomplete.js     # Búsqueda HS
 │   ├── ExportPDF.js              # Exportación PDF
@@ -790,7 +847,17 @@ lexaduana/
 │   ├── vatCalculator.js          # Lógica IVA variable
 │   ├── csvParser.js              # Parser CSV bulk
 │   ├── excelExporter.js          # Exportador Excel
-│   └── analytics.js              # GA4 trackEvent helper
+│   ├── analytics.js              # GA4 trackEvent helper
+│   ├── i18n.js                   # 🆕 Core i18n (LocaleProvider, useLocale, useTranslation)
+│   ├── i18n/                     # 🆕 Diccionarios de traducción ES/EN
+│   │   ├── auth.js               # Login, register, forgot/reset password
+│   │   ├── landing.js            # Landing page completa
+│   │   ├── eudr.js               # EUDR (~120 strings)
+│   │   ├── clasificador.js       # Clasificador IA (~45 strings)
+│   │   ├── incoterms.js          # Incoterms 2020 (~80 strings)
+│   │   ├── oea.js                # OEA (~90 strings)
+│   │   └── valor-en-aduana.js    # Valor en Aduana UI (~140 strings)
+│   └── customsValueData.en.js    # 🆕 Datos Valor en Aduana EN (~490 líneas)
 ├── 📁 scripts/                   # Scripts migración y schemas
 │   ├── bloque1-schema.sql        # Schema bloque 1 (master data)
 │   ├── loadBlock1.js             # Carga bloque 1 (5 tablas)
@@ -1044,6 +1111,15 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 - **Description**: Menciona las 3 herramientas principales + EUR-Lex
 - **Open Graph / Twitter Cards**: Actualizados con nuevo posicionamiento
 - **Schema.org**: Descripción actualizada como suite de herramientas
+
+### ✅ Completado (v5.12.0 - Abril 2026)
+
+#### 🌐 Soporte bilingüe ES/EN
+- Infraestructura i18n con React Context + localStorage
+- 10 páginas públicas traducidas (~600 strings)
+- Datos Valor en Aduana completamente traducidos (~490 líneas)
+- LanguageSwitcher en sidebar y páginas standalone
+- Sin dependencias externas (i18n custom, zero-bundle-cost)
 
 ### ✅ Completado (v5.4.0 - Abril 2026)
 

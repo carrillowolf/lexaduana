@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { authDict } from '@/lib/i18n/auth'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -11,6 +14,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState(null)
 
   const supabase = createClientComponentClient()
+  const t = useTranslation(authDict)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,9 +31,9 @@ export default function ForgotPasswordPage() {
         throw error
       }
 
-      setMessage('Se ha enviado un enlace de recuperación a tu correo electrónico. Revisa tu bandeja de entrada.')
+      setMessage(t('forgotPassword.success'))
     } catch (err) {
-      setError(err.message || 'Error al enviar el correo de recuperación')
+      setError(err.message || t('forgotPassword.errorFallback'))
     } finally {
       setLoading(false)
     }
@@ -40,6 +44,11 @@ export default function ForgotPasswordPage() {
       {/* Ambient glow */}
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[#0A3D5C]/20 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-[#F4C542]/8 rounded-full blur-[150px] pointer-events-none" />
+
+      {/* Language switcher */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher />
+      </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
@@ -54,9 +63,9 @@ export default function ForgotPasswordPage() {
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">
-              Recuperar contraseña
+              {t('forgotPassword.title')}
             </h1>
-            <p className="text-white/50 text-sm">Te enviaremos un enlace para restablecer tu contraseña</p>
+            <p className="text-white/50 text-sm">{t('forgotPassword.subtitle')}</p>
           </div>
 
           {message && (
@@ -75,7 +84,7 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white/60 mb-2">
-                  Correo electrónico
+                  {t('forgotPassword.email')}
                 </label>
                 <input
                   id="email"
@@ -99,10 +108,10 @@ export default function ForgotPasswordPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Enviando...
+                    {t('forgotPassword.submitting')}
                   </>
                 ) : (
-                  'Enviar enlace de recuperación'
+                  t('forgotPassword.submit')
                 )}
               </button>
             </form>
@@ -113,14 +122,14 @@ export default function ForgotPasswordPage() {
               href="/auth/login"
               className="text-sm text-white/40 hover:text-white/60 transition-colors"
             >
-              ← Volver al inicio de sesión
+              {t('forgotPassword.back')}
             </Link>
           </div>
         </div>
 
         {/* Footer */}
         <p className="text-center text-white/20 text-sm mt-6">
-          © 2024-2026 LexAduana. Todos los derechos reservados.
+          {t('forgotPassword.copyright')}
         </p>
       </div>
     </div>

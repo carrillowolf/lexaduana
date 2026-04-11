@@ -5,58 +5,66 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { useSidebar } from './SidebarContext'
+import { useTranslation } from '@/lib/i18n'
+import { commonDict } from '@/lib/i18n/common'
 
 // ============================================================
-// NAVIGATION STRUCTURE
+// NAVIGATION STRUCTURE (dynamic labels via i18n)
 // ============================================================
 
-const NAV_SECTIONS = [
-  {
-    label: 'HERRAMIENTAS',
-    items: [
-      { href: '/calculadora', icon: '🧮', label: 'Calculadora' },
-      { href: '/clasificador', icon: '🤖', label: 'Clasificador IA' },
-      { href: '/factura-ocr', icon: '📄', label: 'Extractor Facturas', badge: 'Nuevo' },
-      { href: '/comparador', icon: '⚖️', label: 'Comparador' },
-      { href: '/despachos', icon: '📋', label: 'Despachos' },
-      { href: '/bulk', icon: '📊', label: 'Cálculo masivo' },
-    ],
-  },
-  {
-    label: 'REGULACIONES UE',
-    items: [
+function useNavSections() {
+  const t = useTranslation(commonDict)
+  return {
+    sections: [
       {
-        href: '/cbam',
-        icon: '🏭',
-        label: 'CBAM',
-        expandable: true,
-        children: [
-          { href: '/cbam', label: 'Hub principal' },
-          { href: '/cbam/assessment', label: 'Autoevaluación' },
-          { href: '/cbam/guia', label: 'Guía' },
-          { href: '/cbam/asesoria', label: 'Asesoría' },
-          { href: '/cbam/historial', label: 'Historial' },
+        label: t('nav.tools'),
+        items: [
+          { href: '/calculadora', icon: '🧮', label: t('nav.calculator') },
+          { href: '/clasificador', icon: '🤖', label: t('nav.classifier') },
+          { href: '/factura-ocr', icon: '📄', label: t('nav.invoiceOcr'), badge: 'New' },
+          { href: '/comparador', icon: '⚖️', label: t('nav.comparator') },
+          { href: '/despachos', icon: '📋', label: t('nav.dispatches') },
+          { href: '/bulk', icon: '📊', label: t('nav.bulkCalc') },
         ],
       },
-      { href: '/eudr', icon: '🌳', label: 'EUDR' },
-      { href: '/oea', icon: '🛡️', label: 'OEA' },
+      {
+        label: t('nav.regulations'),
+        items: [
+          {
+            href: '/cbam',
+            icon: '🏭',
+            label: t('nav.cbam'),
+            expandable: true,
+            children: [
+              { href: '/cbam', label: t('nav.cbamHub') },
+              { href: '/cbam/assessment', label: t('nav.cbamAssessment') },
+              { href: '/cbam/guia', label: t('nav.cbamGuide') },
+              { href: '/cbam/asesoria', label: t('nav.cbamAdvisory') },
+              { href: '/cbam/historial', label: t('nav.cbamHistory') },
+            ],
+          },
+          { href: '/eudr', icon: '🌳', label: t('nav.eudr') },
+          { href: '/oea', icon: '🛡️', label: t('nav.oea') },
+        ],
+      },
+      {
+        label: t('nav.resources'),
+        items: [
+          { href: '/glosario', icon: '📖', label: t('nav.glossary') },
+          { href: '/incoterms', icon: '📦', label: t('nav.incoterms') },
+          { href: '/valor-en-aduana', icon: '⚖️', label: t('nav.customsValue') },
+          { href: '/tipos-cambio', icon: '💱', label: t('nav.exchangeRates') },
+        ],
+      },
     ],
-  },
-  {
-    label: 'RECURSOS',
-    items: [
-      { href: '/glosario', icon: '📖', label: 'Glosario' },
-      { href: '/incoterms', icon: '📦', label: 'Incoterms 2020' },
-      { href: '/valor-en-aduana', icon: '⚖️', label: 'Valor en Aduana' },
-      { href: '/tipos-cambio', icon: '💱', label: 'Tipos de cambio' },
+    authItems: [
+      { href: '/dashboard', icon: '📈', label: t('nav.dashboard') },
+      { href: '/favoritos', icon: '⭐', label: t('nav.favorites') },
     ],
-  },
-]
-
-const AUTH_ITEMS = [
-  { href: '/dashboard', icon: '📈', label: 'Dashboard' },
-  { href: '/favoritos', icon: '⭐', label: 'Favoritos' },
-]
+    loginLabel: t('nav.login'),
+    suiteLabel: t('nav.suiteLabel'),
+  }
+}
 
 // ============================================================
 // COMPONENTS
@@ -147,6 +155,7 @@ export default function AppSidebar() {
   const { isOpen, isMobile, closeSidebar } = useSidebar()
   const [user, setUser] = useState(null)
   const supabase = createClient()
+  const { sections: NAV_SECTIONS, authItems: AUTH_ITEMS, loginLabel, suiteLabel } = useNavSections()
 
   useEffect(() => {
     const getUser = async () => {
@@ -178,7 +187,7 @@ export default function AppSidebar() {
           <img src="/logo.png" alt="LexAduana" className="h-9 w-9 rounded-lg bg-white p-0.5" />
           <div className="min-w-0">
             <p className="text-base font-bold text-[#0A3D5C] truncate">LexAduana</p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Suite de Comercio</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">{suiteLabel}</p>
           </div>
         </Link>
       </div>
@@ -232,7 +241,7 @@ export default function AppSidebar() {
           <NavItem
             href="/auth/login"
             icon="👤"
-            label="Iniciar sesión"
+            label={loginLabel}
             isActive={false}
             onClick={handleNavigate}
           />

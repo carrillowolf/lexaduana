@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { authDict } from '@/lib/i18n/auth'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -14,6 +17,7 @@ export default function RegisterPage() {
   const [message, setMessage] = useState('')
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslation(authDict)
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -22,13 +26,13 @@ export default function RegisterPage() {
     setMessage('')
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
+      setError(t('register.passwordMismatch'))
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+      setError(t('register.passwordTooShort'))
       setLoading(false)
       return
     }
@@ -44,7 +48,7 @@ export default function RegisterPage() {
 
       if (error) throw error
 
-      setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.')
+      setMessage(t('register.success'))
       setTimeout(() => {
         router.push('/auth/login')
       }, 3000)
@@ -57,12 +61,15 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#060d16] flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Ambient glow */}
       <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-[#0A3D5C]/20 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-1/3 left-1/4 w-[400px] h-[400px] bg-[#F4C542]/8 rounded-full blur-[150px] pointer-events-none" />
 
+      {/* Language switcher */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
         <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-3">
             <img src="/logo.png" alt="LexAduana" className="h-10 w-10 rounded-lg bg-white p-0.5" />
@@ -70,13 +77,12 @@ export default function RegisterPage() {
           </Link>
         </div>
 
-        {/* Card */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">
-              Crear cuenta gratis
+              {t('register.title')}
             </h1>
-            <p className="text-white/50 text-sm">Accede a todas las herramientas de LexAduana</p>
+            <p className="text-white/50 text-sm">{t('register.subtitle')}</p>
           </div>
 
           {error && (
@@ -94,7 +100,7 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                Email
+                {t('register.email')}
               </label>
               <input
                 type="email"
@@ -108,7 +114,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                Contraseña
+                {t('register.password')}
               </label>
               <input
                 type="password"
@@ -118,12 +124,12 @@ export default function RegisterPage() {
                 placeholder="••••••••"
                 required
               />
-              <p className="mt-1.5 text-xs text-white/30">Mínimo 6 caracteres</p>
+              <p className="mt-1.5 text-xs text-white/30">{t('register.passwordHint')}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
-                Confirmar contraseña
+                {t('register.confirmPassword')}
               </label>
               <input
                 type="password"
@@ -140,24 +146,23 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full bg-[#F4C542] text-[#060d16] font-semibold py-3 px-6 rounded-xl hover:bg-[#F4C542]/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+              {loading ? t('register.submitting') : t('register.submit')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-white/40">
-              ¿Ya tienes cuenta?{' '}
+              {t('register.hasAccount')}{' '}
               <Link href="/auth/login" className="text-[#F4C542] hover:text-[#F4C542]/80 font-medium transition-colors">
-                Iniciar sesión
+                {t('register.signIn')}
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Back link */}
         <div className="mt-6 text-center">
           <Link href="/" className="text-sm text-white/30 hover:text-white/50 transition-colors">
-            ← Volver a LexAduana
+            {t('register.back')}
           </Link>
         </div>
       </div>

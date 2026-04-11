@@ -14,17 +14,54 @@ import {
   DUTY_VS_VAT_COMPARISON,
   PAGE_SECTIONS,
 } from '@/lib/customsValueData'
+import {
+  VALUATION_METHODS_EN,
+  NUMERICAL_EXAMPLES_EN,
+  DV1_INFO_EN,
+  EXTENDED_DUA_H1_FIELDS_EN,
+  ENHANCED_CAU_ADJUSTMENTS_EN,
+  PROBLEMATIC_CASES_EN,
+  GENERAL_NOTES_EN,
+  DUTY_VS_VAT_COMPARISON_EN,
+  PAGE_SECTIONS_EN,
+} from '@/lib/customsValueData.en'
+import { useTranslation, useLocale } from '@/lib/i18n'
+import { valorDict } from '@/lib/i18n/valor-en-aduana'
 
 /* ================================================================
-   MINI-TOC — navegación entre secciones
+   Hook to pick locale-aware data
+   ================================================================ */
+
+function useLocalizedData() {
+  const { locale } = useLocale()
+  const isEn = locale === 'en'
+  return {
+    valuationMethods: isEn ? VALUATION_METHODS_EN : VALUATION_METHODS,
+    numericalExamples: isEn ? NUMERICAL_EXAMPLES_EN : NUMERICAL_EXAMPLES,
+    dv1Info: isEn ? DV1_INFO_EN : DV1_INFO,
+    duaFields: isEn ? EXTENDED_DUA_H1_FIELDS_EN : EXTENDED_DUA_H1_FIELDS,
+    cauAdjustments: isEn ? ENHANCED_CAU_ADJUSTMENTS_EN : ENHANCED_CAU_ADJUSTMENTS,
+    problematicCases: isEn ? PROBLEMATIC_CASES_EN : PROBLEMATIC_CASES,
+    generalNotes: isEn ? GENERAL_NOTES_EN : GENERAL_NOTES,
+    dutyVsVatComparison: isEn ? DUTY_VS_VAT_COMPARISON_EN : DUTY_VS_VAT_COMPARISON,
+    pageSections: isEn ? PAGE_SECTIONS_EN : PAGE_SECTIONS,
+    locale,
+  }
+}
+
+/* ================================================================
+   MINI-TOC — section navigation
    ================================================================ */
 
 function MiniTOC() {
+  const t = useTranslation(valorDict)
+  const { pageSections } = useLocalizedData()
+
   return (
     <nav className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">En esta guía</p>
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">{t('toc.label')}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        {PAGE_SECTIONS.map((s) => (
+        {pageSections.map((s) => (
           <a
             key={s.id}
             href={`#${s.id}`}
@@ -40,10 +77,13 @@ function MiniTOC() {
 }
 
 /* ================================================================
-   BLOQUE 1 — Métodos de valoración
+   BLOCK 1 — Valuation methods
    ================================================================ */
 
 function ValuationMethods() {
+  const t = useTranslation(valorDict)
+  const { valuationMethods } = useLocalizedData()
+
   const frequencyConfig = {
     habitual: { bg: 'bg-emerald-100 text-emerald-800', icon: '✅' },
     secundario: { bg: 'bg-blue-100 text-blue-700', icon: '🔄' },
@@ -53,17 +93,13 @@ function ValuationMethods() {
   return (
     <section id="metodos" className="scroll-mt-8">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-        ¿Cómo se determina el valor en aduana?
+        {t('methods.title')}
       </h2>
-      <p className="text-sm text-gray-600 mb-6">
-        El CAU establece 6 métodos <strong>secuenciales y subsidiarios</strong>: no se puede saltar al
-        Método 3 si el 1 y el 2 son aplicables. Excepción: los métodos 4 y 5 pueden invertirse a
-        petición del importador.
-      </p>
+      <p className="text-sm text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: t('methods.desc') }} />
 
-      {/* Flecha visual de secuencia */}
+      {/* Visual sequence arrow */}
       <div className="hidden sm:flex items-center justify-center gap-1 mb-6 text-xs text-gray-400">
-        {VALUATION_METHODS.map((m, i) => (
+        {valuationMethods.map((m, i) => (
           <span key={m.number} className="flex items-center gap-1">
             <span className={`px-2 py-1 rounded font-bold ${i === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
               M{m.number}
@@ -74,7 +110,7 @@ function ValuationMethods() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {VALUATION_METHODS.map((m) => {
+        {valuationMethods.map((m) => {
           const freq = frequencyConfig[m.frequency]
           return (
             <div key={m.number} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
@@ -95,7 +131,7 @@ function ValuationMethods() {
               <p className="text-sm text-gray-700 leading-relaxed mb-3">{m.description}</p>
               {m.keyChange && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800">
-                  <strong>Cambio CAU:</strong> {m.keyChange}
+                  <strong>{t('methods.keyChange')}</strong> {m.keyChange}
                 </div>
               )}
             </div>
@@ -107,25 +143,26 @@ function ValuationMethods() {
 }
 
 /* ================================================================
-   BLOQUE 2 — Ajustes por Incoterm (wizard interactivo)
+   BLOCK 2 — Incoterm adjustments (interactive wizard)
    ================================================================ */
 
 function IncotermWizard() {
   const [selected, setSelected] = useState('CIF')
+  const t = useTranslation(valorDict)
+  const { generalNotes } = useLocalizedData()
   const item = INCOTERMS_2020.find((i) => i.code === selected)
   const adj = item?.customsValueAdjustments
 
   return (
     <section id="ajustes-incoterm" className="scroll-mt-8">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-        Ajustes según tu Incoterm
+        {t('wizard.title')}
       </h2>
       <p className="text-sm text-gray-600 mb-6">
-        Selecciona el Incoterm de tu factura para ver qué gastos debes sumar o restar del precio
-        facturado para obtener el valor en aduana (base CIF frontera UE).
+        {t('wizard.desc')}
       </p>
 
-      {/* Selector de Incoterm */}
+      {/* Incoterm selector */}
       <div className="flex flex-wrap gap-2 mb-6">
         {INCOTERMS_2020.map((inc) => (
           <button
@@ -144,19 +181,19 @@ function IncotermWizard() {
 
       {adj && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Cabecera */}
+          {/* Header */}
           <div className="bg-gradient-to-r from-[#0A3D5C] to-[#0D5A8A] px-5 py-4 text-white">
             <h3 className="text-lg font-bold">{item.code} — {item.name}</h3>
             <p className="text-sm text-blue-200">{item.nameEs}</p>
           </div>
 
           <div className="p-5 space-y-5">
-            {/* Adiciones */}
+            {/* Additions */}
             {adj.addToCustomsValue.length > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <h4 className="text-sm font-bold text-red-800 mb-3 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-red-200 text-red-800 flex items-center justify-center text-xs">+</span>
-                  Sumar al precio facturado
+                  {t('wizard.addTitle')}
                 </h4>
                 <div className="space-y-2">
                   {adj.addToCustomsValue.map((a, i) => (
@@ -165,7 +202,7 @@ function IncotermWizard() {
                       <div>
                         <span className="font-medium text-gray-800">{a.concept}</span>
                         {a.mandatory === false && (
-                          <span className="ml-1.5 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">condicional</span>
+                          <span className="ml-1.5 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{t('wizard.conditional')}</span>
                         )}
                         {a.note && <p className="text-xs text-gray-500 mt-0.5">{a.note}</p>}
                       </div>
@@ -175,22 +212,22 @@ function IncotermWizard() {
               </div>
             )}
 
-            {/* Sin adiciones */}
+            {/* No additions */}
             {adj.addToCustomsValue.length === 0 && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="text-sm text-gray-500 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">+</span>
-                  No hay adiciones al precio facturado
+                  {t('wizard.noAdditions')}
                 </p>
               </div>
             )}
 
-            {/* Deducciones */}
+            {/* Deductions */}
             {adj.deductFromCustomsValue.length > 0 && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                 <h4 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs">−</span>
-                  Restar del precio facturado
+                  {t('wizard.deductTitle')}
                 </h4>
                 <div className="space-y-2">
                   {adj.deductFromCustomsValue.map((d, i) => (
@@ -207,24 +244,24 @@ function IncotermWizard() {
               </div>
             )}
 
-            {/* Sin deducciones */}
+            {/* No deductions */}
             {adj.deductFromCustomsValue.length === 0 && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="text-sm text-gray-500 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">−</span>
-                  No hay deducciones del precio facturado
+                  {t('wizard.noDeductions')}
                 </p>
               </div>
             )}
 
-            {/* Fórmula */}
+            {/* Formula */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Fórmula</p>
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">{t('wizard.formula')}</p>
               <p className="text-sm font-mono font-bold text-blue-900">{adj.formula}</p>
               <p className="text-xs text-blue-600 mt-1">{adj.legalBasis}</p>
             </div>
 
-            {/* Alerta */}
+            {/* Alert */}
             {item.dispatcherAlert && (
               <div className={`rounded-lg p-3.5 text-sm flex items-start gap-2.5 ${
                 item.dispatcherAlert.type === 'critical'
@@ -239,13 +276,13 @@ function IncotermWizard() {
                   {item.dispatcherAlert.type === 'critical' ? '🚨' : item.dispatcherAlert.type === 'warning' ? '⚠️' : item.dispatcherAlert.type === 'success' ? '✅' : 'ℹ️'}
                 </span>
                 <div>
-                  <p className="font-semibold text-xs uppercase tracking-wider mb-0.5">Alerta para el despachante</p>
+                  <p className="font-semibold text-xs uppercase tracking-wider mb-0.5">{t('wizard.dispatcherAlert')}</p>
                   <p className="leading-relaxed">{item.dispatcherAlert.text}</p>
                 </div>
               </div>
             )}
 
-            {/* Nota adicional */}
+            {/* Additional note */}
             {(adj.note || adj.warning) && (
               <p className="text-xs text-gray-500 italic">{adj.note || adj.warning}</p>
             )}
@@ -253,13 +290,13 @@ function IncotermWizard() {
         </div>
       )}
 
-      {/* Notas generales */}
+      {/* General notes */}
       <div className="mt-4 grid sm:grid-cols-2 gap-3">
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800">
-          <strong>Sobre el seguro:</strong> {GENERAL_NOTES.insurance}
+          <strong>{t('wizard.insuranceLabel')}</strong> {generalNotes.insurance}
         </div>
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800">
-          <strong>Transporte aéreo:</strong> {GENERAL_NOTES.airFreight}
+          <strong>{t('wizard.airFreightLabel')}</strong> {generalNotes.airFreight}
         </div>
       </div>
     </section>
@@ -267,29 +304,29 @@ function IncotermWizard() {
 }
 
 /* ================================================================
-   BLOQUE 3 — Ajustes obligatorios (art. 71/72 CAU)
+   BLOCK 3 — Mandatory adjustments (art. 71/72 UCC)
    ================================================================ */
 
 function MandatoryAdjustments() {
+  const t = useTranslation(valorDict)
+  const { cauAdjustments } = useLocalizedData()
+
   return (
     <section id="ajustes-obligatorios" className="scroll-mt-8">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-        Ajustes obligatorios independientes del Incoterm
+        {t('mandatory.title')}
       </h2>
-      <p className="text-sm text-gray-600 mb-6">
-        Estos ajustes se aplican <strong>siempre que se den las circunstancias</strong>,
-        independientemente del Incoterm pactado. Son los elementos de los artículos 71 y 72 del CAU.
-      </p>
+      <p className="text-sm text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: t('mandatory.desc') }} />
 
       <div className="grid md:grid-cols-2 gap-5">
-        {/* Siempre sumar */}
+        {/* Always add */}
         <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
           <div className="bg-red-50 px-5 py-3 border-b border-red-200">
-            <h3 className="text-sm font-bold text-red-800">+ Lo que SIEMPRE se suma al valor en aduana</h3>
+            <h3 className="text-sm font-bold text-red-800">{t('mandatory.alwaysAddTitle')}</h3>
             <p className="text-[11px] text-red-600">Art. 71 CAU</p>
           </div>
           <div className="p-4 space-y-4">
-            {ENHANCED_CAU_ADJUSTMENTS.alwaysAdd.map((item, i) => (
+            {cauAdjustments.alwaysAdd.map((item, i) => (
               <div key={i} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                 <div className="flex items-start gap-2">
                   <span className="text-red-400 font-bold text-sm mt-0.5">+</span>
@@ -310,14 +347,14 @@ function MandatoryAdjustments() {
           </div>
         </div>
 
-        {/* Nunca incluir */}
+        {/* Never include */}
         <div className="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
           <div className="bg-emerald-50 px-5 py-3 border-b border-emerald-200">
-            <h3 className="text-sm font-bold text-emerald-800">− Lo que NUNCA se incluye en el valor en aduana</h3>
+            <h3 className="text-sm font-bold text-emerald-800">{t('mandatory.neverIncludeTitle')}</h3>
             <p className="text-[11px] text-emerald-600">Art. 72 CAU</p>
           </div>
           <div className="p-4 space-y-4">
-            {ENHANCED_CAU_ADJUSTMENTS.neverInclude.map((item, i) => (
+            {cauAdjustments.neverInclude.map((item, i) => (
               <div key={i} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                 <div className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold text-sm mt-0.5">−</span>
@@ -337,51 +374,51 @@ function MandatoryAdjustments() {
 }
 
 /* ================================================================
-   BLOQUE 4 — Base arancel vs Base IVA + ejemplos numéricos
+   BLOCK 4 — Tariff base vs VAT base + numerical examples
    ================================================================ */
 
 function DutyVsVat() {
   const [activeExample, setActiveExample] = useState('fob')
-  const example = NUMERICAL_EXAMPLES.find((e) => e.id === activeExample)
+  const t = useTranslation(valorDict)
+  const { numericalExamples, generalNotes, dutyVsVatComparison, locale } = useLocalizedData()
+  const example = numericalExamples.find((e) => e.id === activeExample)
+  const fmt = (n) => n.toLocaleString(locale === 'en' ? 'en-GB' : 'es-ES')
 
   return (
     <section id="base-arancel-iva" className="scroll-mt-8">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-        Base del arancel vs Base del IVA
+        {t('dutyVsVat.title')}
       </h2>
-      <p className="text-sm text-gray-600 mb-6">
-        Son <strong>dos bases diferentes</strong> que producen importes distintos. El transporte
-        interior, los aranceles y otros gravámenes se suman a la base del IVA pero NO al valor en aduana.
-      </p>
+      <p className="text-sm text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: t('dutyVsVat.desc') }} />
 
-      {/* Dos cards de definición */}
+      {/* Two definition cards */}
       <div className="grid sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <h3 className="text-sm font-bold text-blue-900 mb-1">{DUTY_VS_VAT_COMPARISON.dutyBasis.name}</h3>
-          <p className="text-xs text-blue-700 font-mono mb-2">{DUTY_VS_VAT_COMPARISON.dutyBasis.formula}</p>
-          <p className="text-[11px] text-blue-600">{DUTY_VS_VAT_COMPARISON.dutyBasis.legalBasis}</p>
-          <p className="text-[11px] text-blue-500 mt-1">{DUTY_VS_VAT_COMPARISON.dutyBasis.declaration}</p>
+          <h3 className="text-sm font-bold text-blue-900 mb-1">{dutyVsVatComparison.dutyBasis.name}</h3>
+          <p className="text-xs text-blue-700 font-mono mb-2">{dutyVsVatComparison.dutyBasis.formula}</p>
+          <p className="text-[11px] text-blue-600">{dutyVsVatComparison.dutyBasis.legalBasis}</p>
+          <p className="text-[11px] text-blue-500 mt-1">{dutyVsVatComparison.dutyBasis.declaration}</p>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <h3 className="text-sm font-bold text-amber-900 mb-1">{DUTY_VS_VAT_COMPARISON.vatBasis.name}</h3>
-          <p className="text-xs text-amber-700 font-mono mb-2">{DUTY_VS_VAT_COMPARISON.vatBasis.formula}</p>
-          <p className="text-[11px] text-amber-600">{DUTY_VS_VAT_COMPARISON.vatBasis.legalBasis}</p>
-          <p className="text-[11px] text-amber-500 mt-1">{DUTY_VS_VAT_COMPARISON.vatBasis.declaration}</p>
+          <h3 className="text-sm font-bold text-amber-900 mb-1">{dutyVsVatComparison.vatBasis.name}</h3>
+          <p className="text-xs text-amber-700 font-mono mb-2">{dutyVsVatComparison.vatBasis.formula}</p>
+          <p className="text-[11px] text-amber-600">{dutyVsVatComparison.vatBasis.legalBasis}</p>
+          <p className="text-[11px] text-amber-500 mt-1">{dutyVsVatComparison.vatBasis.declaration}</p>
         </div>
       </div>
 
-      {/* Tabla comparativa */}
+      {/* Comparative table */}
       <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-8">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Concepto</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-blue-700 w-32">Base arancel</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-amber-700 w-32">Base IVA</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">{t('dutyVsVat.concept')}</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-blue-700 w-32">{t('dutyVsVat.dutyBase')}</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-amber-700 w-32">{t('dutyVsVat.vatBase')}</th>
             </tr>
           </thead>
           <tbody>
-            {DUTY_VS_VAT_COMPARISON.comparison.map((row, i) => (
+            {dutyVsVatComparison.comparison.map((row, i) => (
               <tr key={i} className="border-b border-gray-100">
                 <td className="px-4 py-2.5 text-sm text-gray-700">{row.concept}</td>
                 <td className={`px-4 py-2.5 text-center text-sm font-bold ${row.inDutyBase ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'}`}>
@@ -396,16 +433,16 @@ function DutyVsVat() {
         </table>
       </div>
 
-      {/* Nota primer destino */}
+      {/* First destination note */}
       <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800 mb-6">
-        <strong>Primer lugar de destino:</strong> {GENERAL_NOTES.firstDestination}
+        <strong>{t('dutyVsVat.firstDestLabel')}</strong> {generalNotes.firstDestination}
       </div>
 
-      {/* Ejemplos numéricos */}
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Ejemplos numéricos</h3>
+      {/* Numerical examples */}
+      <h3 className="text-lg font-bold text-gray-900 mb-4">{t('dutyVsVat.examplesTitle')}</h3>
 
       <div className="flex gap-2 mb-4">
-        {NUMERICAL_EXAMPLES.map((ex) => (
+        {numericalExamples.map((ex) => (
           <button
             key={ex.id}
             onClick={() => setActiveExample(ex.id)}
@@ -425,26 +462,26 @@ function DutyVsVat() {
           <div className="bg-gray-800 px-5 py-3">
             <p className="text-sm font-bold text-white">{example.title}</p>
             <p className="text-xs text-gray-400">
-              {example.product} ({example.hs}) — {example.incoterm} — Arancel: {example.dutyRate} — IVA: {example.vatRate} — Carta de porte: {example.cartaPorte}
+              {example.product} ({example.hs}) — {example.incoterm} — {t('dutyVsVat.tariff')}: {example.dutyRate} — {locale === 'en' ? 'VAT' : 'IVA'}: {example.vatRate} — {t('dutyVsVat.billOfLading')} {example.cartaPorte}
             </p>
           </div>
 
           <div className="p-5">
-            {/* Desglose DDP */}
+            {/* DDP breakdown */}
             {example.priceBreakdown && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-xs">
-                <p className="font-semibold text-amber-800 mb-1">Desglose factura DDP ({example.totalInvoice.toLocaleString('es-ES')} EUR):</p>
+                <p className="font-semibold text-amber-800 mb-1">{t('dutyVsVat.invoiceBreakdown')} ({fmt(example.totalInvoice)} EUR):</p>
                 {example.priceBreakdown.map((b, i) => (
                   <div key={i} className="flex justify-between text-amber-700">
                     <span>{b.concept}</span>
-                    <span className="font-mono">{b.amount.toLocaleString('es-ES')} EUR</span>
+                    <span className="font-mono">{fmt(b.amount)} EUR</span>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="grid sm:grid-cols-2 gap-4">
-              {/* Paso 1: Valor en aduana */}
+              {/* Step 1: Customs value */}
               <div className="bg-slate-50 rounded-lg p-4">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold mr-1">1</span>
@@ -453,29 +490,29 @@ function DutyVsVat() {
                 {example.steps.customsValue.items.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm py-0.5">
                     <span className="text-gray-600">{item.sign ? `${item.sign} ` : ''}{item.concept}</span>
-                    <span className="font-mono font-semibold text-gray-900">{Math.abs(item.amount).toLocaleString('es-ES')} EUR</span>
+                    <span className="font-mono font-semibold text-gray-900">{fmt(Math.abs(item.amount))} EUR</span>
                   </div>
                 ))}
                 {example.steps.customsValue.note && (
                   <p className="text-[11px] text-gray-400 italic mt-1">{example.steps.customsValue.note}</p>
                 )}
                 <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between text-sm font-bold">
-                  <span className="text-slate-700">= VALOR EN ADUANA</span>
-                  <span className="text-[#0A3D5C] font-mono">{example.steps.customsValue.total.toLocaleString('es-ES')} EUR</span>
+                  <span className="text-slate-700">{t('dutyVsVat.customsValueLabel')}</span>
+                  <span className="text-[#0A3D5C] font-mono">{fmt(example.steps.customsValue.total)} EUR</span>
                 </div>
               </div>
 
-              {/* Paso 2: Arancel */}
+              {/* Step 2: Tariff */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-2">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-200 text-blue-600 text-[10px] font-bold mr-1">2</span>
-                  Arancel
+                  {t('dutyVsVat.tariff')}
                 </p>
-                <p className="text-sm text-gray-600">{example.steps.duty.base.toLocaleString('es-ES')} EUR x {example.dutyRate}</p>
-                <p className="text-lg font-bold text-blue-800 mt-2">{example.steps.duty.amount.toLocaleString('es-ES')} EUR</p>
+                <p className="text-sm text-gray-600">{fmt(example.steps.duty.base)} EUR x {example.dutyRate}</p>
+                <p className="text-lg font-bold text-blue-800 mt-2">{fmt(example.steps.duty.amount)} EUR</p>
               </div>
 
-              {/* Paso 3: Base IVA */}
+              {/* Step 3: VAT base */}
               <div className="bg-amber-50 rounded-lg p-4">
                 <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-200 text-amber-600 text-[10px] font-bold mr-1">3</span>
@@ -484,64 +521,64 @@ function DutyVsVat() {
                 {example.steps.vatBase.items.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm py-0.5">
                     <span className="text-gray-600">{item.sign ? `${item.sign} ` : ''}{item.concept}</span>
-                    <span className="font-mono font-semibold text-gray-900">{item.amount.toLocaleString('es-ES')} EUR</span>
+                    <span className="font-mono font-semibold text-gray-900">{fmt(item.amount)} EUR</span>
                   </div>
                 ))}
                 {example.steps.vatBase.note && (
                   <p className="text-[11px] text-gray-400 italic mt-1">{example.steps.vatBase.note}</p>
                 )}
                 <div className="border-t border-amber-300 mt-2 pt-2 flex justify-between text-sm font-bold">
-                  <span className="text-amber-700">= BASE IVA</span>
-                  <span className="text-amber-900 font-mono">{example.steps.vatBase.total.toLocaleString('es-ES')} EUR</span>
+                  <span className="text-amber-700">{t('dutyVsVat.vatBaseLabel')}</span>
+                  <span className="text-amber-900 font-mono">{fmt(example.steps.vatBase.total)} EUR</span>
                 </div>
               </div>
 
-              {/* Paso 4: Total tributos */}
+              {/* Step 4: Total taxes */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                 <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-200 text-emerald-600 text-[10px] font-bold mr-1">4</span>
-                  Total tributos importación
+                  {t('dutyVsVat.totalTax')}
                 </p>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">IVA: {example.steps.vat.base.toLocaleString('es-ES')} x {example.vatRate}</span>
-                    <span className="font-mono">{example.steps.vat.amount.toLocaleString('es-ES')} EUR</span>
+                    <span className="text-gray-600">{t('dutyVsVat.vatLabel')} {fmt(example.steps.vat.base)} x {example.vatRate}</span>
+                    <span className="font-mono">{fmt(example.steps.vat.amount)} EUR</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Arancel</span>
-                    <span className="font-mono">{example.steps.duty.amount.toLocaleString('es-ES')} EUR</span>
+                    <span className="text-gray-600">{t('dutyVsVat.tariff')}</span>
+                    <span className="font-mono">{fmt(example.steps.duty.amount)} EUR</span>
                   </div>
                 </div>
                 <div className="border-t border-emerald-300 mt-2 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-emerald-800">TOTAL</span>
-                    <span className="text-xl font-bold text-emerald-900 font-mono">{example.steps.totalTax.toLocaleString('es-ES')} EUR</span>
+                    <span className="text-sm font-bold text-emerald-800">{t('dutyVsVat.total')}</span>
+                    <span className="text-xl font-bold text-emerald-900 font-mono">{fmt(example.steps.totalTax)} EUR</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Alerta DDP: sobrepago */}
+            {/* DDP alert: overpayment */}
             {example.wrongDeclaration && (
               <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
-                <p className="font-bold mb-2">⚠️ Si se hubiera declarado {example.totalInvoice.toLocaleString('es-ES')} EUR como valor en aduana:</p>
+                <p className="font-bold mb-2">⚠️ {t('dutyVsVat.wrongDeclTitle')} {fmt(example.totalInvoice)} {t('dutyVsVat.wrongDeclSuffix')}</p>
                 <div className="grid sm:grid-cols-3 gap-2 text-xs">
                   <div>
-                    <p>Arancel incorrecto: {example.wrongDeclaration.wrongDuty.amount.toLocaleString('es-ES')} EUR</p>
-                    <p className="font-bold text-red-900">+{example.wrongDeclaration.overpayDuty.toLocaleString('es-ES')} EUR de más</p>
+                    <p>{t('dutyVsVat.wrongTariff')} {fmt(example.wrongDeclaration.wrongDuty.amount)} EUR</p>
+                    <p className="font-bold text-red-900">+{fmt(example.wrongDeclaration.overpayDuty)} EUR {t('dutyVsVat.overpay')}</p>
                   </div>
                   <div>
-                    <p>IVA incorrecto: {example.wrongDeclaration.wrongVat.toLocaleString('es-ES')} EUR</p>
-                    <p className="font-bold text-red-900">+{example.wrongDeclaration.overpayVat.toLocaleString('es-ES')} EUR de más</p>
+                    <p>{t('dutyVsVat.wrongVat')} {fmt(example.wrongDeclaration.wrongVat)} EUR</p>
+                    <p className="font-bold text-red-900">+{fmt(example.wrongDeclaration.overpayVat)} EUR {t('dutyVsVat.overpay')}</p>
                   </div>
                   <div className="flex items-center">
-                    <p className="text-base font-bold text-red-900">Sobrepago total: {example.wrongDeclaration.overpayTotal.toLocaleString('es-ES')} EUR</p>
+                    <p className="text-base font-bold text-red-900">{t('dutyVsVat.overpayTotal')} {fmt(example.wrongDeclaration.overpayTotal)} EUR</p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Refs DUA */}
+            {/* DUA refs */}
             <div className="mt-3 text-[11px] text-gray-400 space-x-3">
               {example.duaRefs.map((ref, i) => (
                 <span key={i}>{ref}</span>
@@ -555,28 +592,31 @@ function DutyVsVat() {
 }
 
 /* ================================================================
-   BLOQUE 5 — DV1 y casillas DUA/H1
+   BLOCK 5 — DV1 and DUA/H1 fields
    ================================================================ */
 
 function DV1AndFields() {
+  const t = useTranslation(valorDict)
+  const { dv1Info, duaFields } = useLocalizedData()
+
   return (
     <section id="dv1-casillas" className="scroll-mt-8">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-        El DV1 y las casillas del H1/DUA
+        {t('dv1.title')}
       </h2>
 
       {/* DV1 */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
-        <h3 className="text-base font-bold text-gray-900 mb-3">¿Qué es el DV1?</h3>
-        <p className="text-sm text-gray-700 mb-3">{DV1_INFO.definition}</p>
+        <h3 className="text-base font-bold text-gray-900 mb-3">{t('dv1.whatIsDv1')}</h3>
+        <p className="text-sm text-gray-700 mb-3">{dv1Info.definition}</p>
 
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 mb-4">
-          <strong>Obligatorio</strong> cuando el valor supera {DV1_INFO.threshold} por envío.
-          Excepciones: {DV1_INFO.exceptions.join('; ')}.
+          <strong>{t('dv1.mandatory')}</strong> {t('dv1.mandatoryText')} {dv1Info.threshold} {t('dv1.mandatoryPerShipment')}{' '}
+          {t('dv1.exceptions')} {dv1Info.exceptions.join('; ')}.
         </div>
 
         <div className="grid sm:grid-cols-3 gap-3 mb-4">
-          {DV1_INFO.sections.map((s, i) => (
+          {dv1Info.sections.map((s, i) => (
             <div key={i} className={`rounded-lg p-3 border ${
               i === 1 ? 'bg-red-50 border-red-200' : i === 2 ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'
             }`}>
@@ -588,29 +628,29 @@ function DV1AndFields() {
           ))}
         </div>
 
-        {/* Fórmula operativa */}
+        {/* Operative formula */}
         <div className="bg-gray-800 rounded-lg p-4">
-          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Fórmula operativa fundamental</p>
-          <p className="text-sm font-mono text-emerald-400 mb-1">{DV1_INFO.formula}</p>
-          <p className="text-xs font-mono text-gray-500">En DUA: {DV1_INFO.formulaDUA}</p>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{t('dv1.operativeFormula')}</p>
+          <p className="text-sm font-mono text-emerald-400 mb-1">{dv1Info.formula}</p>
+          <p className="text-xs font-mono text-gray-500">{t('dv1.inDua')} {dv1Info.formulaDUA}</p>
         </div>
       </div>
 
-      {/* Tabla de casillas */}
-      <h3 className="text-base font-bold text-gray-900 mb-3">Tabla de casillas DUA / Data Elements H1</h3>
+      {/* Fields table */}
+      <h3 className="text-base font-bold text-gray-900 mb-3">{t('dv1.tableTitle')}</h3>
       <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-4">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600">Concepto</th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">DUA (antiguo)</th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-blue-700 whitespace-nowrap">H1 (vigente)</th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 whitespace-nowrap">Grupo EUCDM</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600">Qué contiene</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600">{t('dv1.concept')}</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">{t('dv1.duaLegacy')}</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-blue-700 whitespace-nowrap">{t('dv1.h1Current')}</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 whitespace-nowrap">{t('dv1.eucdmGroup')}</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600">{t('dv1.contents')}</th>
             </tr>
           </thead>
           <tbody>
-            {EXTENDED_DUA_H1_FIELDS.map((field, i) => (
+            {duaFields.map((field, i) => (
               <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-2.5 text-sm font-medium text-gray-800">{field.concept}</td>
                 <td className="px-3 py-2.5 text-center text-xs text-gray-500 font-mono">{field.dua}</td>
@@ -624,19 +664,20 @@ function DV1AndFields() {
       </div>
 
       <p className="text-xs text-gray-400 italic">
-        Nota: Desde la migración al sistema H1 (CAU), los Data Elements del EUCDM sustituyen a las casillas del DUA.
-        Muchos operativos y software aún usan la numeración DUA por costumbre. Ambas referencias son válidas.
+        {t('dv1.migrationNote')}
       </p>
     </section>
   )
 }
 
 /* ================================================================
-   BLOQUE 6 — Casos problemáticos
+   BLOCK 6 — Problematic cases
    ================================================================ */
 
 function ProblematicCases() {
   const [expandedId, setExpandedId] = useState(null)
+  const t = useTranslation(valorDict)
+  const { problematicCases } = useLocalizedData()
 
   const severityStyles = {
     critical: 'border-red-200 hover:border-red-300',
@@ -647,15 +688,14 @@ function ProblematicCases() {
   return (
     <section id="casos-problematicos" className="scroll-mt-8">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-        Casos problemáticos
+        {t('cases.title')}
       </h2>
       <p className="text-sm text-gray-600 mb-6">
-        Escenarios reales que generan errores frecuentes en la declaración del valor en aduana.
-        Haz clic para desplegar la solución.
+        {t('cases.desc')}
       </p>
 
       <div className="space-y-3">
-        {PROBLEMATIC_CASES.map((c) => {
+        {problematicCases.map((c) => {
           const isExpanded = expandedId === c.id
           return (
             <div key={c.id} className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-colors ${severityStyles[c.severity]}`}>
@@ -678,18 +718,18 @@ function ProblematicCases() {
               {isExpanded && (
                 <div className="px-5 pb-5 space-y-3 animate-fadeIn">
                   <div className="bg-red-50 rounded-lg p-3">
-                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">Problema</p>
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">{t('cases.problem')}</p>
                     <p className="text-sm text-red-800">{c.problem}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Por qué ocurre</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('cases.why')}</p>
                     <p className="text-sm text-gray-700">{c.why}</p>
                   </div>
                   <div className="bg-emerald-50 rounded-lg p-3">
-                    <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Solución</p>
+                    <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">{t('cases.solution')}</p>
                     <p className="text-sm text-emerald-800">{c.solution}</p>
                   </div>
-                  <p className="text-xs text-gray-400">Referencia: {c.reference}</p>
+                  <p className="text-xs text-gray-400">{t('cases.reference')} {c.reference}</p>
                 </div>
               )}
             </div>
@@ -705,32 +745,36 @@ function ProblematicCases() {
    ================================================================ */
 
 function CrossLinks() {
+  const t = useTranslation(valorDict)
+
   return (
     <div className="grid sm:grid-cols-3 gap-4">
       <Link href="/incoterms" className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
         <span className="text-2xl mb-2 block">📦</span>
-        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Incoterms 2020</p>
-        <p className="text-xs text-gray-500 mt-1">Tabla interactiva con los 11 Incoterms, wizard de decisión y guía completa</p>
+        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{t('crossLinks.incoterms')}</p>
+        <p className="text-xs text-gray-500 mt-1">{t('crossLinks.incotermsDesc')}</p>
       </Link>
       <Link href="/calculadora" className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
         <span className="text-2xl mb-2 block">🧮</span>
-        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Calculadora TARIC</p>
-        <p className="text-xs text-gray-500 mt-1">Calcula aranceles, IVA y costes totales de importación</p>
+        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{t('crossLinks.calculator')}</p>
+        <p className="text-xs text-gray-500 mt-1">{t('crossLinks.calculatorDesc')}</p>
       </Link>
       <Link href="/cbam/assessment" className="group bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
         <span className="text-2xl mb-2 block">🌍</span>
-        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Verificador CBAM</p>
-        <p className="text-xs text-gray-500 mt-1">Verifica si tu producto está afectado por el Mecanismo de Ajuste en Frontera</p>
+        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{t('crossLinks.cbam')}</p>
+        <p className="text-xs text-gray-500 mt-1">{t('crossLinks.cbamDesc')}</p>
       </Link>
     </div>
   )
 }
 
 /* ================================================================
-   PÁGINA PRINCIPAL
+   MAIN PAGE
    ================================================================ */
 
 export default function ValorEnAduanaPage() {
+  const t = useTranslation(valorDict)
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
@@ -738,34 +782,33 @@ export default function ValorEnAduanaPage() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <span className="inline-block px-4 py-1.5 bg-white/10 border border-white/10 text-white/70 rounded-full text-sm font-medium mb-5">
-            CAU — Reglamento (UE) 952/2013
+            {t('hero.badge')}
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight tracking-tight">
-            Valor en Aduana:{' '}
-            <span className="text-[#F4C542]">Guía Operativa</span>
+            {t('hero.titleMain')}{' '}
+            <span className="text-[#F4C542]">{t('hero.titleHighlight')}</span>
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Todo lo que necesitas para declarar correctamente el valor en aduana:
-            métodos de valoración, ajustes por Incoterm, DV1, casillas H1 y casos reales.
+            {t('hero.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="#ajustes-incoterm"
               className="px-7 py-3 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-xl transition-all hover:bg-[#F4C542]/90 text-sm"
             >
-              Ajustes por Incoterm
+              {t('hero.ctaPrimary')}
             </a>
             <a
               href="#casos-problematicos"
               className="px-7 py-3 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-xl transition-all text-sm"
             >
-              Casos problemáticos
+              {t('hero.ctaSecondary')}
             </a>
           </div>
         </div>
       </section>
 
-      {/* Contenido principal */}
+      {/* Main content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
         <MiniTOC />
         <ValuationMethods />

@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { SidebarProvider } from './SidebarContext'
+import { LocaleProvider } from '@/lib/i18n'
 import AppSidebar from './AppSidebar'
 import AppTopbar from './AppTopbar'
 
@@ -24,11 +25,12 @@ export default function AppShell({ children }) {
 
   // Páginas sin sidebar: render directo
   if (!shouldShowShell(pathname)) {
-    return <>{children}</>
+    return <LocaleProvider>{children}</LocaleProvider>
   }
 
   // Páginas con sidebar: app-like layout
   return (
+    <LocaleProvider>
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden">
         <AppSidebar />
@@ -40,5 +42,6 @@ export default function AppShell({ children }) {
         </div>
       </div>
     </SidebarProvider>
+    </LocaleProvider>
   )
 }
