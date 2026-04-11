@@ -26,13 +26,6 @@ export default async function SolicitudPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#0A3D5C]">Solicitud de Asesoría CBAM</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Completa los siguientes pasos para que nuestro equipo pueda analizar tu exposición al CBAM.
-          </p>
-        </div>
-
         <AdvisoryIntakeForm countries={countries} />
       </main>
     </div>

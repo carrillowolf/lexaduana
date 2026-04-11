@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useTranslation, useLocale } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
 import {
   runSelfAssessment,
   getSectorDisplay,
@@ -21,25 +23,14 @@ import {
 } from '@/lib/cbamTranslations'
 
 // ============================================================
-// CONSTANTES
-// ============================================================
-
-const IMPORT_TYPES = [
-  { value: 'libre_practica', label: 'Despacho a libre práctica' },
-  { value: 'devolucion_203', label: 'Devolución (Art. 203 UCC)' },
-  { value: 'otro', label: 'Ninguna de las anteriores' },
-]
-
-const VALUE_RANGES = [
-  { value: 'gt150', label: 'Más de 150 euros' },
-  { value: 'lte150', label: '150 euros o menos' },
-]
-
-// ============================================================
 // COMPONENTE PRINCIPAL
 // ============================================================
 
 export default function CBAMSelfAssessment({ countries: serverCountries = [] }) {
+  const t = useTranslation(cbamDict)
+  const { locale } = useLocale()
+  const numLocale = locale === 'en' ? 'en-GB' : 'es-ES'
+
   // Estado del formulario
   const [cnCode, setCnCode] = useState('')
   const [countryCode, setCountryCode] = useState('')
@@ -54,6 +45,18 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
   const [cnSuggestions, setCnSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
 
+  // Tipos de importación y rangos de valor (traducidos)
+  const IMPORT_TYPES = useMemo(() => [
+    { value: 'libre_practica', label: t('assessment.importType1') },
+    { value: 'devolucion_203', label: t('assessment.importType2') },
+    { value: 'otro', label: t('assessment.importType3') },
+  ], [t])
+
+  const VALUE_RANGES = useMemo(() => [
+    { value: 'gt150', label: t('assessment.valueGt150') },
+    { value: 'lte150', label: t('assessment.valueLte150') },
+  ], [t])
+
   // Países: usar server-provided o fallback
   const countries = useMemo(() => {
     if (serverCountries.length > 0) return serverCountries
@@ -64,9 +67,9 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
     countries.filter(c => c.cbamApplies).sort((a, b) => {
       const nameA = translateCountry(a.name)
       const nameB = translateCountry(b.name)
-      return nameA.localeCompare(nameB, 'es')
+      return nameA.localeCompare(nameB, numLocale)
     }),
-    [countries]
+    [countries, numLocale]
   )
 
   // ============================================================
@@ -129,8 +132,8 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
           <div className="flex items-center gap-3">
             <span className="text-3xl">🔍</span>
             <div>
-              <h3 className="text-xl font-bold text-white">Verificador CBAM</h3>
-              <p className="text-emerald-100 text-sm">573 códigos CN | 246 países | Benchmarks oficiales</p>
+              <h3 className="text-xl font-bold text-white">{t('assessment.formTitle')}</h3>
+              <p className="text-emerald-100 text-sm">{t('assessment.formMeta')}</p>
             </div>
           </div>
         </div>
@@ -140,7 +143,7 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
             {/* CN Code con autocomplete */}
             <div className="relative">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Código CN <span className="text-red-500">*</span>
+                {t('assessment.cnCodeLabel')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -148,12 +151,12 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
                 onChange={(e) => handleCnCodeChange(e.target.value)}
                 onFocus={() => cnSuggestions.length > 0 && setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                placeholder="Introduce el código CN de 8 dígitos"
+                placeholder={t('assessment.cnCodePlaceholder')}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-lg font-mono"
                 maxLength={8}
                 inputMode="numeric"
               />
-              <p className="mt-1 text-xs text-gray-400">8 dígitos del código de nomenclatura combinada</p>
+              <p className="mt-1 text-xs text-gray-400">{t('assessment.cnCodeHelp')}</p>
 
               {/* Autocomplete dropdown */}
               {showSuggestions && cnSuggestions.length > 0 && (
@@ -187,35 +190,35 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
             {/* País */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                País de origen <span className="text-red-500">*</span>
+                {t('assessment.countryLabel')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
               >
-                <option value="">Seleccionar país...</option>
+                <option value="">{t('assessment.countryPlaceholder')}</option>
                 {cbamCountries.map(c => (
                   <option key={c.code} value={c.code}>
                     {translateCountry(c.name)} ({c.code})
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-400">Países donde el CBAM aplica ({cbamCountries.length} países)</p>
+              <p className="mt-1 text-xs text-gray-400">{t('assessment.countryHelp').replace('{count}', cbamCountries.length)}</p>
             </div>
 
             {/* Tipo de importación */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tipo de importación
+                {t('assessment.importTypeLabel')}
               </label>
               <select
                 value={importType}
                 onChange={(e) => setImportType(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
               >
-                {IMPORT_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                {IMPORT_TYPES.map(it => (
+                  <option key={it.value} value={it.value}>{it.label}</option>
                 ))}
               </select>
             </div>
@@ -223,7 +226,7 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
             {/* Valor de la mercancía */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Valor de la mercancía
+                {t('assessment.valueLabel')}
               </label>
               <div className="flex gap-3">
                 {VALUE_RANGES.map(v => (
@@ -257,10 +260,10 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Analizando...
+                  {t('assessment.analyzing')}
                 </span>
               ) : (
-                'Verificar CBAM'
+                t('assessment.verify')
               )}
             </button>
             {result && (
@@ -269,7 +272,7 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
                 onClick={handleReset}
                 className="px-6 py-4 border-2 border-gray-200 text-gray-600 font-medium rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all"
               >
-                Nueva consulta
+                {t('assessment.newQuery')}
               </button>
             )}
           </div>
@@ -278,7 +281,7 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
 
       {/* Resultados */}
       {result && !loading && (
-        <AssessmentResult result={result} />
+        <AssessmentResult result={result} t={t} numLocale={numLocale} />
       )}
     </div>
   )
@@ -288,27 +291,27 @@ export default function CBAMSelfAssessment({ countries: serverCountries = [] }) 
 // RESULTADO DEL ASSESSMENT
 // ============================================================
 
-function AssessmentResult({ result }) {
+function AssessmentResult({ result, t, numLocale }) {
   if (!result.cbamApplies) {
-    return <ExclusionResult result={result} />
+    return <ExclusionResult result={result} t={t} />
   }
-  return <CBAMAppliesResult result={result} />
+  return <CBAMAppliesResult result={result} t={t} numLocale={numLocale} />
 }
 
 // ============================================================
 // RESULTADO: CBAM NO APLICA
 // ============================================================
 
-function ExclusionResult({ result }) {
+function ExclusionResult({ result, t }) {
   return (
     <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6">
         <div className="flex items-center gap-3">
           <span className="text-3xl">✅</span>
           <div>
-            <h3 className="text-xl font-bold text-white">El CBAM no aplica a esta importación</h3>
+            <h3 className="text-xl font-bold text-white">{t('assessment.notAppliesTitle')}</h3>
             <p className="text-green-100 text-sm">
-              {result.exclusionReasons.length} motivo{result.exclusionReasons.length !== 1 ? 's' : ''} de exclusión identificado{result.exclusionReasons.length !== 1 ? 's' : ''}
+              {result.exclusionReasons.length} {t('assessment.notAppliesReasons')}
             </p>
           </div>
         </div>
@@ -333,8 +336,7 @@ function ExclusionResult({ result }) {
 
         <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
           <p className="text-sm text-amber-800">
-            <strong>Nota:</strong> Este resultado se basa en la información proporcionada. Si tiene dudas
-            sobre la clasificación arancelaria de su producto, consulte con un especialista en aduanas.
+            <strong>Nota:</strong> {t('assessment.notAppliesNote')}
           </p>
         </div>
       </div>
@@ -346,7 +348,7 @@ function ExclusionResult({ result }) {
 // RESULTADO: CBAM SÍ APLICA
 // ============================================================
 
-function CBAMAppliesResult({ result }) {
+function CBAMAppliesResult({ result, t, numLocale }) {
   const { requirements, benchmarks, country } = result
   const sector = getSectorDisplay(requirements.sector)
 
@@ -358,9 +360,9 @@ function CBAMAppliesResult({ result }) {
           <div className="flex items-center gap-3">
             <span className="text-3xl">🌍</span>
             <div>
-              <h3 className="text-xl font-bold text-white">El CBAM aplica a esta importación</h3>
+              <h3 className="text-xl font-bold text-white">{t('assessment.appliesTitle')}</h3>
               <p className="text-amber-100 text-sm">
-                Informe completo de obligaciones y requisitos
+                {t('assessment.appliesSubtitle')}
               </p>
             </div>
           </div>
@@ -370,26 +372,26 @@ function CBAMAppliesResult({ result }) {
           {/* Identificación del producto */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <InfoCard
-              label="Sector"
+              label={t('assessment.labelSector')}
               value={<BilingualText es={sector.name} en={requirements.sector} />}
               icon={sector.icon}
               accent="emerald"
             />
             <InfoCard
-              label="Categoría de producto agregada"
+              label={t('assessment.labelCategory')}
               value={<BilingualText es={AGGREGATED_CATEGORY_TRANSLATIONS[requirements.aggregatedCategory]} en={requirements.aggregatedCategory} />}
               icon="📦"
               accent="blue"
             />
             <InfoCard
-              label="Código CN"
+              label={t('assessment.labelCnCode')}
               value={requirements.cnCode}
               icon="🏷️"
               accent="purple"
               mono
             />
             <InfoCard
-              label="País"
+              label={t('assessment.labelCountry')}
               value={country ? translateCountry(country.name) : '—'}
               icon="🌐"
               accent="teal"
@@ -397,7 +399,7 @@ function CBAMAppliesResult({ result }) {
           </div>
 
           <p className="text-gray-600 bg-gray-50 rounded-xl p-4 text-sm">
-            <strong>Descripción:</strong> {requirements.description}
+            <strong>{t('assessment.labelDescription')}</strong> {requirements.description}
           </p>
         </div>
       </div>
@@ -406,14 +408,14 @@ function CBAMAppliesResult({ result }) {
       {requirements.specialProvisions && (
         <div className="bg-amber-50 rounded-2xl shadow-lg border-2 border-amber-200 p-6">
           <h4 className="font-bold text-amber-800 flex items-center gap-2 mb-3">
-            <span>⚠️</span> Provisiones especiales
+            <span>⚠️</span> {t('assessment.specialProvisions')}
           </h4>
           <p className="text-amber-700 text-sm leading-relaxed">{translateSpecialProvisions(requirements.specialProvisions)}</p>
         </div>
       )}
 
       {/* Rutas de producción */}
-      <SectionCard title="Rutas de producción" icon="🏭" description="Métodos de fabricación aplicables a este producto">
+      <SectionCard title={t('assessment.productionRoutes')} icon="🏭" description={t('assessment.productionRoutesDesc')}>
         <div className="flex flex-wrap gap-2 mb-4">
           {requirements.productionRoutes.map((route, i) => {
             const esName = PRODUCTION_ROUTE_TRANSLATIONS[route]
@@ -430,7 +432,7 @@ function CBAMAppliesResult({ result }) {
         {requirements.productionRoutesDetail && (
           <details className="group">
             <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium">
-              Ver detalle de monitorización por ruta
+              {t('assessment.productionRoutesDetail')}
             </summary>
             <div className="mt-3 p-4 bg-blue-50 rounded-xl text-sm text-blue-800 whitespace-pre-line leading-relaxed">
               {requirements.productionRoutesDetail}
@@ -440,9 +442,9 @@ function CBAMAppliesResult({ result }) {
       </SectionCard>
 
       {/* Precursores */}
-      <SectionCard title="Precursores a declarar" icon="🔗" description="Materias primas cuyas emisiones deben incluirse en el cálculo">
+      <SectionCard title={t('assessment.precursors')} icon="🔗" description={t('assessment.precursorsDesc')}>
         {requirements.precursors.length === 0 ? (
-          <p className="text-gray-500 text-sm italic">Este producto no tiene precursores — solo se declaran emisiones directas de producción.</p>
+          <p className="text-gray-500 text-sm italic">{t('assessment.noPrecursors')}</p>
         ) : (
           <div className="space-y-3">
             {requirements.precursors.map((p, i) => (
@@ -456,7 +458,7 @@ function CBAMAppliesResult({ result }) {
                   </p>
                   {p.conditional && (
                     <p className="text-xs text-amber-600 mt-1">
-                      Condicional: {translateSpecialProvisions(p.condition)}
+                      {t('assessment.conditional')} {translateSpecialProvisions(p.condition)}
                     </p>
                   )}
                 </div>
@@ -467,11 +469,11 @@ function CBAMAppliesResult({ result }) {
       </SectionCard>
 
       {/* Datos a solicitar al proveedor */}
-      <SectionCard title="Datos a solicitar al proveedor" icon="📋" description="Información que necesitas pedir a tu proveedor para cumplir con el CBAM">
+      <SectionCard title={t('assessment.supplierData')} icon="📋" description={t('assessment.supplierDataDesc')}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Datos de instalación */}
           <DataRequirementCard
-            title="Datos de la instalación"
+            title={t('assessment.installationData')}
             icon="🏗️"
             content={requirements.installationData}
           />
@@ -479,7 +481,7 @@ function CBAMAppliesResult({ result }) {
           {/* Emisiones indirectas */}
           {requirements.indirectEmissionsData && (
             <DataRequirementCard
-              title="Emisiones indirectas"
+              title={t('assessment.indirectEmissions')}
               icon="⚡"
               content={requirements.indirectEmissionsData}
             />
@@ -488,7 +490,7 @@ function CBAMAppliesResult({ result }) {
           {/* Datos extra */}
           {requirements.extraDataRequired && (
             <DataRequirementCard
-              title="Datos específicos del producto"
+              title={t('assessment.productSpecificData')}
               icon="📐"
               content={requirements.extraDataRequired}
             />
@@ -497,9 +499,9 @@ function CBAMAppliesResult({ result }) {
           {/* Carbon price */}
           {requirements.carbonPriceAbroad && (
             <DataRequirementCard
-              title="Precio del carbono pagado en origen"
+              title={t('assessment.carbonPriceAbroad')}
               icon="💰"
-              content="El proveedor debe declarar si ha pagado algún precio de carbono en su país de origen. Esta cantidad puede deducirse del coste CBAM."
+              content={t('assessment.carbonPriceAbroadContent')}
             />
           )}
         </div>
@@ -507,19 +509,19 @@ function CBAMAppliesResult({ result }) {
 
       {/* Benchmarks */}
       {benchmarks && (
-        <SectionCard title="Valores de referencia (benchmarks)" icon="📊" description="Valores de asignación gratuita (Free Allocation Adjustment) según Reg. (UE) 2025/2620">
+        <SectionCard title={t('assessment.benchmarksTitle')} icon="📊" description={t('assessment.benchmarksDesc')}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-gray-200">
-                  <th className="py-3 px-4 text-left text-gray-500 font-medium">Ruta</th>
+                  <th className="py-3 px-4 text-left text-gray-500 font-medium">{t('assessment.benchmarkRoute')}</th>
                   <th className="py-3 px-4 text-right text-gray-500 font-medium">
-                    <div>Columna A</div>
-                    <div className="text-xs font-normal text-green-600">Emisiones reales</div>
+                    <div>{t('assessment.benchmarkColA')}</div>
+                    <div className="text-xs font-normal text-green-600">{t('assessment.benchmarkColADesc')}</div>
                   </th>
                   <th className="py-3 px-4 text-right text-gray-500 font-medium">
-                    <div>Columna B</div>
-                    <div className="text-xs font-normal text-amber-600">Valores por defecto</div>
+                    <div>{t('assessment.benchmarkColB')}</div>
+                    <div className="text-xs font-normal text-amber-600">{t('assessment.benchmarkColBDesc')}</div>
                   </th>
                 </tr>
               </thead>
@@ -528,14 +530,14 @@ function CBAMAppliesResult({ result }) {
                   <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <span className="font-mono text-gray-600">
-                        {bv.columnARoute || bv.columnBRoute || `Ruta ${i + 1}`}
+                        {bv.columnARoute || bv.columnBRoute || `${t('assessment.benchmarkRoute')} ${i + 1}`}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
                       {bv.columnA > 0 ? (
                         <span className="font-bold text-green-700">{bv.columnA.toFixed(3)}</span>
                       ) : (
-                        <span className="text-gray-400">0 (sin FAA)</span>
+                        <span className="text-gray-400">{t('assessment.benchmarkNoFAA')}</span>
                       )}
                       <span className="text-xs text-gray-400 ml-1">tCO₂e/t</span>
                     </td>
@@ -543,7 +545,7 @@ function CBAMAppliesResult({ result }) {
                       {bv.columnB > 0 ? (
                         <span className="font-bold text-amber-700">{bv.columnB.toFixed(3)}</span>
                       ) : (
-                        <span className="text-gray-400">0 (sin FAA)</span>
+                        <span className="text-gray-400">{t('assessment.benchmarkNoFAA')}</span>
                       )}
                       <span className="text-xs text-gray-400 ml-1">tCO₂e/t</span>
                     </td>
@@ -554,29 +556,34 @@ function CBAMAppliesResult({ result }) {
           </div>
 
           <div className="mt-4 p-4 bg-blue-50 rounded-xl text-sm text-blue-800 space-y-2">
-            <p><strong>Columna A</strong> = Valor de referencia cuando el declarante usa emisiones reales verificadas (asignación gratuita efectiva)</p>
-            <p><strong>Columna B</strong> = Valor de referencia cuando el declarante usa valores por defecto (asignación gratuita por defecto)</p>
+            <p dangerouslySetInnerHTML={{ __html: t('assessment.benchmarkColAExplain') }} />
+            <p dangerouslySetInnerHTML={{ __html: t('assessment.benchmarkColBExplain') }} />
             {benchmarks.benchmarkValues.some(bv => bv.columnA === 0) && (
-              <p className="text-amber-700"><strong>Nota:</strong> Columna A = 0 significa que no hay deducción por asignación gratuita cuando se usan emisiones reales para este producto.</p>
+              <p className="text-amber-700"><strong>Nota:</strong> {t('assessment.benchmarkColAZeroNote')}</p>
             )}
           </div>
         </SectionCard>
       )}
 
       {/* Umbral de minimis */}
-      <SectionCard title="Umbral de minimis" icon="📏" description="Exención para importaciones de bajo volumen">
+      <SectionCard title={t('assessment.deMinimisTitle')} icon="📏" description={t('assessment.deMinimisDesc')}>
         {requirements.deMinimisApplies ? (
           <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-            <p className="text-green-800">
-              <strong>Aplica:</strong> Si importa menos de <strong>{requirements.deMinimisThreshold} toneladas/año</strong> de
-              mercancías CBAM del sector {sector.name}, puede solicitar la exención de minimis (certificado Y137).
-            </p>
+            <p className="text-green-800"
+               dangerouslySetInnerHTML={{
+                 __html: '<strong>' + (numLocale === 'en-GB' ? 'Applies:' : 'Aplica:') + '</strong> ' +
+                   t('assessment.deMinimisYes')
+                     .replace('{threshold}', requirements.deMinimisThreshold)
+                     .replace('{sector}', sector.name)
+               }}
+            />
           </div>
         ) : (
           <div className="p-4 bg-red-50 rounded-xl border border-red-200">
             <p className="text-red-800">
-              <strong>No aplica:</strong> El sector {sector.name} no tiene exención de minimis.
-              El CBAM se aplica independientemente del volumen importado.
+              <strong>{numLocale === 'en-GB' ? 'Does not apply:' : 'No aplica:'}</strong>{' '}
+              {t('assessment.deMinimisNo')
+                .replace('{sector}', sector.name)}
             </p>
           </div>
         )}
@@ -585,7 +592,7 @@ function CBAMAppliesResult({ result }) {
       {/* Próximos pasos */}
       <div className="bg-gradient-to-r from-[#0A3D5C] to-[#083049] rounded-3xl shadow-xl p-8 text-white">
         <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <span>🚀</span> Próximos pasos
+          <span>🚀</span> {t('assessment.nextSteps')}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
@@ -593,37 +600,36 @@ function CBAMAppliesResult({ result }) {
             className="block p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
           >
             <span className="text-2xl mb-2 block">📧</span>
-            <h5 className="font-bold mb-1">Contactar al proveedor</h5>
-            <p className="text-sm text-white/70">Genera un email profesional para solicitar datos de emisiones</p>
+            <h5 className="font-bold mb-1">{t('assessment.nextStepEmail')}</h5>
+            <p className="text-sm text-white/70">{t('assessment.nextStepEmailDesc')}</p>
           </Link>
           <Link
             href="/cbam#simulator"
             className="block p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
           >
             <span className="text-2xl mb-2 block">🧮</span>
-            <h5 className="font-bold mb-1">Calcular coste CBAM</h5>
-            <p className="text-sm text-white/70">Estima el coste de certificados con el simulador</p>
+            <h5 className="font-bold mb-1">{t('assessment.nextStepCalc')}</h5>
+            <p className="text-sm text-white/70">{t('assessment.nextStepCalcDesc')}</p>
           </Link>
           <Link
             href="/cbam/guia"
             className="block p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
           >
             <span className="text-2xl mb-2 block">📖</span>
-            <h5 className="font-bold mb-1">Guía CBAM</h5>
-            <p className="text-sm text-white/70">Aprende todo sobre el CBAM con nuestra guía completa</p>
+            <h5 className="font-bold mb-1">{t('assessment.nextStepGuide')}</h5>
+            <p className="text-sm text-white/70">{t('assessment.nextStepGuideDesc')}</p>
           </Link>
         </div>
       </div>
 
       {/* CTA Asesoría profesional */}
       <div className="mt-6 p-5 bg-blue-50 border border-blue-200 rounded-xl">
-        <p className="text-blue-800 font-medium mb-1">¿Necesitas un análisis profesional de tu exposición CBAM?</p>
+        <p className="text-blue-800 font-medium mb-1">{t('assessment.advisoryCta')}</p>
         <p className="text-sm text-blue-700 mb-3">
-          Nuestro equipo analiza tus importaciones, contacta a tus proveedores, y te entrega un informe
-          con el cálculo exacto de tus obligaciones y costes.
+          {t('assessment.advisoryCtaDesc')}
         </p>
         <Link href="/cbam/asesoria" className="inline-flex items-center gap-1 text-[#0A3D5C] hover:underline font-bold text-sm">
-          Solicitar asesoría profesional
+          {t('assessment.advisoryCtaLink')}
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
           </svg>

@@ -4,12 +4,17 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
 import { exportCBAMToExcel } from '@/lib/cbamExcelExporter'
+import { useTranslation, useLocale } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
 
 export default function CBAMHistorialPage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [calculations, setCalculations] = useState([])
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const t = useTranslation(cbamDict)
+  const locale = useLocale()
+  const numLocale = locale === 'en' ? 'en-GB' : 'es-ES'
 
   useEffect(() => {
     async function init() {
@@ -45,7 +50,7 @@ export default function CBAMHistorialPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este cálculo de tu historial?')) return
+    if (!confirm(t('history.confirmDelete'))) return
 
     const supabase = createClient()
     const { error } = await supabase
@@ -90,11 +95,11 @@ export default function CBAMHistorialPage() {
   }
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
+    return new Intl.NumberFormat(numLocale, { style: 'currency', currency: 'EUR' }).format(value)
   }
 
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('es-ES', {
+    return new Date(dateStr).toLocaleDateString(numLocale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -104,9 +109,14 @@ export default function CBAMHistorialPage() {
   }
 
   const getSectorName = (sectorId) => {
+    const key = `history.sector${sectorId.charAt(0).toUpperCase() + sectorId.slice(1)}`
     const names = {
-      cement: 'Cemento', ironSteel: 'Hierro y Acero', aluminium: 'Aluminio',
-      fertilizers: 'Fertilizantes', hydrogen: 'Hidrógeno', electricity: 'Electricidad'
+      cement: t('history.sectorCement'),
+      ironSteel: t('history.sectorSteel'),
+      aluminium: t('history.sectorAluminium'),
+      fertilizers: t('history.sectorFertilizers'),
+      hydrogen: t('history.sectorHydrogen'),
+      electricity: t('history.sectorElectricity'),
     }
     return names[sectorId] || sectorId
   }
@@ -119,7 +129,7 @@ export default function CBAMHistorialPage() {
     return icons[sectorId] || '📦'
   }
 
-  // Totales
+  // Totals
   const totals = calculations.reduce((acc, c) => ({
     tonnes: acc.tonnes + parseFloat(c.tonnes || 0),
     cost: acc.cost + parseFloat(c.total_cost || 0),
@@ -135,7 +145,7 @@ export default function CBAMHistorialPage() {
               <Link href="/cbam" className="flex items-center space-x-3">
                 <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
                 <div>
-                  <h1 className="text-xl font-bold text-[#0A3D5C]">CBAM Historial</h1>
+                  <h1 className="text-xl font-bold text-[#0A3D5C]">{t('history.title')}</h1>
                 </div>
               </Link>
             </div>
@@ -143,14 +153,14 @@ export default function CBAMHistorialPage() {
         </header>
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <span className="text-6xl mb-6 block">🔐</span>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Inicia sesión para ver tu historial</h2>
-          <p className="text-gray-600 mb-6">Necesitas una cuenta para guardar y consultar tus cálculos CBAM.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('history.loginTitle')}</h2>
+          <p className="text-gray-600 mb-6">{t('history.loginDesc')}</p>
           <div className="flex gap-4 justify-center">
             <Link href="/auth/login" className="px-6 py-3 bg-[#0A3D5C] text-white font-medium rounded-xl hover:bg-[#083049] transition">
-              Iniciar sesión
+              {t('history.login')}
             </Link>
             <Link href="/auth/register" className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition">
-              Crear cuenta
+              {t('history.createAccount')}
             </Link>
           </div>
         </div>
@@ -167,14 +177,14 @@ export default function CBAMHistorialPage() {
             <Link href="/cbam" className="flex items-center space-x-3">
               <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
               <div>
-                <h1 className="text-xl font-bold text-[#0A3D5C]">CBAM Historial</h1>
-                <p className="text-xs text-gray-500">Tus cálculos guardados</p>
+                <h1 className="text-xl font-bold text-[#0A3D5C]">{t('history.title')}</h1>
+                <p className="text-xs text-gray-500">{t('history.subtitle')}</p>
               </div>
             </Link>
 
             <div className="flex items-center space-x-3">
               <Link href="/cbam" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition">
-                ← CBAM
+                {t('history.backCbam')}
               </Link>
               <Link href="/dashboard" className="px-4 py-2 bg-[#0A3D5C] hover:bg-[#083049] text-white text-sm font-medium rounded-lg transition-colors">
                 Dashboard
@@ -188,19 +198,19 @@ export default function CBAMHistorialPage() {
         {/* Stats */}
         <div className="grid sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <p className="text-sm text-gray-500">Total cálculos</p>
+            <p className="text-sm text-gray-500">{t('history.statCalcs')}</p>
             <p className="text-3xl font-bold text-gray-800">{calculations.length}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <p className="text-sm text-gray-500">Total toneladas</p>
-            <p className="text-3xl font-bold text-gray-800">{totals.tonnes.toLocaleString('es-ES', { maximumFractionDigits: 0 })}</p>
+            <p className="text-sm text-gray-500">{t('history.statTonnes')}</p>
+            <p className="text-3xl font-bold text-gray-800">{totals.tonnes.toLocaleString(numLocale, { maximumFractionDigits: 0 })}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <p className="text-sm text-gray-500">Total emisiones</p>
-            <p className="text-3xl font-bold text-emerald-600">{totals.emissions.toLocaleString('es-ES', { maximumFractionDigits: 1 })} <span className="text-sm font-normal">tCO₂</span></p>
+            <p className="text-sm text-gray-500">{t('history.statEmissions')}</p>
+            <p className="text-3xl font-bold text-emerald-600">{totals.emissions.toLocaleString(numLocale, { maximumFractionDigits: 1 })} <span className="text-sm font-normal">tCO₂</span></p>
           </div>
           <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-sm p-5 text-white">
-            <p className="text-sm text-purple-100">Coste total CBAM</p>
+            <p className="text-sm text-purple-100">{t('history.statCost')}</p>
             <p className="text-3xl font-bold">{formatCurrency(totals.cost)}</p>
           </div>
         </div>
@@ -214,14 +224,14 @@ export default function CBAMHistorialPage() {
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
             >
               <span>📥</span>
-              Exportar Excel {selectedIds.size > 0 ? `(${selectedIds.size})` : `(${calculations.length})`}
+              {t('history.exportExcel')} {selectedIds.size > 0 ? `(${selectedIds.size})` : `(${calculations.length})`}
             </button>
             {calculations.length > 0 && (
               <button
                 onClick={toggleSelectAll}
                 className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
               >
-                {selectedIds.size === calculations.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                {selectedIds.size === calculations.length ? t('history.deselectAll') : t('history.selectAll')}
               </button>
             )}
           </div>
@@ -229,7 +239,7 @@ export default function CBAMHistorialPage() {
             href="/cbam#simulador"
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            + Nuevo cálculo
+            {t('history.newCalc')}
           </Link>
         </div>
 
@@ -237,18 +247,18 @@ export default function CBAMHistorialPage() {
         {loading ? (
           <div className="text-center py-20">
             <div className="animate-spin h-10 w-10 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-500">Cargando historial...</p>
+            <p className="text-gray-500">{t('history.loadingHistory')}</p>
           </div>
         ) : calculations.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
             <span className="text-6xl mb-4 block">📊</span>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Sin cálculos guardados</h3>
-            <p className="text-gray-600 mb-6">Usa la calculadora CBAM y guarda tus resultados aquí.</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">{t('history.emptyTitle')}</h3>
+            <p className="text-gray-600 mb-6">{t('history.emptyDesc')}</p>
             <Link
               href="/cbam"
               className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition"
             >
-              Ir a la calculadora CBAM
+              {t('history.goToCalc')}
             </Link>
           </div>
         ) : (
@@ -265,14 +275,14 @@ export default function CBAMHistorialPage() {
                         className="rounded border-gray-300"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Fecha</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sector</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Toneladas</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Emisiones</th>
-                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Fuente</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Precio CO₂</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Coste CBAM</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notas</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{t('history.colDate')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{t('history.colSector')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">{t('history.colTonnes')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">{t('history.colEmissions')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">{t('history.colSource')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">{t('history.colCo2Price')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">{t('history.colCost')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{t('history.colNotes')}</th>
                     <th className="px-4 py-3 w-10"></th>
                   </tr>
                 </thead>
@@ -297,7 +307,7 @@ export default function CBAMHistorialPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-right font-mono text-gray-700">
-                        {parseFloat(calc.tonnes).toLocaleString('es-ES')}
+                        {parseFloat(calc.tonnes).toLocaleString(numLocale)}
                       </td>
                       <td className="px-4 py-3 text-sm text-right font-mono text-gray-700">
                         {parseFloat(calc.emission_factor).toFixed(3)}
@@ -308,7 +318,7 @@ export default function CBAMHistorialPage() {
                             ? 'bg-green-100 text-green-700'
                             : 'bg-amber-100 text-amber-700'
                         }`}>
-                          {calc.emission_source === 'real' ? '✅ Real' : '📊 Defecto'}
+                          {calc.emission_source === 'real' ? t('history.sourceReal') : t('history.sourceDefault')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-right font-mono text-gray-700">
@@ -324,7 +334,7 @@ export default function CBAMHistorialPage() {
                         <button
                           onClick={() => handleDelete(calc.id)}
                           className="text-gray-400 hover:text-red-500 transition"
-                          title="Eliminar"
+                          title={t('history.deleteTip')}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

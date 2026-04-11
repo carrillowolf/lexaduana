@@ -3,45 +3,48 @@
 import { useState, useEffect } from 'react'
 import { CBAM_SECTORS, calculateCBAMCost } from '@/lib/cbamData'
 import { createClient } from '@/lib/supabase-browser'
+import { useTranslation, useLocale } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
 
 // Valores por defecto de emisiones (tCO2e por tonelada de producto)
+// Product names are translated via t('products.xxx') in the UI
 const DEFAULT_EMISSION_FACTORS = {
   cement: {
-    name: 'Cemento',
+    nameKey: 'cement',
     products: [
-      { id: 'clinker', name: 'Clínker', factor: 0.951, codes: ['25231000'] },
-      { id: 'portland', name: 'Cemento Portland', factor: 0.693, codes: ['25232100', '25232900'] },
-      { id: 'aluminous', name: 'Cemento Aluminoso', factor: 1.124, codes: ['25233000'] },
-      { id: 'other_cement', name: 'Otros cementos hidráulicos', factor: 0.693, codes: ['25239000'] },
+      { id: 'clinker', nameKey: 'clinker', factor: 0.951, codes: ['25231000'] },
+      { id: 'portland', nameKey: 'portland', factor: 0.693, codes: ['25232100', '25232900'] },
+      { id: 'aluminous', nameKey: 'aluminous', factor: 1.124, codes: ['25233000'] },
+      { id: 'other_cement', nameKey: 'other_cement', factor: 0.693, codes: ['25239000'] },
     ]
   },
   ironSteel: {
-    name: 'Hierro y Acero',
+    nameKey: 'ironSteel',
     products: [
-      { id: 'pig_iron', name: 'Arrabio / Fundición en bruto', factor: 1.600, codes: ['7201'] },
-      { id: 'crude_steel', name: 'Acero bruto', factor: 1.080, codes: ['7206', '7207'] },
-      { id: 'iron_products', name: 'Productos de hierro/acero', factor: 1.210, codes: ['7208', '7209', '7210', '7301', '7302', '7304', '7305', '7306', '7307', '7308', '7309', '7310', '7311', '7318', '7326'] },
+      { id: 'pig_iron', nameKey: 'pig_iron', factor: 1.600, codes: ['7201'] },
+      { id: 'crude_steel', nameKey: 'crude_steel', factor: 1.080, codes: ['7206', '7207'] },
+      { id: 'iron_products', nameKey: 'iron_products', factor: 1.210, codes: ['7208', '7209', '7210', '7301', '7302', '7304', '7305', '7306', '7307', '7308', '7309', '7310', '7311', '7318', '7326'] },
     ]
   },
   aluminium: {
-    name: 'Aluminio',
+    nameKey: 'aluminium',
     products: [
-      { id: 'unwrought', name: 'Aluminio en bruto', factor: 6.600, codes: ['7601'] },
-      { id: 'alu_products', name: 'Productos de aluminio', factor: 7.100, codes: ['7603', '7604', '7605', '7606', '7607', '7608', '7609', '7610', '7611', '7612', '7613', '7614', '7616'] },
+      { id: 'unwrought', nameKey: 'unwrought', factor: 6.600, codes: ['7601'] },
+      { id: 'alu_products', nameKey: 'alu_products', factor: 7.100, codes: ['7603', '7604', '7605', '7606', '7607', '7608', '7609', '7610', '7611', '7612', '7613', '7614', '7616'] },
     ]
   },
   fertilizers: {
-    name: 'Fertilizantes',
+    nameKey: 'fertilizers',
     products: [
-      { id: 'ammonia', name: 'Amoniaco', factor: 2.126, codes: ['2814'] },
-      { id: 'nitric_acid', name: 'Ácido nítrico', factor: 2.840, codes: ['28080000'] },
-      { id: 'urea', name: 'Urea / Fertilizantes nitrogenados', factor: 1.570, codes: ['3102', '3105'] },
+      { id: 'ammonia', nameKey: 'ammonia', factor: 2.126, codes: ['2814'] },
+      { id: 'nitric_acid', nameKey: 'nitric_acid', factor: 2.840, codes: ['28080000'] },
+      { id: 'urea', nameKey: 'urea', factor: 1.570, codes: ['3102', '3105'] },
     ]
   },
   hydrogen: {
-    name: 'Hidrógeno',
+    nameKey: 'hydrogen',
     products: [
-      { id: 'hydrogen', name: 'Hidrógeno', factor: 9.000, codes: ['28041000'] },
+      { id: 'hydrogen', nameKey: 'hydrogen', factor: 9.000, codes: ['28041000'] },
     ]
   }
 }
@@ -93,6 +96,10 @@ const EU_ETS_PRICE_FALLBACK = {
 }
 
 export default function CBAMCostSimulator() {
+  const t = useTranslation(cbamDict)
+  const locale = useLocale()
+  const numLocale = locale === 'en' ? 'en-GB' : 'es-ES'
+
   const [selectedSector, setSelectedSector] = useState('')
   const [selectedProduct, setSelectedProduct] = useState('')
   const [tonnes, setTonnes] = useState('')
@@ -190,8 +197,8 @@ export default function CBAMCostSimulator() {
     const effectiveCost = grossCost * phaseInRate
 
     setResult({
-      product: product.name,
-      sector: DEFAULT_EMISSION_FACTORS[selectedSector].name,
+      product: t(`products.${product.nameKey}`),
+      sector: t(`sectors.${DEFAULT_EMISSION_FACTORS[selectedSector].nameKey}`),
       sectorId: selectedSector,
       productKey: selectedProduct,
       tonnes: calculation.tonnes,
@@ -250,23 +257,23 @@ export default function CBAMCostSimulator() {
 
       const json = await res.json()
       if (json.success) {
-        setSaveMessage({ type: 'success', text: 'Cálculo guardado en tu historial' })
+        setSaveMessage({ type: 'success', text: t('simulator.savedOk') })
       } else {
-        setSaveMessage({ type: 'error', text: json.error || 'Error al guardar' })
+        setSaveMessage({ type: 'error', text: json.error || t('simulator.savedError') })
       }
     } catch {
-      setSaveMessage({ type: 'error', text: 'Error de conexión al guardar' })
+      setSaveMessage({ type: 'error', text: t('simulator.savedConnError') })
     } finally {
       setSaving(false)
     }
   }
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
+    return new Intl.NumberFormat(numLocale, { style: 'currency', currency: 'EUR' }).format(value)
   }
 
   const formatNumber = (value, decimals = 2) => {
-    return new Intl.NumberFormat('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value)
+    return new Intl.NumberFormat(numLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value)
   }
 
   return (
@@ -275,21 +282,21 @@ export default function CBAMCostSimulator() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-1 bg-white/20 rounded text-xs font-bold text-white">🇪🇸 España</span>
-              <span className="px-2 py-1 bg-amber-400/30 rounded text-xs font-bold text-amber-100">CALCULADORA</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs font-bold text-white">{t('simulator.badge')}</span>
+              <span className="px-2 py-1 bg-amber-400/30 rounded text-xs font-bold text-amber-100">{t('simulator.badgeCalc')}</span>
             </div>
-            <h2 className="text-2xl font-bold text-white">💰 Calculadora CBAM</h2>
-            <p className="text-emerald-100 mt-1">Calcula el coste de certificados con emisiones reales o valores por defecto</p>
+            <h2 className="text-2xl font-bold text-white">{t('simulator.title')}</h2>
+            <p className="text-emerald-100 mt-1">{t('simulator.subtitle')}</p>
           </div>
           <div className="hidden md:block text-right">
-            <p className="text-emerald-200 text-sm">Precio EU ETS actual</p>
+            <p className="text-emerald-200 text-sm">{t('simulator.etsLabel')}</p>
             <p className="text-3xl font-bold text-white">
               {etsPriceLoading ? '...' : formatCurrency(etsPrice.price)}
             </p>
-            <p className="text-emerald-200 text-xs">por tCO₂</p>
+            <p className="text-emerald-200 text-xs">{t('simulator.etsUnit')}</p>
             {!etsPriceLoading && etsPrice.date && (
               <p className="text-emerald-300 text-xs mt-1">
-                Actualizado: {new Date(etsPrice.date).toLocaleDateString('es-ES')}
+                {t('simulator.etsUpdated')} {new Date(etsPrice.date).toLocaleDateString(numLocale)}
                 {etsPrice.source && etsPrice.source !== 'fallback (hardcoded)' && etsPrice.source !== 'fallback (error)' && (
                   <span className="ml-1">({etsPrice.source})</span>
                 )}
@@ -303,36 +310,36 @@ export default function CBAMCostSimulator() {
         {/* Row 1: Sector, Producto, Toneladas */}
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sector CBAM</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('simulator.sectorLabel')}</label>
             <select
               value={selectedSector}
               onChange={(e) => { setSelectedSector(e.target.value); setSelectedProduct(''); setResult(null) }}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
             >
-              <option value="">Selecciona sector...</option>
+              <option value="">{t('simulator.sectorPlaceholder')}</option>
               {Object.entries(DEFAULT_EMISSION_FACTORS).map(([key, sector]) => (
-                <option key={key} value={key}>{CBAM_SECTORS[key]?.icon} {sector.name}</option>
+                <option key={key} value={key}>{CBAM_SECTORS[key]?.icon} {t(`sectors.${sector.nameKey}`)}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de producto</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('simulator.productLabel')}</label>
             <select
               value={selectedProduct}
               onChange={(e) => { setSelectedProduct(e.target.value); setResult(null) }}
               disabled={!selectedSector}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 disabled:bg-gray-100"
             >
-              <option value="">Selecciona producto...</option>
+              <option value="">{t('simulator.productPlaceholder')}</option>
               {selectedSector && DEFAULT_EMISSION_FACTORS[selectedSector]?.products.map((product) => (
-                <option key={product.id} value={product.id}>{product.name} ({product.factor} tCO₂/t)</option>
+                <option key={product.id} value={product.id}>{t(`products.${product.nameKey}`)} ({product.factor} tCO₂/t)</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Toneladas a importar</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('simulator.tonnesLabel')}</label>
             <input
               type="number"
               value={tonnes}
@@ -348,7 +355,7 @@ export default function CBAMCostSimulator() {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Fuente de emisiones */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Fuente de emisiones</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('simulator.emissionSourceLabel')}</label>
             <div className="flex gap-3">
               <button
                 onClick={() => { setEmissionSource('default'); setResult(null) }}
@@ -360,11 +367,11 @@ export default function CBAMCostSimulator() {
               >
                 <div className="flex items-center justify-center gap-2">
                   <span>📊</span>
-                  <span>Valores por defecto UE</span>
+                  <span>{t('simulator.emissionDefault')}</span>
                 </div>
                 {emissionSource === 'default' && selectedYear >= 2026 && (
                   <div className="text-xs mt-1 text-amber-600">
-                    Markup {getMarkup().label} aplicado
+                    {t('simulator.markupApplied').replace('{label}', getMarkup().label)}
                   </div>
                 )}
               </button>
@@ -378,11 +385,11 @@ export default function CBAMCostSimulator() {
               >
                 <div className="flex items-center justify-center gap-2">
                   <span>✅</span>
-                  <span>Emisiones reales verificadas</span>
+                  <span>{t('simulator.emissionReal')}</span>
                 </div>
                 {emissionSource === 'real' && (
                   <div className="text-xs mt-1 text-green-600">
-                    Sin penalización
+                    {t('simulator.noPenalty')}
                   </div>
                 )}
               </button>
@@ -394,7 +401,7 @@ export default function CBAMCostSimulator() {
             {emissionSource === 'real' ? (
               <>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Emisiones reales (tCO₂/t producto)
+                  {t('simulator.realEmissionLabel')}
                 </label>
                 <input
                   type="number"
@@ -406,13 +413,13 @@ export default function CBAMCostSimulator() {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 placeholder:text-gray-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Dato del fabricante/exportador según verificador acreditado
+                  {t('simulator.realEmissionHelp')}
                 </p>
               </>
             ) : (
               <div className="h-full flex items-end">
                 <p className="text-xs text-gray-500 pb-1">
-                  El markup C(2025) 8552 se aplica automáticamente según el año seleccionado
+                  {t('simulator.markupAutoNote')}
                 </p>
               </div>
             )}
@@ -421,7 +428,7 @@ export default function CBAMCostSimulator() {
 
         {/* Row 3: Año de importación (siempre visible) */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Año de importación</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('simulator.yearLabel')}</label>
           <div className="grid grid-cols-9 gap-1">
             {Object.entries(CBAM_PHASE_IN_RATES).map(([year, rate]) => {
               const y = parseInt(year)
@@ -453,9 +460,9 @@ export default function CBAMCostSimulator() {
             })}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Porcentaje CBAM aplicable (phase-in). En {selectedYear}, el importador paga el <strong>{(getPhaseInRate(selectedYear) * 100).toFixed(1)}%</strong> del coste bruto.
+            <span dangerouslySetInnerHTML={{ __html: t('simulator.yearPhaseInNote').replace('{year}', selectedYear).replace('{rate}', (getPhaseInRate(selectedYear) * 100).toFixed(1)) }} />
             {emissionSource === 'default' && (
-              <span className="text-amber-600"> Markup por valores por defecto: {getMarkup().label}.</span>
+              <span className="text-amber-600"> {t('simulator.yearMarkupNote').replace('{label}', getMarkup().label)}</span>
             )}
           </p>
         </div>
@@ -465,10 +472,10 @@ export default function CBAMCostSimulator() {
           <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xl">📊</span>
-              <h4 className="font-bold text-blue-900">Precios oficiales de certificados CBAM 2026</h4>
+              <h4 className="font-bold text-blue-900">{t('simulator.quarterlyTitle')}</h4>
             </div>
             <p className="text-xs text-blue-700 mb-4">
-              La Comisión Europea publica trimestralmente el precio de los certificados CBAM, calculado como la media de los precios de subasta del EU ETS.
+              {t('simulator.quarterlyDesc')}
             </p>
             <div className="grid sm:grid-cols-2 gap-3">
               {Object.entries(CBAM_QUARTERLY_PRICES_2026).map(([quarter, price]) => {
@@ -493,7 +500,7 @@ export default function CBAMCostSimulator() {
                         </p>
                       ) : (
                         <p className="text-xs text-gray-500 ml-4 mt-1">
-                          Pendiente — se publica el {CBAM_QUARTERLY_PUBLISH_DATES[quarter]}
+                          {t('simulator.quarterlyPending')} {CBAM_QUARTERLY_PUBLISH_DATES[quarter]}
                         </p>
                       )}
                     </div>
@@ -503,7 +510,7 @@ export default function CBAMCostSimulator() {
                         className="ml-3 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
                         title={`Usar ${formatNumber(price)} €/tCO₂ como precio EUA en la calculadora`}
                       >
-                        Usar este precio
+                        {t('simulator.quarterlyUsePrice')}
                       </button>
                     )}
                   </div>
@@ -512,12 +519,12 @@ export default function CBAMCostSimulator() {
             </div>
             {Object.values(CBAM_QUARTERLY_PRICES_2026).some(p => p !== null) && (
               <p className="text-xs text-blue-600 mt-3">
-                💡 Pulsa &quot;Usar este precio&quot; para aplicar el precio oficial del trimestre a tu cálculo.
+                {t('simulator.quarterlyTip')}
               </p>
             )}
             {Object.values(CBAM_QUARTERLY_PRICES_2026).every(p => p === null) && (
               <p className="text-xs text-blue-600 mt-3">
-                🕐 Aún no se ha publicado ningún precio oficial. El primer precio se espera el 7 de abril de 2026.
+                {t('simulator.quarterlyNoPrices')}
               </p>
             )}
           </div>
@@ -528,48 +535,48 @@ export default function CBAMCostSimulator() {
           disabled={!selectedProduct || !tonnes || parseFloat(tonnes) <= 0 || (emissionSource === 'real' && (!customEmission || parseFloat(customEmission) <= 0))}
           className="w-full px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all"
         >
-          Calcular coste CBAM
+          {t('simulator.calculate')}
         </button>
 
         {result && (
           <div className="mt-8 space-y-6">
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border-2 border-emerald-200">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">📊 Resultado del cálculo</h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">{t('simulator.resultTitle')}</h3>
 
               <div className="grid sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-500 mb-1">Cantidad</p>
+                  <p className="text-sm text-gray-500 mb-1">{t('simulator.resultQty')}</p>
                   <p className="text-2xl font-bold text-gray-800">{formatNumber(result.tonnes, 0)} <span className="text-sm font-normal">t</span></p>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">
                   <p className="text-sm text-gray-500 mb-1">
-                    Emisiones {emissionSource === 'real' ? '(reales)' : '(defecto)'}
+                    {t('simulator.resultEmissions')} {emissionSource === 'real' ? t('simulator.resultEmissionsReal') : t('simulator.resultEmissionsDefault')}
                   </p>
                   <p className="text-xl font-bold text-gray-600">
                     {formatNumber(result.emissionFactor, 3)} <span className="text-sm font-normal">tCO₂/t</span>
                   </p>
                   {emissionSource === 'default' && result.markup.pct > 0 && (
                     <p className="text-xs text-amber-600 font-medium mt-1">
-                      → {formatNumber(result.emissionFactorWithMarkup, 3)} con markup {result.markup.label}
+                      → {formatNumber(result.emissionFactorWithMarkup, 3)} {t('simulator.resultWithMarkup')} {result.markup.label}
                     </p>
                   )}
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-500 mb-1">Benchmark UE</p>
+                  <p className="text-sm text-gray-500 mb-1">{t('simulator.resultBenchmark')}</p>
                   <p className="text-xl font-bold text-blue-600">-{formatNumber(result.benchmark, 3)} <span className="text-sm font-normal">tCO₂/t</span></p>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-500 mb-1">Emisiones CBAM</p>
+                  <p className="text-sm text-gray-500 mb-1">{t('simulator.resultCbamEmissions')}</p>
                   <p className="text-xl font-bold text-emerald-600">{formatNumber(result.emissionsSubjectToCBAM, 3)} <span className="text-sm font-normal">tCO₂/t</span></p>
                 </div>
               </div>
 
               {/* Coste efectivo (con FAA) - prominente */}
               <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-6 text-center mb-4">
-                <p className="text-emerald-100 mb-1">Coste CBAM efectivo en {result.phaseInYear}</p>
+                <p className="text-emerald-100 mb-1">{t('simulator.resultEffective').replace('{year}', result.phaseInYear)}</p>
                 <p className="text-5xl font-bold text-white">{formatCurrency(result.effectiveCost)}</p>
                 <p className="text-emerald-200 text-sm mt-2">
-                  Phase-in {result.phaseInYear}: {(result.phaseInRate * 100).toFixed(1)}% del coste bruto
+                  {t('simulator.resultPhaseIn').replace('{year}', result.phaseInYear).replace('{rate}', (result.phaseInRate * 100).toFixed(1))}
                 </p>
               </div>
 
@@ -577,18 +584,18 @@ export default function CBAMCostSimulator() {
               <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Coste CBAM bruto (sin FAA):</span>
+                    <span className="text-gray-600">{t('simulator.resultGross')}</span>
                     <span className="font-bold text-gray-800">{formatCurrency(result.totalCost)}</span>
                   </div>
                   <div className="flex justify-between items-center text-emerald-700">
-                    <span>Ajuste asignación gratuita (FAA):</span>
+                    <span>{t('simulator.resultFAA')}</span>
                     <span className="font-bold">
-                      -{((1 - result.phaseInRate) * 100).toFixed(1)}% (año {result.phaseInYear})
+                      -{((1 - result.phaseInRate) * 100).toFixed(1)}% ({locale === 'en' ? 'year' : 'año'} {result.phaseInYear})
                     </span>
                   </div>
                   <hr />
                   <div className="flex justify-between items-center text-base">
-                    <span className="font-bold text-gray-800">Coste CBAM efectivo:</span>
+                    <span className="font-bold text-gray-800">{t('simulator.resultEffectiveLabel')}</span>
                     <span className="font-bold text-emerald-700 text-lg">{formatCurrency(result.effectiveCost)}</span>
                   </div>
                 </div>
@@ -604,7 +611,7 @@ export default function CBAMCostSimulator() {
                     <div className="flex items-center gap-2">
                       <span className="text-xl">⚠️</span>
                       <span className="text-sm font-medium text-amber-800">
-                        Sobrecoste por usar valores por defecto ({result.markup.label}):
+                        {t('simulator.surchargeLabel').replace('{label}', result.markup.label)}
                       </span>
                     </div>
                     <span className="font-bold text-amber-700">
@@ -612,47 +619,47 @@ export default function CBAMCostSimulator() {
                     </span>
                   </div>
                   <p className="text-xs text-amber-600 mt-2">
-                    💡 Si obtienes emisiones reales verificadas del fabricante, podrías ahorrar esta penalización.
+                    {t('simulator.surchargeTip')}
                   </p>
                 </div>
               )}
 
               {/* Detalle */}
               <div className="bg-white rounded-lg p-4 space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-600">Sector:</span><span className="font-medium">{result.sector}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Producto:</span><span className="font-medium">{result.product}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">{t('simulator.detailSector')}</span><span className="font-medium">{result.sector}</span></div>
+                <div className="flex justify-between"><span className="text-gray-600">{t('simulator.detailProduct')}</span><span className="font-medium">{result.product}</span></div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Fuente emisiones:</span>
+                  <span className="text-gray-600">{t('simulator.detailSource')}</span>
                   <span className={`font-medium ${emissionSource === 'real' ? 'text-green-600' : 'text-amber-600'}`}>
-                    {emissionSource === 'real' ? '✅ Verificadas' : '📊 Valores por defecto UE'}
+                    {emissionSource === 'real' ? t('simulator.detailSourceReal') : t('simulator.detailSourceDefault')}
                   </span>
                 </div>
                 <hr className="my-2" />
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Emisiones base:</span>
+                  <span className="text-gray-600">{t('simulator.detailBaseEmissions')}</span>
                   <span className="font-medium">{formatNumber(result.emissionFactor, 3)} tCO₂/t</span>
                 </div>
                 {emissionSource === 'default' && result.markup.pct > 0 && (
                   <div className="flex justify-between text-amber-700">
-                    <span>Markup {result.markup.label}:</span>
+                    <span>{t('simulator.detailMarkup').replace('{label}', result.markup.label)}</span>
                     <span className="font-medium">→ {formatNumber(result.emissionFactorWithMarkup, 3)} tCO₂/t</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Benchmark UE:</span>
+                  <span className="text-gray-600">{t('simulator.detailBenchmark')}</span>
                   <span className="font-medium text-blue-600">- {formatNumber(result.benchmark, 3)} tCO₂/t</span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-800 font-bold">Emisiones sujetas a CBAM:</span>
+                  <span className="text-gray-800 font-bold">{t('simulator.detailCbamEmissions')}</span>
                   <span className="font-bold text-emerald-600">{formatNumber(result.emissionsSubjectToCBAM, 3)} tCO₂/t</span>
                 </div>
                 <hr className="my-2" />
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Precio EU ETS:</span>
+                  <span className="text-gray-600">{t('simulator.detailEtsPrice')}</span>
                   <span className="font-medium">{formatCurrency(result.pricePerTonne)}/tCO₂</span>
                 </div>
                 <div className="flex justify-between text-base border-t pt-2">
-                  <span className="text-gray-800 font-medium">Fórmula:</span>
+                  <span className="text-gray-800 font-medium">{t('simulator.detailFormula')}</span>
                   <span className="font-mono text-gray-600 text-xs">
                     {formatNumber(result.tonnes)}t × ({formatNumber(result.emissionFactorWithMarkup, 3)} - {formatNumber(result.benchmark, 3)}) × {formatCurrency(result.pricePerTonne)}
                   </span>
@@ -663,8 +670,8 @@ export default function CBAMCostSimulator() {
                 <div className="flex items-start gap-2">
                   <span className="text-xl">ℹ️</span>
                   <div className="text-sm text-blue-800">
-                    <p className="font-bold mb-1">¿Por qué se resta el benchmark?</p>
-                    <p>Las fábricas europeas ya pagan por el benchmark ({formatNumber(result.benchmark, 3)} tCO₂/t) en el EU ETS. El CBAM solo cobra por las emisiones que <strong>exceden</strong> ese nivel de eficiencia.</p>
+                    <p className="font-bold mb-1">{t('simulator.whyBenchmark')}</p>
+                    <p dangerouslySetInnerHTML={{ __html: t('simulator.whyBenchmarkText').replace('{benchmark}', formatNumber(result.benchmark, 3)) }} />
                   </div>
                 </div>
               </div>
@@ -676,10 +683,10 @@ export default function CBAMCostSimulator() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">💾</span>
-                    <h4 className="font-bold text-indigo-900">Guardar en tu historial</h4>
+                    <h4 className="font-bold text-indigo-900">{t('simulator.saveTitle')}</h4>
                   </div>
                   <a href="/cbam/historial" className="text-sm text-indigo-600 hover:underline">
-                    Ver historial →
+                    {t('simulator.saveHistory')}
                   </a>
                 </div>
                 <div className="flex gap-3">
@@ -687,7 +694,7 @@ export default function CBAMCostSimulator() {
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Nota opcional (ej: Proveedor X, pedido #123)"
+                    placeholder={t('simulator.savePlaceholder')}
                     className="flex-1 px-4 py-2 border border-indigo-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-indigo-400"
                   />
                   <button
@@ -695,7 +702,7 @@ export default function CBAMCostSimulator() {
                     disabled={saving}
                     className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium rounded-lg transition-colors text-sm"
                   >
-                    {saving ? 'Guardando...' : 'Guardar'}
+                    {saving ? t('simulator.saving') : t('simulator.save')}
                   </button>
                 </div>
                 {saveMessage && (
@@ -714,7 +721,7 @@ export default function CBAMCostSimulator() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📈</span>
-                  <span className="font-bold text-gray-800">Ver proyección 2026-2034</span>
+                  <span className="font-bold text-gray-800">{t('simulator.projectionTitle')}</span>
                 </div>
                 <span className={`text-gray-400 transition-transform ${showProjection ? 'rotate-180' : ''}`}>
                   ▼
@@ -723,7 +730,7 @@ export default function CBAMCostSimulator() {
               {showProjection && (
                 <div className="px-5 pb-5 border-t border-gray-100">
                   <p className="text-xs text-gray-500 mt-3 mb-4">
-                    Proyección con el mismo volumen ({formatNumber(result.tonnes, 0)} t) e intensidad de emisiones
+                    {t('simulator.projectionNote').replace('{tonnes}', formatNumber(result.tonnes, 0))}
                   </p>
                   <div className="space-y-2">
                     {Object.entries(CBAM_PHASE_IN_RATES).map(([year, rate]) => {
@@ -753,8 +760,8 @@ export default function CBAMCostSimulator() {
                   </div>
                   <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-3">
                     <p className="text-xs text-purple-800">
-                      <strong>En 2034</strong> se paga el 100% — de {formatCurrency(result.effectiveCost)} hoy a {formatCurrency(result.totalCost)} en 2034.
-                      La diferencia es <strong>{formatCurrency(result.totalCost - result.effectiveCost)}</strong> de exposición creciente.
+                      <strong>{t('simulator.projectionFull')}</strong> — {formatCurrency(result.effectiveCost)} → {formatCurrency(result.totalCost)}.
+                      {' '}{formatCurrency(result.totalCost - result.effectiveCost)} {t('simulator.projectionExposure')}
                     </p>
                   </div>
                 </div>
@@ -766,14 +773,10 @@ export default function CBAMCostSimulator() {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">ℹ️</span>
                 <div className="text-sm text-blue-800 space-y-2">
-                  <h4 className="font-bold text-blue-900">Ajuste por Asignación Gratuita (FAA)</h4>
-                  <p>
-                    Durante 2026-2034, el coste CBAM se introduce progresivamente. En 2026, solo el 2,5%
-                    del coste recae sobre el importador, aumentando gradualmente hasta el 100% en 2034.
-                    Esto refleja la eliminación progresiva de las asignaciones gratuitas del EU ETS para sectores CBAM.
-                  </p>
+                  <h4 className="font-bold text-blue-900">{t('simulator.faaTitle')}</h4>
+                  <p>{t('simulator.faaText')}</p>
                   <p className="text-blue-900 font-medium">
-                    Este cálculo ya incluye el ajuste FAA para el año {result.phaseInYear} ({(result.phaseInRate * 100).toFixed(1)}%).
+                    {t('simulator.faaCurrentYear').replace('{year}', result.phaseInYear).replace('{rate}', (result.phaseInRate * 100).toFixed(1))}
                   </p>
                 </div>
               </div>
@@ -783,13 +786,13 @@ export default function CBAMCostSimulator() {
               <div className="flex items-start gap-3">
                 <span className="text-xl">⚠️</span>
                 <div className="text-sm text-amber-800">
-                  <p className="font-bold mb-1">Aviso importante</p>
+                  <p className="font-bold mb-1">{t('simulator.disclaimer')}</p>
                   <ul className="space-y-1 text-amber-700">
-                    <li>• Esta es una <strong>estimación orientativa</strong></li>
-                    <li>• Las emisiones reales dependen del proceso productivo de cada instalación</li>
-                    <li>• El precio EU ETS fluctúa diariamente</li>
-                    <li>• El ajuste FAA aplicado es una aproximación basada en el phase-in oficial</li>
-                    <li>• Consulte con un asesor especializado para cálculos definitivos</li>
+                    <li dangerouslySetInnerHTML={{ __html: `• ${t('simulator.disclaimer1')}` }} />
+                    <li>• {t('simulator.disclaimer2')}</li>
+                    <li>• {t('simulator.disclaimer3')}</li>
+                    <li>• {t('simulator.disclaimer4')}</li>
+                    <li>• {t('simulator.disclaimer5')}</li>
                   </ul>
                 </div>
               </div>
@@ -799,12 +802,12 @@ export default function CBAMCostSimulator() {
 
         <div className="mt-6 p-4 bg-gray-50 rounded-xl text-xs text-gray-500">
           <p>
-            <strong>Fuentes:</strong> Valores por defecto según Reg. (UE) 2023/1773. Markup según C(2025) 8552.
+            <strong>{t('simulator.sources')}</strong> {t('simulator.sourcesText')}
             {' '}Precio EU ETS: €{etsPrice.price}/tCO₂
-            {etsPrice.date && ` (${new Date(etsPrice.date).toLocaleDateString('es-ES')})`}
+            {etsPrice.date && ` (${new Date(etsPrice.date).toLocaleDateString(numLocale)})`}
             {etsPrice.source && etsPrice.source !== 'fallback (hardcoded)' && etsPrice.source !== 'fallback (error)'
-              ? ` - Fuente: ${etsPrice.source}`
-              : ' - Precio de referencia'
+              ? ` - ${t('simulator.sourceLabel')} ${etsPrice.source}`
+              : ` - ${t('simulator.sourceRef')}`
             }.
           </p>
         </div>

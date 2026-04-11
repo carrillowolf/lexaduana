@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
 
 export default function CBAMEmailTemplate() {
   const [language, setLanguage] = useState('es')
@@ -8,6 +10,7 @@ export default function CBAMEmailTemplate() {
   const [productName, setProductName] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [copied, setCopied] = useState(false)
+  const t = useTranslation(cbamDict)
 
   const templates = {
     es: {
@@ -89,14 +92,13 @@ Official template: https://cbam.ec.europa.eu/`
   const currentTemplate = templates[language]
 
   const handleCopy = async () => {
-    const fullEmail = `Asunto: ${currentTemplate.subject}\n\n${currentTemplate.body}`
-    
+    const fullEmail = `${t('email.subjectLabel')} ${currentTemplate.subject}\n\n${currentTemplate.body}`
+
     try {
       await navigator.clipboard.writeText(fullEmail)
       setCopied(true)
       setTimeout(() => setCopied(false), 3000)
     } catch (err) {
-      // Fallback para navegadores que no soportan clipboard API
       const textArea = document.createElement('textarea')
       textArea.value = fullEmail
       document.body.appendChild(textArea)
@@ -123,21 +125,21 @@ Official template: https://cbam.ec.europa.eu/`
             <span className="text-4xl">📧</span>
             <div>
               <h3 className="text-xl font-bold text-white">
-                Plantilla: Solicitar datos al proveedor
+                {t('email.title')}
               </h3>
               <p className="text-orange-100 text-sm">
-                Email listo para copiar y enviar a tu fabricante/exportador
+                {t('email.subtitle')}
               </p>
             </div>
           </div>
-          
-          {/* Toggle idioma */}
+
+          {/* Language toggle */}
           <div className="flex items-center gap-2 bg-white/20 rounded-lg p-1">
             <button
               onClick={() => setLanguage('es')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                language === 'es' 
-                  ? 'bg-white text-orange-600 shadow' 
+                language === 'es'
+                  ? 'bg-white text-orange-600 shadow'
                   : 'text-white hover:bg-white/10'
               }`}
             >
@@ -146,8 +148,8 @@ Official template: https://cbam.ec.europa.eu/`
             <button
               onClick={() => setLanguage('en')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                language === 'en' 
-                  ? 'bg-white text-orange-600 shadow' 
+                language === 'en'
+                  ? 'bg-white text-orange-600 shadow'
                   : 'text-white hover:bg-white/10'
               }`}
             >
@@ -158,11 +160,11 @@ Official template: https://cbam.ec.europa.eu/`
       </div>
 
       <div className="p-8">
-        {/* Campos personalizables */}
+        {/* Customizable fields */}
         <div className="grid sm:grid-cols-3 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del proveedor
+              {t('email.supplierLabel')}
             </label>
             <input
               type="text"
@@ -174,7 +176,7 @@ Official template: https://cbam.ec.europa.eu/`
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Producto
+              {t('email.productLabel')}
             </label>
             <input
               type="text"
@@ -186,7 +188,7 @@ Official template: https://cbam.ec.europa.eu/`
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tu empresa
+              {t('email.companyLabel')}
             </label>
             <input
               type="text"
@@ -198,24 +200,24 @@ Official template: https://cbam.ec.europa.eu/`
           </div>
         </div>
 
-        {/* Vista previa del email */}
+        {/* Email preview */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">
-              Vista previa del email
+              {t('email.previewLabel')}
             </label>
             <span className="text-xs text-gray-500">
-              {language === 'es' ? 'Los campos entre [corchetes] se reemplazarán' : 'Fields in [brackets] will be replaced'}
+              {t('email.previewNote')}
             </span>
           </div>
-          
-          {/* Asunto */}
+
+          {/* Subject */}
           <div className="bg-gray-100 px-4 py-2 rounded-t-lg border border-gray-300 border-b-0">
-            <span className="text-sm text-gray-500">Asunto: </span>
+            <span className="text-sm text-gray-500">{t('email.subjectLabel')} </span>
             <span className="text-sm font-medium text-gray-800">{currentTemplate.subject}</span>
           </div>
-          
-          {/* Cuerpo */}
+
+          {/* Body */}
           <div className="bg-white border border-gray-300 rounded-b-lg p-4 max-h-80 overflow-y-auto">
             <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
               {currentTemplate.body}
@@ -223,13 +225,13 @@ Official template: https://cbam.ec.europa.eu/`
           </div>
         </div>
 
-        {/* Botones de acción */}
+        {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleCopy}
             className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
-              copied 
-                ? 'bg-green-500 text-white' 
+              copied
+                ? 'bg-green-500 text-white'
                 : 'bg-orange-500 hover:bg-orange-600 text-white'
             }`}
           >
@@ -238,18 +240,18 @@ Official template: https://cbam.ec.europa.eu/`
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                ¡Copiado al portapapeles!
+                {t('email.copied')}
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
-                Copiar email completo
+                {t('email.copyFull')}
               </>
             )}
           </button>
-          
+
           <button
             onClick={handleOpenMailClient}
             className="flex-1 px-6 py-3 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
@@ -257,16 +259,16 @@ Official template: https://cbam.ec.europa.eu/`
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Abrir en cliente de correo
+            {t('email.openMail')}
           </button>
         </div>
 
-        {/* Nota */}
+        {/* Note */}
         <p className="mt-4 text-xs text-gray-500 text-center">
-          💡 Puedes adjuntar la plantilla oficial de la Comisión Europea descargándola desde{' '}
-          <a 
-            href="https://cbam.ec.europa.eu/" 
-            target="_blank" 
+          💡 {t('email.tip')}{' '}
+          <a
+            href="https://cbam.ec.europa.eu/"
+            target="_blank"
             rel="noopener noreferrer"
             className="text-orange-600 hover:underline"
           >

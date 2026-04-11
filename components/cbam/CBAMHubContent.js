@@ -1,0 +1,588 @@
+'use client'
+
+import Link from 'next/link'
+import { useTranslation, useLocale } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
+import CBAMCostSimulator from '@/components/CBAMCostSimulator'
+import CBAMEmailTemplate from '@/components/CBAMEmailTemplate'
+import CBAMVerifier from '@/components/cbam/CBAMVerifier'
+
+export default function CBAMHubContent({
+  nextDeadline,
+  sectors,
+  timeline,
+  excludedCountries,
+  certificates,
+  markupSchedule,
+  downstreamExtension,
+  threshold,
+}) {
+  const t = useTranslation(cbamDict)
+  const { locale } = useLocale()
+  const numLocale = locale === 'en' ? 'en-GB' : 'es-ES'
+
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString(numLocale, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  }
+
+  return (
+    <>
+      {/* ═══ HERO DARK ═══ */}
+      <div className="bg-[#0A3D5C] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Hero content */}
+            <div className="lg:col-span-2">
+              <span className="inline-block px-3 py-1 bg-white/10 border border-white/10 rounded-full text-sm font-medium text-white/80 mb-4">
+                {t('hub.heroRegulation')}
+              </span>
+              <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4 tracking-tight">
+                CBAM — Carbon Border<br />Adjustment Mechanism
+              </h1>
+              <p className="text-white/60 text-lg max-w-xl mb-6">
+                {t('hub.heroDesc')}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/cbam/assessment" className="inline-flex items-center px-5 py-2.5 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-xl hover:bg-[#F4C542]/90 transition-all gap-2">
+                  {t('hub.ctaAssessment')}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+                </Link>
+                <Link href="/cbam/guia" className="inline-flex items-center px-5 py-2.5 bg-white/10 border border-white/20 text-white font-medium rounded-xl hover:bg-white/20 transition-all gap-2">
+                  {t('hub.ctaGuide')}
+                </Link>
+              </div>
+            </div>
+
+            {/* Proximo Deadline */}
+            {nextDeadline && (
+              <div className={`rounded-2xl p-6 ${
+                nextDeadline.isUrgent
+                  ? 'bg-red-500/20 border border-red-400/30'
+                  : 'bg-white/[0.06] border border-white/[0.1]'
+              }`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">⏰</span>
+                  <h3 className="font-bold text-white text-sm uppercase tracking-wider">{t('hub.nextDeadline')}</h3>
+                </div>
+                <div className={`text-5xl font-bold mb-2 ${nextDeadline.isUrgent ? 'text-red-400' : 'text-[#F4C542]'}`}>
+                  {nextDeadline.daysLeft}
+                </div>
+                <p className="text-white/40 text-sm mb-1">{t('hub.daysLeft')}</p>
+                <p className="font-medium text-white/80 mb-1">{nextDeadline.quarter}</p>
+                <p className="text-sm text-white/40">
+                  {t('hub.deadlineLimit')} {formatDate(nextDeadline.deadline)}
+                </p>
+                {nextDeadline.status === 'critical' && (
+                  <div className="mt-3 p-2.5 bg-red-500/20 border border-red-400/20 rounded-lg">
+                    <p className="text-sm font-medium text-red-300">
+                      {t('hub.deadlineCritical')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ BLOQUE INTRODUCTORIO ═══ */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold text-[#0A3D5C] mb-4 flex items-center gap-2">
+              <span className="text-2xl">🏭</span> {t('hub.whatIsTitle')}
+            </h2>
+            <div className="space-y-3 text-gray-600 leading-relaxed">
+              <p dangerouslySetInnerHTML={{ __html: t('hub.whatIsP1') }} />
+              <p dangerouslySetInnerHTML={{ __html: t('hub.whatIsP2') }} />
+              <p className="font-medium text-gray-800" dangerouslySetInnerHTML={{ __html: t('hub.whatIsP3') }} />
+            </div>
+            <div className="flex flex-wrap items-center gap-6 mt-6">
+              <Link
+                href="/cbam/guia"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#083049] transition-colors"
+              >
+                {t('hub.guideLinkText')}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+              </Link>
+              <div className="flex items-center gap-4 text-sm text-gray-400 font-medium">
+                <span>{t('hub.statSectors')}</span>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <span>{t('hub.statCodes')}</span>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <span>{t('hub.statMandatory')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        {/* CTA Self-Assessment */}
+        <Link href="/cbam/assessment" className="block group -mt-4">
+          <div className="bg-white border-2 border-[#F4C542]/30 rounded-2xl p-6 hover:border-[#F4C542]/60 hover:shadow-lg transition-all shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-[#F4C542]/10 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                  🔍
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">{t('hub.selfAssessTitle')}</h3>
+                    <span className="px-2 py-0.5 bg-[#F4C542]/20 text-[#0A3D5C] text-xs font-bold rounded-full">{t('hub.selfAssessFree')}</span>
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    {t('hub.selfAssessDesc')}
+                  </p>
+                  <p className="text-[#0A3D5C] text-xs font-medium mt-1">{t('hub.selfAssessMeta')}</p>
+                </div>
+              </div>
+              <svg className="w-6 h-6 text-[#F4C542] group-hover:translate-x-1 transition-transform hidden md:block" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </div>
+        </Link>
+
+        {/* Banner Novedades */}
+        <div className="bg-[#0A3D5C] rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#F4C542]/5 rounded-full -translate-y-32 translate-x-32"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 bg-[#F4C542]/20 text-[#F4C542] rounded-full text-sm font-bold">
+                {t('hub.updateBadge')}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold mb-4">{t('hub.updateTitle')}</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-white/[0.06] border border-white/[0.08] rounded-xl p-4">
+                <h3 className="font-bold mb-1 text-sm">{t('hub.updateWeekly')}</h3>
+                <p className="text-sm text-white/60">{t('hub.updateWeeklyDesc')}</p>
+              </div>
+              <div className="bg-white/[0.06] border border-white/[0.08] rounded-xl p-4">
+                <h3 className="font-bold mb-1 text-sm">{t('hub.updatePenalty')}</h3>
+                <p className="text-sm text-white/60">{t('hub.updatePenaltyDesc')}</p>
+              </div>
+              <div className="bg-white/[0.06] border border-white/[0.08] rounded-xl p-4">
+                <h3 className="font-bold mb-1 text-sm">{t('hub.updateCodes')}</h3>
+                <p className="text-sm text-white/60">{t('hub.updateCodesDesc')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Verificador de Codigo */}
+        <CBAMVerifier threshold={threshold} />
+
+        {/* Simulador de Costes */}
+        <CBAMCostSimulator />
+
+        {/* Precio de Certificados CBAM */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#0A3D5C] px-8 py-5">
+            <h2 className="text-xl font-bold text-white mb-0.5">{t('hub.certTitle')}</h2>
+            <p className="text-white/50 text-sm">{t('hub.certSubtitle')}</p>
+          </div>
+          <div className="p-8">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="rounded-xl p-6 border-2 border-[#0A3D5C]/20 bg-[#0A3D5C]/[0.02]">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="px-3 py-1 bg-[#0A3D5C] text-white text-sm font-bold rounded-full">2026</span>
+                  <span className="text-[#0A3D5C] font-bold">{t('hub.certQuarterly')}</span>
+                </div>
+                <div className="space-y-3 text-gray-600 text-sm">
+                  <p>{t('hub.certQuarterlyAvg')}</p>
+                  <p><strong>{t('hub.certQuarterlyCount')}</strong></p>
+                  <p>{t('hub.certQuarterlyPublish')}</p>
+                </div>
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-sm text-emerald-700"><strong>{t('hub.certQuarterlyNote')}</strong> {t('hub.certQuarterlyNoteDesc')}</p>
+                </div>
+              </div>
+              <div className="rounded-xl p-6 border-2 border-amber-300 bg-amber-50/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="px-3 py-1 bg-amber-500 text-white text-sm font-bold rounded-full">2027+</span>
+                  <span className="text-amber-700 font-bold">{t('hub.certWeekly')}</span>
+                </div>
+                <div className="space-y-3 text-gray-600 text-sm">
+                  <p>{t('hub.certWeeklyAvg')}</p>
+                  <p><strong>{t('hub.certWeeklyCount')}</strong></p>
+                  <p>{t('hub.certWeeklyPublish')}</p>
+                </div>
+                <div className="mt-4 p-3 bg-amber-100 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800"><strong>{t('hub.certWeeklyNote')}</strong> {t('hub.certWeeklyNoteDesc')}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+              <h4 className="font-bold text-gray-800 mb-3 text-sm">{t('hub.calcMethodTitle')}</h4>
+              <ul className="space-y-1.5 text-gray-600 text-sm">
+                <li className="flex items-start gap-2"><span className="text-[#0A3D5C] mt-0.5">•</span>{t('hub.calcMethod1')}</li>
+                <li className="flex items-start gap-2"><span className="text-[#0A3D5C] mt-0.5">•</span>{t('hub.calcMethod2')}</li>
+                <li className="flex items-start gap-2"><span className="text-[#0A3D5C] mt-0.5">•</span>{t('hub.calcMethod3')}</li>
+                <li className="flex items-start gap-2"><span className="text-[#0A3D5C] mt-0.5">•</span>{t('hub.calcMethod4')}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Penalizacion Valores por Defecto */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-red-600 px-8 py-5">
+            <h2 className="text-xl font-bold text-white mb-0.5">{t('hub.penaltyTitle')}</h2>
+            <p className="text-red-100/60 text-sm">{t('hub.penaltySubtitle')}</p>
+          </div>
+          <div className="p-8">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <p className="text-amber-800 text-sm">
+                <strong>{t('hub.penaltyExplain')}</strong> {t('hub.penaltyExplainText')}
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              {markupSchedule.map((item) => (
+                <div key={item.year} className={`rounded-xl p-6 text-center border-2 ${
+                  item.year === 2026 ? 'border-yellow-300 bg-yellow-50' : item.year === 2027 ? 'border-orange-300 bg-orange-50' : 'border-red-300 bg-red-50'
+                }`}>
+                  <div className={`text-4xl font-bold mb-2 ${
+                    item.year === 2026 ? 'text-yellow-600' : item.year === 2027 ? 'text-orange-600' : 'text-red-600'
+                  }`}>{item.label}</div>
+                  <div className="text-xl font-bold text-gray-800 mb-1">{item.year}</div>
+                  <div className="text-sm text-gray-600">{item.description}</div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+              <h4 className="font-bold text-gray-800 mb-4 text-sm">{t('hub.penaltyExampleTitle')}</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-slate-300">
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.penaltyColYear')}</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.penaltyColBase')}</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.penaltyColMarkup')}</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.penaltyColAdjusted')}</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.penaltyColSurcharge')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    <tr><td className="px-4 py-3 font-medium">2026</td><td className="px-4 py-3 font-mono">1.080 tCO2/t</td><td className="px-4 py-3 text-yellow-600 font-bold">+10%</td><td className="px-4 py-3 font-mono font-bold">1.188 tCO2/t</td><td className="px-4 py-3 text-red-600">+0.108 tCO2/t</td></tr>
+                    <tr><td className="px-4 py-3 font-medium">2027</td><td className="px-4 py-3 font-mono">1.080 tCO2/t</td><td className="px-4 py-3 text-orange-600 font-bold">+20%</td><td className="px-4 py-3 font-mono font-bold">1.296 tCO2/t</td><td className="px-4 py-3 text-red-600">+0.216 tCO2/t</td></tr>
+                    <tr className="bg-red-50"><td className="px-4 py-3 font-medium">2028+</td><td className="px-4 py-3 font-mono">1.080 tCO2/t</td><td className="px-4 py-3 text-red-600 font-bold">+30%</td><td className="px-4 py-3 font-mono font-bold">1.404 tCO2/t</td><td className="px-4 py-3 text-red-600 font-bold">+0.324 tCO2/t</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-lg mt-0.5">✅</span>
+                <div>
+                  <h4 className="font-bold text-emerald-800 mb-1 text-sm">{t('hub.penaltyException')}</h4>
+                  <p className="text-emerald-700 text-sm" dangerouslySetInnerHTML={{ __html: t('hub.penaltyExceptionText') }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Extension Productos Downstream 2028 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#0A3D5C] px-8 py-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-0.5">{t('hub.downstreamTitle')}</h2>
+              <p className="text-white/50 text-sm">{t('hub.downstreamSubtitle')}</p>
+            </div>
+            <span className="px-3 py-1 bg-[#F4C542]/20 text-[#F4C542] text-xs font-bold rounded-full hidden sm:block">{t('hub.downstreamProposal')}</span>
+          </div>
+          <div className="p-8">
+            <div className="grid sm:grid-cols-3 gap-4 mb-8">
+              <div className="bg-[#0A3D5C] rounded-xl p-6 text-white text-center">
+                <div className="text-4xl font-bold mb-1 text-[#F4C542]">~{downstreamExtension.stats.newCNCodes}</div>
+                <div className="text-white/50 text-sm">{t('hub.downstreamNewCodes')}</div>
+              </div>
+              <div className="bg-[#0A3D5C] rounded-xl p-6 text-white text-center">
+                <div className="text-4xl font-bold mb-1 text-[#F4C542]">~{(downstreamExtension.stats.newImporters / 1000).toFixed(1)}k</div>
+                <div className="text-white/50 text-sm">{t('hub.downstreamNewImporters')}</div>
+              </div>
+              <div className="bg-[#0A3D5C] rounded-xl p-6 text-white text-center">
+                <div className="text-4xl font-bold mb-1 text-[#F4C542]">~{(downstreamExtension.stats.newSMEs / 1000).toFixed(1)}k</div>
+                <div className="text-white/50 text-sm">{t('hub.downstreamNewSMEs')}</div>
+              </div>
+            </div>
+            <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">{t('hub.downstreamSectorsTitle')}</h3>
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              {downstreamExtension.sectors.map((sector) => (
+                <div key={sector.id} className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">{sector.icon}</span>
+                    <h4 className="font-bold text-gray-800">{sector.name}</h4>
+                  </div>
+                  <ul className="space-y-1">
+                    {sector.examples.map((example, idx) => (
+                      <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                        <span className="text-[#0A3D5C] mt-0.5">•</span><span>{example}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <h4 className="font-bold text-gray-700 mb-2 text-sm">{t('hub.downstreamNotIncluded')}</h4>
+              <div className="flex flex-wrap gap-2">
+                {downstreamExtension.notIncluded.map((item, idx) => (
+                  <span key={idx} className="px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-xs">{item}</span>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-gray-500">{t('hub.downstreamNotIncludedNote')}</p>
+            </div>
+            <div className="mt-6 bg-[#0A3D5C]/5 rounded-xl p-4 border border-[#0A3D5C]/10">
+              <h4 className="font-bold text-[#0A3D5C] mb-2 text-sm">{t('hub.downstreamCriteria')}</h4>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {downstreamExtension.selectionCriteria.map((criterion, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-[#0A3D5C]/80">
+                    <span className="w-5 h-5 bg-[#0A3D5C] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</span>
+                    <span className="text-sm">{criterion}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sectores Afectados */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">{t('hub.sectorsTitle')}</h2>
+          <p className="text-gray-500 text-sm mb-6">{t('hub.sectorsSubtitle')}</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sectors.map((sector) => (
+              <div key={sector.id} className={`bg-gradient-to-br ${sector.color} rounded-xl p-6 text-white shadow-sm hover:shadow-md transition-shadow`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-3xl">{sector.icon}</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">{sector.emissions}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${sector.deMinimisApplies ? 'bg-blue-400/30' : 'bg-red-400/30'}`}>
+                      {sector.deMinimisApplies ? t('hub.sectorDeMinimis') : t('hub.sectorNoThreshold')}
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold mb-2">{sector.name}</h3>
+                <p className="text-white/70 text-sm mb-3">{sector.description}</p>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-medium">{t('hub.sectorGases')}</span>
+                  <span className="px-2 py-0.5 bg-white/20 rounded">{Array.isArray(sector.gases) ? sector.gases.join(', ') : sector.gases}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Paises Excluidos */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-emerald-600 px-8 py-5">
+            <h2 className="text-xl font-bold text-white mb-0.5">{t('hub.excludedTitle')}</h2>
+            <p className="text-emerald-100/60 text-sm">{t('hub.excludedSubtitle')}</p>
+          </div>
+          <div className="p-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {excludedCountries.map((country) => (
+                <div key={country.code} className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold text-[#0A3D5C]">{country.code}</span>
+                    <span className="text-gray-700 font-medium text-sm">{country.name}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">{country.reason}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+              <strong>Nota:</strong>{' '}
+              <span dangerouslySetInnerHTML={{ __html: t('hub.excludedNote') }} />
+            </p>
+          </div>
+        </div>
+
+        {/* Certificados Necesarios */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#0A3D5C] px-8 py-5">
+            <h2 className="text-xl font-bold text-white mb-0.5">{t('hub.certsTableTitle')}</h2>
+            <p className="text-white/50 text-sm">{t('hub.certsTableSubtitle')}</p>
+          </div>
+          <div className="p-8">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.certsColCode')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.certsColDesc')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{t('hub.certsColApp')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {certificates.map((cert) => (
+                    <tr key={cert.code} className="hover:bg-slate-50">
+                      <td className="px-4 py-4">
+                        <span className="font-mono font-bold text-[#0A3D5C] bg-[#0A3D5C]/5 px-2 py-1 rounded">{cert.code}</span>
+                      </td>
+                      <td className="px-4 py-4 text-gray-700 text-sm">{cert.description}</td>
+                      <td className="px-4 py-4">
+                        {cert.required ? (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">{t('hub.certsRequired')}</span>
+                        ) : cert.appliesTo ? (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">{t('hub.certsOnly')} {Array.isArray(cert.appliesTo) ? cert.appliesTo.join(', ') : cert.appliesTo}</span>
+                        ) : cert.notAppliesTo ? (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{t('hub.certsExcept')} {Array.isArray(cert.notAppliesTo) ? cert.notAppliesTo.join(', ') : cert.notAppliesTo}</span>
+                        ) : (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{t('hub.certsExemption')}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm">
+                <strong>{locale === 'en' ? 'Important:' : 'Importante:'}</strong> {t('hub.certsImportant')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-[#0A3D5C] px-8 py-5">
+            <h2 className="text-xl font-bold text-white mb-0.5">{t('hub.timelineTitle')}</h2>
+            <p className="text-white/50 text-sm">{t('hub.timelineSubtitle')}</p>
+          </div>
+          <div className="p-8">
+            <div className="relative">
+              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+              {timeline.map((event, index) => (
+                <div key={index} className="relative pl-12 pb-8 last:pb-0">
+                  <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    event.status === 'completed' ? 'bg-emerald-500'
+                    : event.status === 'critical' ? 'bg-red-500 animate-pulse'
+                    : event.status === 'upcoming' ? 'bg-amber-500'
+                    : 'bg-gray-300'
+                  }`}>
+                    {event.status === 'completed' ? (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    ) : event.status === 'critical' ? (
+                      <span className="text-white text-xs font-bold">!</span>
+                    ) : (
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                  <div className={`p-4 rounded-lg ${
+                    event.status === 'critical' ? 'bg-red-50 border-2 border-red-200'
+                    : event.status === 'upcoming' ? 'bg-amber-50 border border-amber-200'
+                    : event.isNew ? 'bg-purple-50 border-2 border-purple-300'
+                    : 'bg-gray-50 border border-gray-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold text-sm ${event.status === 'critical' ? 'text-red-700' : 'text-gray-800'}`}>{event.title}</h3>
+                        {event.isNew && <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">{t('hub.timelineNew')}</span>}
+                      </div>
+                      <span className={`text-xs font-medium ${
+                        event.status === 'completed' ? 'text-emerald-600' : event.status === 'critical' ? 'text-red-600' : 'text-gray-500'
+                      }`}>{formatDate(event.date)}</span>
+                    </div>
+                    <p className="text-gray-600 text-sm">{event.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Umbral de minimis */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-[#0A3D5C]/10 rounded-xl flex-shrink-0">
+              <svg className="w-6 h-6 text-[#0A3D5C]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z" /></svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{t('hub.thresholdTitle')}</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                {t('hub.thresholdDesc')}{' '}
+                <strong>{threshold.massThreshold || threshold.mass_threshold || 50} {locale === 'en' ? 'tonnes' : 'toneladas'}</strong>{' '}
+                {t('hub.thresholdDescEnd')}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className="px-3 py-1.5 bg-[#0A3D5C]/10 text-[#0A3D5C] rounded-full font-medium">{locale === 'en' ? 'Threshold' : 'Umbral'}: {threshold.massThreshold || threshold.mass_threshold || 50}{t('hub.thresholdUnit')}</span>
+                <span className="px-3 py-1.5 bg-[#0A3D5C]/10 text-[#0A3D5C] rounded-full font-medium">{t('hub.thresholdCert')} Y137</span>
+                <span className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full font-medium">{t('hub.thresholdNoApply')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Plantilla Email Proveedor */}
+        <CBAMEmailTemplate />
+
+        {/* Recursos */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">{t('hub.officialResources')}</h3>
+            <ul className="space-y-3">
+              {[
+                { href: 'https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_es', label: t('hub.officialLink1') },
+                { href: 'https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32023R0956', label: t('hub.officialLink2') },
+                { href: 'https://cbam.ec.europa.eu/', label: t('hub.officialLink3') },
+                { href: 'https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en', label: t('hub.officialLink4') },
+              ].map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[#0A3D5C] hover:text-[#0A3D5C]/70 text-sm transition-colors">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">{t('hub.toolsTitle')}</h3>
+            <ul className="space-y-3">
+              {[
+                { href: '/calculadora', icon: '🧮', label: t('hub.toolCalc') },
+                { href: '/clasificador', icon: '🤖', label: t('hub.toolClassifier') },
+                { href: '/comparador', icon: '📊', label: t('hub.toolComparator') },
+                { href: '/eudr', icon: '🌳', label: t('hub.toolEudr') },
+                { href: '/oea', icon: '🛡️', label: t('hub.toolOea') },
+                { href: '/cbam/asesoria', icon: '📋', label: t('hub.toolAdvisory') },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="flex items-center gap-2 text-[#0A3D5C] hover:text-[#0A3D5C]/70 text-sm transition-colors">
+                    <span>{link.icon}</span>{link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* CTA Final */}
+        <div className="bg-[#0A3D5C] rounded-2xl p-8 text-white text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F4C542]/5 to-transparent"></div>
+          <div className="relative z-10">
+            <h2 className="text-2xl font-bold mb-3">{t('hub.ctaFinalTitle')}</h2>
+            <p className="text-white/50 mb-6 max-w-2xl mx-auto text-sm">
+              {t('hub.ctaFinalDesc')}
+            </p>
+            <Link href="/calculadora" className="inline-flex items-center px-6 py-3 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-xl hover:bg-[#F4C542]/90 transition-colors gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+              {t('hub.ctaFinalButton')}
+            </Link>
+          </div>
+        </div>
+      </main>
+    </>
+  )
+}

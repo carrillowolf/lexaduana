@@ -3,17 +3,13 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import ProductLineEditor from './ProductLineEditor'
+import { useTranslation } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
 
-const STEPS = [
-  { number: 1, title: 'Datos de empresa' },
-  { number: 2, title: 'Productos importados' },
-  { number: 3, title: 'Documentación y confirmación' },
-]
-
-function ProgressBar({ currentStep }) {
+function ProgressBar({ currentStep, steps }) {
   return (
     <div className="flex items-center justify-between mb-8">
-      {STEPS.map((step, i) => (
+      {steps.map((step, i) => (
         <div key={step.number} className="flex items-center flex-1">
           <div className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
@@ -35,7 +31,7 @@ function ProgressBar({ currentStep }) {
               {step.title}
             </span>
           </div>
-          {i < STEPS.length - 1 && (
+          {i < steps.length - 1 && (
             <div className={`flex-1 h-0.5 mx-3 ${
               currentStep > step.number ? 'bg-[#0A3D5C]' : 'bg-gray-200'
             }`} />
@@ -47,10 +43,10 @@ function ProgressBar({ currentStep }) {
 }
 
 // ============================================================
-// PASO 1: DATOS DE EMPRESA
+// STEP 1: COMPANY DATA
 // ============================================================
 
-function Step1({ data, onChange }) {
+function Step1({ data, onChange, t }) {
   function handleChange(field, value) {
     onChange({ ...data, [field]: value })
   }
@@ -58,16 +54,16 @@ function Step1({ data, onChange }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Datos de tu empresa</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('intake.companyTitle')}</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Información necesaria para identificar al importador y contacto principal.
+          {t('intake.companyDesc')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre de la empresa <span className="text-red-500">*</span>
+            {t('intake.companyName')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -80,7 +76,7 @@ function Step1({ data, onChange }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            CIF/NIF <span className="text-gray-400 text-xs">(recomendado)</span>
+            {t('intake.companyCif')} <span className="text-gray-400 text-xs">{t('intake.companyCifHint')}</span>
           </label>
           <input
             type="text"
@@ -93,7 +89,7 @@ function Step1({ data, onChange }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Número EORI <span className="text-gray-400 text-xs">(si ya lo tienes)</span>
+            {t('intake.companyEori')} <span className="text-gray-400 text-xs">{t('intake.companyEoriHint')}</span>
           </label>
           <input
             type="text"
@@ -106,20 +102,19 @@ function Step1({ data, onChange }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre de contacto <span className="text-red-500">*</span>
+            {t('intake.contactName')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={data.contactName || ''}
             onChange={(e) => handleChange('contactName', e.target.value)}
-            placeholder="Nombre y apellidos"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email de contacto <span className="text-red-500">*</span>
+            {t('intake.contactEmail')} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -132,7 +127,7 @@ function Step1({ data, onChange }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Teléfono <span className="text-gray-400 text-xs">(opcional)</span>
+            {t('intake.contactPhone')} <span className="text-gray-400 text-xs">{t('intake.contactPhoneHint')}</span>
           </label>
           <input
             type="tel"
@@ -154,7 +149,7 @@ function Step1({ data, onChange }) {
             className="w-4 h-4 rounded border-gray-300 text-[#0A3D5C] focus:ring-[#0A3D5C]"
           />
           <span className="text-sm text-gray-700">
-            Soy declarante CBAM autorizado (o estoy en proceso de autorización)
+            {t('intake.isAuthorized')}
           </span>
         </label>
 
@@ -166,20 +161,19 @@ function Step1({ data, onChange }) {
             className="w-4 h-4 rounded border-gray-300 text-[#0A3D5C] focus:ring-[#0A3D5C]"
           />
           <span className="text-sm text-gray-700">
-            Tengo representante aduanero indirecto
+            {t('intake.hasRepresentative')}
           </span>
         </label>
 
         {data.hasIndirectRepresentative && (
           <div className="pl-7">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del representante
+              {t('intake.representativeName')}
             </label>
             <input
               type="text"
               value={data.representativeName || ''}
               onChange={(e) => handleChange('representativeName', e.target.value)}
-              placeholder="Nombre del representante aduanero"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
             />
           </div>
@@ -190,17 +184,16 @@ function Step1({ data, onChange }) {
 }
 
 // ============================================================
-// PASO 2: PRODUCTOS
+// STEP 2: PRODUCTS
 // ============================================================
 
-function Step2({ products, countries, onChange }) {
+function Step2({ products, countries, onChange, t }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Productos importados</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('intake.productsTitle')}</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Detalla cada producto que importas y que podría estar afectado por el CBAM.
-          Necesitas al menos un producto para continuar.
+          {t('intake.productsDesc')}
         </p>
       </div>
       <ProductLineEditor
@@ -213,12 +206,10 @@ function Step2({ products, countries, onChange }) {
 }
 
 // ============================================================
-// PASO 3: DOCUMENTACIÓN Y CONFIRMACIÓN
+// STEP 3: DOCUMENTATION & CONFIRMATION
 // ============================================================
 
-function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, onConfirmChange }) {
-  const [uploading, setUploading] = useState(false)
-
+function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, onConfirmChange, t }) {
   function handleFileSelect(e) {
     const selectedFiles = Array.from(e.target.files || [])
     const newFiles = selectedFiles.map(f => ({
@@ -260,10 +251,9 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Documentación y confirmación</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('intake.docsTitle')}</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Sube los documentos relevantes y confirma tu solicitud. Los documentos son opcionales pero
-          nos permiten hacer un análisis más preciso.
+          {t('intake.docsDesc')}
         </p>
       </div>
 
@@ -275,9 +265,9 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
         onClick={() => document.getElementById('file-input').click()}
       >
         <div className="text-3xl mb-2">📄</div>
-        <p className="font-medium text-gray-700">Arrastra archivos aquí o haz clic para seleccionar</p>
+        <p className="font-medium text-gray-700">{t('intake.dropzone')}</p>
         <p className="text-xs text-gray-500 mt-1">
-          PDF, JPEG, PNG, Excel, CSV. Máximo 10MB por archivo.
+          {t('intake.dropzoneFormats')}
         </p>
         <input
           id="file-input"
@@ -289,7 +279,7 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
         />
       </div>
 
-      {/* Lista de archivos */}
+      {/* File list */}
       {files.length > 0 && (
         <div className="space-y-3">
           {files.map((f, i) => (
@@ -303,11 +293,11 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
                 onChange={(e) => updateFile(i, 'fileType', e.target.value)}
                 className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-[#0A3D5C] outline-none"
               >
-                <option value="dua">DUA</option>
-                <option value="invoice">Factura</option>
-                <option value="supplier_data">Datos proveedor</option>
-                <option value="certificate">Certificado</option>
-                <option value="other">Otro</option>
+                <option value="dua">{t('intake.fileTypeDua')}</option>
+                <option value="invoice">{t('intake.fileTypeInvoice')}</option>
+                <option value="supplier_data">{t('intake.fileTypeSupplier')}</option>
+                <option value="certificate">{t('intake.fileTypeCert')}</option>
+                <option value="other">{t('intake.fileTypeOther')}</option>
               </select>
               <button
                 onClick={() => removeFile(i)}
@@ -320,21 +310,21 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
         </div>
       )}
 
-      {/* Notas */}
+      {/* Notes */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Comentarios adicionales para el equipo de LexAduana
+          {t('intake.notesLabel')}
         </label>
         <textarea
           value={clientNotes || ''}
           onChange={(e) => onNotesChange(e.target.value)}
           rows={3}
-          placeholder="Cualquier información relevante sobre tus importaciones, plazos, o preguntas específicas..."
+          placeholder={t('intake.notesPlaceholder')}
           className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none resize-none"
         />
       </div>
 
-      {/* Confirmación */}
+      {/* Confirmation */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
@@ -344,8 +334,7 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
             className="w-4 h-4 rounded border-gray-300 text-[#0A3D5C] focus:ring-[#0A3D5C] mt-0.5"
           />
           <span className="text-sm text-blue-800">
-            He revisado los datos y deseo solicitar el informe de asesoría CBAM.
-            Entiendo que el equipo de LexAduana se pondrá en contacto conmigo para completar el análisis.
+            {t('intake.confirmText')}
           </span>
         </label>
       </div>
@@ -354,18 +343,25 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
 }
 
 // ============================================================
-// WIZARD PRINCIPAL
+// MAIN WIZARD
 // ============================================================
 
 export default function AdvisoryIntakeForm({ countries = [] }) {
   const router = useRouter()
+  const t = useTranslation(cbamDict)
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [requestId, setRequestId] = useState(null)
 
-  // State del formulario
+  const STEPS = [
+    { number: 1, title: t('intake.step1') },
+    { number: 2, title: t('intake.step2') },
+    { number: 3, title: t('intake.step3') },
+  ]
+
+  // Form state
   const [companyData, setCompanyData] = useState({
     companyName: '',
     companyCif: '',
@@ -383,34 +379,33 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
   const [clientNotes, setClientNotes] = useState('')
   const [confirmed, setConfirmed] = useState(false)
 
-  // Validaciones
+  // Validations
   function validateStep1() {
-    if (!companyData.companyName?.trim()) return 'El nombre de la empresa es obligatorio'
-    if (!companyData.contactName?.trim()) return 'El nombre de contacto es obligatorio'
-    if (!companyData.contactEmail?.trim()) return 'El email de contacto es obligatorio'
+    if (!companyData.companyName?.trim()) return t('intake.valCompanyRequired')
+    if (!companyData.contactName?.trim()) return t('intake.valContactRequired')
+    if (!companyData.contactEmail?.trim()) return t('intake.valEmailRequired')
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(companyData.contactEmail)) return 'El email no es válido'
+    if (!emailRegex.test(companyData.contactEmail)) return t('intake.valEmailInvalid')
     return null
   }
 
   function validateStep2() {
-    if (products.length === 0) return 'Debes añadir al menos un producto'
+    if (products.length === 0) return t('intake.valProductRequired')
     for (let i = 0; i < products.length; i++) {
       const p = products[i]
-      if (!p.productDescription?.trim()) return `Producto ${i + 1}: la descripción es obligatoria`
-      if (!p.countryCode) return `Producto ${i + 1}: selecciona un país de origen`
-      if (!p.annualTonnes || p.annualTonnes <= 0) return `Producto ${i + 1}: las toneladas deben ser positivas`
+      if (!p.productDescription?.trim()) return `${t('productEditor.productN')} ${i + 1}: ${t('intake.valProductDesc')}`
+      if (!p.countryCode) return `${t('productEditor.productN')} ${i + 1}: ${t('intake.valProductCountry')}`
+      if (!p.annualTonnes || p.annualTonnes <= 0) return `${t('productEditor.productN')} ${i + 1}: ${t('intake.valProductTonnes')}`
     }
     return null
   }
 
-  // Guardar borrador (crea o actualiza la solicitud)
+  // Save draft
   const saveDraft = useCallback(async () => {
     setSaving(true)
     setError(null)
     try {
       if (!requestId) {
-        // Crear nueva solicitud
         const res = await fetch('/api/cbam/advisory', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -420,11 +415,10 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
           }),
         })
         const json = await res.json()
-        if (!res.ok) throw new Error(json.error || 'Error al crear solicitud')
+        if (!res.ok) throw new Error(json.error || 'Error')
         setRequestId(json.data.id)
         return json.data.id
       } else {
-        // Actualizar existente
         const res = await fetch(`/api/cbam/advisory/${requestId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -434,7 +428,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
           }),
         })
         const json = await res.json()
-        if (!res.ok) throw new Error(json.error || 'Error al guardar')
+        if (!res.ok) throw new Error(json.error || 'Error')
         return requestId
       }
     } catch (err) {
@@ -445,7 +439,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     }
   }, [requestId, companyData, clientNotes])
 
-  // Guardar productos
+  // Save products
   async function saveProducts(reqId) {
     const res = await fetch(`/api/cbam/advisory/${reqId}/products`, {
       method: 'PUT',
@@ -453,11 +447,11 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       body: JSON.stringify({ products }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.error || 'Error al guardar productos')
+    if (!res.ok) throw new Error(json.error || 'Error')
     return json.data
   }
 
-  // Subir archivos
+  // Upload files
   async function uploadFiles(reqId) {
     for (const f of files) {
       if (f.uploaded) continue
@@ -472,13 +466,13 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       })
       if (!res.ok) {
         const json = await res.json()
-        throw new Error(json.error || `Error subiendo ${f.file.name}`)
+        throw new Error(json.error || `Error uploading ${f.file.name}`)
       }
       f.uploaded = true
     }
   }
 
-  // Navegar entre pasos
+  // Navigate between steps
   async function handleNext() {
     setError(null)
 
@@ -512,10 +506,10 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     setStep(step - 1)
   }
 
-  // Enviar solicitud
+  // Submit request
   async function handleSubmit() {
     if (!confirmed) {
-      setError('Debes confirmar que has revisado los datos')
+      setError(t('intake.valConfirmRequired'))
       return
     }
 
@@ -523,30 +517,25 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     setError(null)
 
     try {
-      // Guardar datos actualizados
       const id = requestId || await saveDraft()
       if (!id) return
 
-      // Actualizar notas si cambiaron
       await fetch(`/api/cbam/advisory/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientNotes }),
       })
 
-      // Subir archivos pendientes
       if (files.length > 0) {
         await uploadFiles(id)
       }
 
-      // Enviar solicitud
       const res = await fetch(`/api/cbam/advisory/${id}/submit`, {
         method: 'POST',
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Error al enviar')
+      if (!res.ok) throw new Error(json.error || 'Error')
 
-      // Redirigir a mis solicitudes
       router.push('/cbam/asesoria/mis-solicitudes')
     } catch (err) {
       setError(err.message)
@@ -557,7 +546,15 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <ProgressBar currentStep={step} />
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-[#0A3D5C]">{t('intake.pageTitle')}</h1>
+        <p className="text-sm text-gray-600 mt-1">
+          {t('intake.pageDesc')}
+        </p>
+      </div>
+
+      <ProgressBar currentStep={step} steps={STEPS} />
 
       {/* Error */}
       {error && (
@@ -567,8 +564,8 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       )}
 
       {/* Steps */}
-      {step === 1 && <Step1 data={companyData} onChange={setCompanyData} />}
-      {step === 2 && <Step2 products={products} countries={countries} onChange={setProducts} />}
+      {step === 1 && <Step1 data={companyData} onChange={setCompanyData} t={t} />}
+      {step === 2 && <Step2 products={products} countries={countries} onChange={setProducts} t={t} />}
       {step === 3 && (
         <Step3
           files={files}
@@ -577,10 +574,11 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
           onNotesChange={setClientNotes}
           confirmed={confirmed}
           onConfirmChange={setConfirmed}
+          t={t}
         />
       )}
 
-      {/* Navegación */}
+      {/* Navigation */}
       <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
         <div>
           {step > 1 && (
@@ -589,7 +587,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
               disabled={saving || submitting}
               className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              Anterior
+              {t('intake.previous')}
             </button>
           )}
         </div>
@@ -601,7 +599,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
               disabled={saving}
               className="px-4 py-2.5 text-sm text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Guardar borrador'}
+              {saving ? t('intake.savingDraft') : t('intake.saveDraft')}
             </button>
           )}
 
@@ -611,7 +609,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
               disabled={saving}
               className="px-6 py-2.5 text-sm font-medium text-white bg-[#0A3D5C] rounded-lg hover:bg-[#0d5078] transition-colors disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Siguiente'}
+              {saving ? t('intake.savingDraft') : t('intake.next')}
             </button>
           ) : (
             <button
@@ -619,7 +617,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
               disabled={submitting || !confirmed}
               className="px-6 py-2.5 text-sm font-medium text-white bg-[#0A3D5C] rounded-lg hover:bg-[#0d5078] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Enviando solicitud...' : 'Enviar solicitud'}
+              {submitting ? t('intake.submitting') : t('intake.submit')}
             </button>
           )}
         </div>

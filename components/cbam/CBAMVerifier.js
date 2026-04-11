@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { checkCBAM } from '@/lib/cbamData'
 import { trackEvent } from '@/lib/analytics'
+import { useTranslation } from '@/lib/i18n'
+import { cbamDict } from '@/lib/i18n/cbam'
 
 /**
  * Verificador CBAM interactivo
@@ -13,6 +15,7 @@ export default function CBAMVerifier({ threshold }) {
   const [hsCode, setHsCode] = useState('')
   const [result, setResult] = useState(null)
   const [checking, setChecking] = useState(false)
+  const t = useTranslation(cbamDict)
 
   const handleCheck = () => {
     if (!hsCode.trim()) return
@@ -40,10 +43,10 @@ export default function CBAMVerifier({ threshold }) {
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
       <div className="bg-gradient-to-r from-slate-50 to-gray-50 px-8 py-6 border-b border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-1">
-          Verificador CBAM
+          {t('verifier.title')}
         </h2>
         <p className="text-gray-600">
-          Comprueba si tu codigo arancelario esta afectado por el CBAM
+          {t('verifier.subtitle')}
         </p>
       </div>
 
@@ -55,7 +58,7 @@ export default function CBAMVerifier({ threshold }) {
               value={hsCode}
               onChange={(e) => setHsCode(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Introduce codigo HS/CN (ej: 7601, 2523, 72101100)"
+              placeholder={t('verifier.placeholder')}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-lg font-mono placeholder:text-gray-500"
             />
           </div>
@@ -67,17 +70,17 @@ export default function CBAMVerifier({ threshold }) {
             {checking ? (
               <>
                 <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                Verificando...
+                {t('verifier.checking')}
               </>
             ) : (
               <>
-                Verificar
+                {t('verifier.check')}
               </>
             )}
           </button>
         </div>
 
-        {/* Resultado */}
+        {/* Result */}
         {result && (
           <div className={`p-6 rounded-xl ${
             result.affected
@@ -90,34 +93,34 @@ export default function CBAMVerifier({ threshold }) {
                   <span className="text-3xl">{result.sector.icon}</span>
                   <div>
                     <h3 className="text-xl font-bold text-red-700">
-                      Producto AFECTADO por CBAM
+                      {t('verifier.affected')}
                     </h3>
                     <p className="text-red-600">
-                      Este codigo esta sujeto al Mecanismo de Ajuste en Frontera por Carbono
+                      {t('verifier.affectedDesc')}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4 mt-4">
                   <div className="bg-white/80 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Sector</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('verifier.sector')}</p>
                     <p className="font-bold text-gray-800">{result.sector.name}</p>
                   </div>
                   <div className="bg-white/80 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Gases de efecto invernadero</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('verifier.ghgGases')}</p>
                     <p className="font-bold text-gray-800">{result.gas}</p>
                   </div>
                   <div className="bg-white/80 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Tipo de emisiones</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('verifier.emissionType')}</p>
                     <p className="font-bold text-gray-800">{result.sector.emissions}</p>
                   </div>
                   <div className="bg-white/80 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Descripcion</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('verifier.description')}</p>
                     <p className="font-bold text-gray-800">{result.description}</p>
                   </div>
                 </div>
 
-                {/* Indicador de minimis */}
+                {/* De minimis indicator */}
                 <div className={`mt-4 p-4 rounded-lg ${
                   result.deMinimisApplies
                     ? 'bg-blue-50 border border-blue-200'
@@ -128,14 +131,14 @@ export default function CBAMVerifier({ threshold }) {
                     <div>
                       <p className={`font-bold ${result.deMinimisApplies ? 'text-blue-800' : 'text-purple-800'}`}>
                         {result.deMinimisApplies
-                          ? `Exencion de minimis APLICABLE (< ${massThreshold}t/año)`
-                          : 'Exencion de minimis NO APLICABLE'
+                          ? t('verifier.deMinimisApplies')
+                          : t('verifier.deMinimisNotApplies')
                         }
                       </p>
                       <p className={`text-sm ${result.deMinimisApplies ? 'text-blue-600' : 'text-purple-600'}`}>
                         {result.deMinimisApplies
-                          ? `Si importas menos de ${massThreshold} toneladas anuales de este sector, puedes estar exento (certificado Y137)`
-                          : 'La electricidad e hidrogeno no tienen umbral de minimis - siempre aplican obligaciones CBAM'
+                          ? t('verifier.deMinimisAppliesDesc').replace('{threshold}', massThreshold)
+                          : t('verifier.deMinimisNotAppliesDesc')
                         }
                       </p>
                     </div>
@@ -143,12 +146,12 @@ export default function CBAMVerifier({ threshold }) {
                 </div>
 
                 <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <h4 className="font-bold text-amber-800 mb-2">Obligaciones</h4>
+                  <h4 className="font-bold text-amber-800 mb-2">{t('verifier.obligations')}</h4>
                   <ul className="text-amber-700 text-sm space-y-1">
-                    <li>• <strong>Hasta 31/12/2025:</strong> Presentar informes trimestrales (sin pago)</li>
-                    <li>• <strong>Desde 01/01/2026:</strong> Comprar certificados CBAM segun emisiones</li>
-                    <li>• Solicitar datos de emisiones al fabricante/exportador</li>
-                    <li>• Registrarse como declarante CBAM autorizado</li>
+                    <li>• <strong>{t('verifier.obligation1')}</strong> {t('verifier.obligation1Desc')}</li>
+                    <li>• <strong>{t('verifier.obligation2')}</strong> {t('verifier.obligation2Desc')}</li>
+                    <li>• {t('verifier.obligation3')}</li>
+                    <li>• {t('verifier.obligation4')}</li>
                   </ul>
                 </div>
               </div>
@@ -157,10 +160,10 @@ export default function CBAMVerifier({ threshold }) {
                 <span className="text-3xl">✅</span>
                 <div>
                   <h3 className="text-xl font-bold text-green-700">
-                    Producto NO afectado por CBAM
+                    {t('verifier.notAffected')}
                   </h3>
                   <p className="text-green-600">
-                    Este codigo arancelario no esta incluido en el ambito del CBAM
+                    {t('verifier.notAffectedDesc')}
                   </p>
                 </div>
               </div>
