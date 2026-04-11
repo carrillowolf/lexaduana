@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { monitorDict } from '@/lib/i18n/monitor'
 
 export default function MonitorAuth() {
   const [isLogin, setIsLogin] = useState(true)
@@ -12,6 +14,7 @@ export default function MonitorAuth() {
   const [companyName, setCompanyName] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const t = useTranslation(monitorDict)
 
   const handleAuth = async (e) => {
     e.preventDefault()
@@ -63,13 +66,13 @@ export default function MonitorAuth() {
         
         setMessage({
           type: 'success',
-          text: '¡Registro exitoso! Revisa tu email para confirmar tu cuenta.'
+          text: t('auth.registerSuccess')
         })
       }
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.message || 'Error en la autenticación'
+        text: error.message || t('auth.authError')
       })
     } finally {
       setLoading(false)
@@ -90,10 +93,10 @@ export default function MonitorAuth() {
           {/* Título */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">
-              Monitor de Aranceles
+              {t('auth.title')}
             </h1>
             <p className="text-gray-600 mt-2">
-              {isLogin ? 'Accede a tu cuenta' : 'Crea tu cuenta gratis'}
+              {isLogin ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
             </p>
           </div>
 
@@ -107,17 +110,17 @@ export default function MonitorAuth() {
                   : 'text-gray-600'
               }`}
             >
-              Iniciar sesión
+              {t('auth.loginTab')}
             </button>
             <button
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-2 px-4 rounded-md transition-all ${
-                !isLogin 
-                  ? 'bg-white shadow-sm text-gray-900 font-medium' 
+                !isLogin
+                  ? 'bg-white shadow-sm text-gray-900 font-medium'
                   : 'text-gray-600'
               }`}
             >
-              Registrarse
+              {t('auth.registerTab')}
             </button>
           </div>
 
@@ -126,14 +129,14 @@ export default function MonitorAuth() {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Empresa
+                  {t('auth.company')}
                 </label>
                 <input
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Nombre de tu empresa"
+                  placeholder={t('auth.companyPlaceholder')}
                   required={!isLogin}
                 />
               </div>
@@ -141,7 +144,7 @@ export default function MonitorAuth() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -155,7 +158,7 @@ export default function MonitorAuth() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contraseña
+                {t('auth.password')}
               </label>
               <input
                 type="password"
@@ -168,7 +171,7 @@ export default function MonitorAuth() {
               />
               {!isLogin && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Mínimo 6 caracteres
+                  {t('auth.minChars')}
                 </p>
               )}
             </div>
@@ -196,10 +199,10 @@ export default function MonitorAuth() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
-                  {isLogin ? 'Accediendo...' : 'Registrando...'}
+                  {isLogin ? t('auth.loggingIn') : t('auth.registering')}
                 </span>
               ) : (
-                isLogin ? 'Acceder' : 'Crear cuenta'
+                isLogin ? t('auth.login') : t('auth.createAccount')
               )}
             </button>
           </form>
@@ -208,13 +211,13 @@ export default function MonitorAuth() {
           {!isLogin && (
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm font-semibold text-blue-900 mb-2">
-                Plan gratuito incluye:
+                {t('auth.freePlanTitle')}
               </p>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>✓ Monitorización de hasta 5 códigos HS</li>
-                <li>✓ Alertas por email</li>
-                <li>✓ Historial de cambios</li>
-                <li>✓ Dashboard personalizado</li>
+                <li>{t('auth.freePlan1')}</li>
+                <li>{t('auth.freePlan2')}</li>
+                <li>{t('auth.freePlan3')}</li>
+                <li>{t('auth.freePlan4')}</li>
               </ul>
             </div>
           )}
@@ -225,7 +228,7 @@ export default function MonitorAuth() {
               href="/"
               className="text-sm text-gray-600 hover:text-gray-900"
             >
-              ← Volver a la calculadora
+              {t('auth.backToCalc')}
             </Link>
           </div>
         </div>

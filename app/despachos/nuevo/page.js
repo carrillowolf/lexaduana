@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { despachosDict } from '@/lib/i18n/despachos'
 
 export default function NuevoDespacho() {
   const [user, setUser] = useState(null)
@@ -14,6 +16,7 @@ export default function NuevoDespacho() {
   
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslation(despachosDict)
 
   // Form data
   const [formData, setFormData] = useState({
@@ -47,47 +50,47 @@ export default function NuevoDespacho() {
   }, [router, supabase])
 
   const operationTypes = [
-    { 
-      id: 'import_maritime', 
-      name: 'Importación Marítima',
+    {
+      id: 'import_maritime',
+      name: t('nuevo.operationTypes.import_maritime.name'),
       icon: '🚢',
-      description: 'FCL/LCL, BL, Puerto'
+      description: t('nuevo.operationTypes.import_maritime.desc')
     },
-    { 
-      id: 'import_air', 
-      name: 'Importación Aérea',
+    {
+      id: 'import_air',
+      name: t('nuevo.operationTypes.import_air.name'),
       icon: '✈️',
-      description: 'AWB, Aeropuerto'
+      description: t('nuevo.operationTypes.import_air.desc')
     },
-    { 
-      id: 'import_road', 
-      name: 'Importación Terrestre',
+    {
+      id: 'import_road',
+      name: t('nuevo.operationTypes.import_road.name'),
       icon: '🚛',
-      description: 'CMR, Carretera'
+      description: t('nuevo.operationTypes.import_road.desc')
     },
-    { 
-      id: 'export_maritime', 
-      name: 'Exportación Marítima',
+    {
+      id: 'export_maritime',
+      name: t('nuevo.operationTypes.export_maritime.name'),
       icon: '🚢📤',
-      description: 'BL, Puerto salida'
+      description: t('nuevo.operationTypes.export_maritime.desc')
     },
-    { 
-      id: 'export_air', 
-      name: 'Exportación Aérea',
+    {
+      id: 'export_air',
+      name: t('nuevo.operationTypes.export_air.name'),
       icon: '✈️📤',
-      description: 'AWB, Aeropuerto salida'
+      description: t('nuevo.operationTypes.export_air.desc')
     },
-    { 
-      id: 'export_road', 
-      name: 'Exportación Terrestre',
+    {
+      id: 'export_road',
+      name: t('nuevo.operationTypes.export_road.name'),
       icon: '🚛📤',
-      description: 'CMR, Carretera'
+      description: t('nuevo.operationTypes.export_road.desc')
     },
-    { 
-      id: 'transit', 
-      name: 'Tránsito',
+    {
+      id: 'transit',
+      name: t('nuevo.operationTypes.transit.name'),
       icon: '🔄',
-      description: 'T1/T2'
+      description: t('nuevo.operationTypes.transit.desc')
     }
   ]
 
@@ -186,8 +189,8 @@ export default function NuevoDespacho() {
             <Link href="/despachos" className="flex items-center space-x-3">
               <img src="/logo.png" alt="LexAduana" className="h-10 w-10" />
               <div>
-                <h1 className="text-xl font-bold text-[#0A3D5C]">Nuevo Despacho</h1>
-                <p className="text-xs text-gray-500">Crear expediente</p>
+                <h1 className="text-xl font-bold text-[#0A3D5C]">{t('nuevo.title')}</h1>
+                <p className="text-xs text-gray-500">{t('nuevo.subtitle')}</p>
               </div>
             </Link>
 
@@ -195,7 +198,7 @@ export default function NuevoDespacho() {
               href="/despachos"
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
             >
-              ← Cancelar
+              ← {t('common.cancel')}
             </Link>
           </div>
         </div>
@@ -206,8 +209,8 @@ export default function NuevoDespacho() {
         {step === 1 && (
           <div>
             <div className="mb-8 text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">¿Qué tipo de operación es?</h2>
-              <p className="text-gray-600">Selecciona el tipo de despacho a crear</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-3">{t('nuevo.step1')}</h2>
+              <p className="text-gray-600">{t('nuevo.selectType')}</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -267,20 +270,20 @@ export default function NuevoDespacho() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Datos básicos */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Datos básicos</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('nuevo.clientSection')}</h3>
                 
                 <div className="grid md:grid-cols-2 gap-4">
                   {/* Nº Expediente */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Nº Expediente <span className="text-red-500">*</span>
+                      {t('nuevo.expedienteNumber')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="expediente_number"
                       value={formData.expediente_number}
                       onChange={handleChange}
-                      placeholder="MAD-2025-001234"
+                      placeholder={t('nuevo.expedientePlaceholder')}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition"
                       required
                     />
@@ -290,14 +293,14 @@ export default function NuevoDespacho() {
                   {/* Cliente */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Cliente <span className="text-red-500">*</span>
+                      {t('nuevo.clientName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="client_name"
                       value={formData.client_name}
                       onChange={handleChange}
-                      placeholder="ABC Importaciones S.L."
+                      placeholder={t('nuevo.clientPlaceholder')}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition"
                       required
                     />
@@ -306,13 +309,13 @@ export default function NuevoDespacho() {
                   {/* Producto */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Descripción producto
+                      {t('nuevo.productDesc')}
                     </label>
                     <textarea
                       name="product_description"
                       value={formData.product_description}
                       onChange={handleChange}
-                      placeholder="Tablets industriales con teclado..."
+                      placeholder={t('nuevo.productPlaceholder')}
                       rows={2}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition resize-none"
                     />
@@ -321,7 +324,7 @@ export default function NuevoDespacho() {
                   {/* Código HS */}
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Código HS (opcional)
+                      {t('nuevo.hsCode')}
                     </label>
                     <input
                       type="text"
@@ -337,7 +340,7 @@ export default function NuevoDespacho() {
                   {/* Incoterm */}
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Incoterm
+                      {t('nuevo.incoterm')}
                     </label>
                     <select
                       name="incoterm"
@@ -345,7 +348,7 @@ export default function NuevoDespacho() {
                       onChange={handleChange}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition"
                     >
-                      <option value="">Seleccionar...</option>
+                      <option value="">{t('nuevo.selectIncoterm')}</option>
                       <option value="EXW">EXW</option>
                       <option value="FCA">FCA</option>
                       <option value="FOB">FOB</option>
@@ -362,24 +365,23 @@ export default function NuevoDespacho() {
 
               {/* Transporte */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Transporte</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('nuevo.transportSection')}</h3>
                 
                 <div className="grid md:grid-cols-2 gap-4">
                   {/* Referencia transporte */}
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      {operationType?.includes('maritime') ? 'BL Number' :
-                       operationType?.includes('air') ? 'AWB Number' :
-                       'CMR Number'}
+                      {t('nuevo.transportRef')}
                     </label>
                     <input
                       type="text"
                       name="transport_reference"
                       value={formData.transport_reference}
                       onChange={handleChange}
-                      placeholder={operationType?.includes('maritime') ? 'MAEU123456789' : 
-                                   operationType?.includes('air') ? '020-12345678' :
-                                   'CMR123456'}
+                      placeholder={operationType?.includes('maritime') ? t('nuevo.transportPlaceholder.maritime') :
+                                   operationType?.includes('air') ? t('nuevo.transportPlaceholder.air') :
+                                   operationType === 'transit' ? t('nuevo.transportPlaceholder.transit') :
+                                   t('nuevo.transportPlaceholder.road')}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition"
                     />
                   </div>
@@ -388,7 +390,7 @@ export default function NuevoDespacho() {
                   {isImport ? (
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">
-                        ETA (Estimated Time Arrival)
+                        {t('nuevo.eta')}
                       </label>
                       <input
                         type="date"
@@ -401,7 +403,7 @@ export default function NuevoDespacho() {
                   ) : (
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">
-                        ETD (Estimated Time Departure)
+                        {t('nuevo.etd')}
                       </label>
                       <input
                         type="date"
@@ -418,7 +420,7 @@ export default function NuevoDespacho() {
                     <>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                          Tipo contenedor
+                          {t('nuevo.containerType')}
                         </label>
                         <select
                           name="container_type"
@@ -426,7 +428,7 @@ export default function NuevoDespacho() {
                           onChange={handleChange}
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition"
                         >
-                          <option value="">Seleccionar...</option>
+                          <option value="">{t('nuevo.selectIncoterm')}</option>
                           <option value="FCL">FCL (Full Container Load)</option>
                           <option value="LCL">LCL (Less than Container Load)</option>
                         </select>
@@ -473,13 +475,13 @@ export default function NuevoDespacho() {
 
               {/* Estado inicial */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Estado inicial</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('nuevo.initialStatus')}</h3>
                 
                 <div className="grid md:grid-cols-2 gap-4">
                   {/* Gastos */}
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Estado gastos
+                      {t('nuevo.expensesStatus')}
                     </label>
                     <select
                       name="expenses_status"
@@ -504,7 +506,7 @@ export default function NuevoDespacho() {
                           className="w-5 h-5 text-[#0A3D5C] border-gray-300 rounded focus:ring-[#0A3D5C]"
                         />
                         <span className="text-sm font-medium text-gray-700">
-                          CR recibido
+                          {t('nuevo.crReceived')}
                         </span>
                       </label>
                     </div>
@@ -514,13 +516,13 @@ export default function NuevoDespacho() {
 
               {/* Notas */}
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Notas internas</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('nuevo.notesSection')}</h3>
                 <textarea
                   name="internal_notes"
                   value={formData.internal_notes}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Notas adicionales sobre este despacho..."
+                  placeholder={t('nuevo.notesPlaceholder')}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition resize-none"
                 />
               </div>
@@ -543,7 +545,7 @@ export default function NuevoDespacho() {
                   href="/despachos"
                   className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </Link>
                 <button
                   type="submit"
@@ -556,14 +558,14 @@ export default function NuevoDespacho() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>Creando...</span>
+                      <span>{t('nuevo.creating')}</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>Crear despacho</span>
+                      <span>{t('nuevo.create')}</span>
                     </>
                   )}
                 </button>

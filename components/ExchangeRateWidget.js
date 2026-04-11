@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useTranslation } from '@/lib/i18n'
+import { sharedComponentsDict } from '@/lib/i18n/shared-components'
 import Link from 'next/link'
 
 export default function ExchangeRateWidget() {
@@ -9,6 +11,7 @@ export default function ExchangeRateWidget() {
   const [upcomingRates, setUpcomingRates] = useState([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+  const t = useTranslation(sharedComponentsDict)
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -48,7 +51,7 @@ export default function ExchangeRateWidget() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                <strong>Nuevos tipos de cambio desde el {new Date(upcomingRates[0].effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+                <strong>{t('exchangeWidget.upcoming')} {new Date(upcomingRates[0].effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
               </p>
             </div>
           </div>
@@ -59,13 +62,13 @@ export default function ExchangeRateWidget() {
       <div className="bg-white rounded-lg shadow-md p-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-sm font-semibold text-gray-700">
-            💱 Tipos de Cambio Oficiales (BCE)
+            {t('exchangeWidget.title')}
           </h3>
           <Link
             href="/tipos-cambio"
             className="text-xs text-blue-600 hover:text-blue-700"
           >
-            Ver todos →
+            {t('exchangeWidget.viewAll')}
           </Link>
         </div>
         
@@ -86,7 +89,7 @@ export default function ExchangeRateWidget() {
         </div>
 
         <p className="text-xs text-gray-500 mt-2">
-          Vigentes desde: {currentRates[0]?.effective_from ? new Date(currentRates[0].effective_from).toLocaleDateString('es-ES') : ''}
+          {t('exchangeWidget.effectiveFrom')} {currentRates[0]?.effective_from ? new Date(currentRates[0].effective_from).toLocaleDateString('es-ES') : ''}
         </p>
       </div>
     </div>

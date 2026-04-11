@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { parseCSV, generateSampleCSV } from '@/lib/csvParser'
 import { exportBulkToExcel } from '@/lib/excelExporter'
+import { useTranslation } from '@/lib/i18n'
+import { bulkDict } from '@/lib/i18n/bulk'
 
 export default function BulkCalculatorPage() {
   const [file, setFile] = useState(null)
@@ -18,6 +20,7 @@ export default function BulkCalculatorPage() {
   const [dragActive, setDragActive] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslation(bulkDict)
 
   // Verificar usuario
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function BulkCalculatorPage() {
         setError('')
 
         if (parsed.hasErrors) {
-          setError(`Se encontraron ${parsed.errors.length} errores en el archivo. Revisa la tabla de errores.`)
+          setError(t('upload.fileErrors').replace('{count}', parsed.errors.length))
         }
       } catch (err) {
         setError(err.message)
@@ -85,7 +88,7 @@ export default function BulkCalculatorPage() {
       const droppedFile = files[0]
 
       if (!droppedFile.name.endsWith('.csv')) {
-        setError('Solo se permiten archivos CSV')
+        setError(t('upload.csvOnly'))
         return
       }
 
@@ -99,7 +102,7 @@ export default function BulkCalculatorPage() {
           setError('')
 
           if (parsed.hasErrors) {
-            setError(`Se encontraron ${parsed.errors.length} errores en el archivo. Revisa la tabla de errores.`)
+            setError(t('upload.fileErrors').replace('{count}', parsed.errors.length))
           }
         } catch (err) {
           setError(err.message)
@@ -113,7 +116,7 @@ export default function BulkCalculatorPage() {
 
   const handleProcess = async () => {
     if (!parsedData || parsedData.items.length === 0) {
-      setError('No hay datos válidos para procesar')
+      setError(t('upload.noValidData'))
       return
     }
 
@@ -127,7 +130,7 @@ export default function BulkCalculatorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: parsedData.items,
-          batchName: batchName || `Lote ${new Date().toLocaleDateString('es-ES')}`
+          batchName: batchName || `${t('upload.batchPlaceholder')} ${new Date().toLocaleDateString('es-ES')}`
         })
       })
 
@@ -190,10 +193,10 @@ export default function BulkCalculatorPage() {
         <div className="mb-8 bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] rounded-2xl shadow-xl p-8 text-white">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-3xl font-bold mb-3">📊 Calculadora Masiva</h2>
-              <p className="text-blue-100 text-lg mb-2">Procesa múltiples cálculos simultáneamente desde un archivo CSV</p>
+              <h2 className="text-3xl font-bold mb-3">📊 {t('hero.title')}</h2>
+              <p className="text-blue-100 text-lg mb-2">{t('hero.subtitle')}</p>
               <p className="text-blue-200 text-sm">
-                Ahorra tiempo calculando hasta 100 productos de una sola vez
+                {t('hero.desc')}
               </p>
             </div>
             <div className="hidden md:block">
@@ -213,50 +216,50 @@ export default function BulkCalculatorPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Instrucciones de uso</h3>
+              <h3 className="text-xl font-bold text-gray-900">{t('instructions.title')}</h3>
             </div>
           </div>
           <div className="p-8">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <h4 className="font-bold text-gray-900 mb-3">📋 Formato del archivo CSV:</h4>
+                <h4 className="font-bold text-gray-900 mb-3">📋 {t('instructions.formatTitle')}</h4>
                 <div className="space-y-2 text-sm text-gray-700">
                   <p className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Columnas requeridas: <strong>hsCode</strong>, <strong>cifValue</strong>, <strong>countryCode</strong></span>
+                    <span dangerouslySetInnerHTML={{ __html: t('instructions.formatCols') }} />
                   </p>
                   <p className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Separador: coma (,)</span>
+                    <span>{t('instructions.formatSep')}</span>
                   </p>
                   <p className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Máximo 100 productos por archivo</span>
+                    <span>{t('instructions.formatMax')}</span>
                   </p>
                   <p className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Códigos HS de 8 o 10 dígitos</span>
+                    <span>{t('instructions.formatDigits')}</span>
                   </p>
                 </div>
               </div>
               <div className="space-y-3">
-                <h4 className="font-bold text-gray-900 mb-3">⚡ Proceso rápido:</h4>
+                <h4 className="font-bold text-gray-900 mb-3">⚡ {t('instructions.processTitle')}</h4>
                 <div className="space-y-2 text-sm text-gray-700">
                   <p className="flex items-start">
                     <span className="mr-2">1.</span>
-                    <span>Descarga el archivo de ejemplo</span>
+                    <span>{t('instructions.processStep1')}</span>
                   </p>
                   <p className="flex items-start">
                     <span className="mr-2">2.</span>
-                    <span>Rellena con tus datos</span>
+                    <span>{t('instructions.processStep2')}</span>
                   </p>
                   <p className="flex items-start">
                     <span className="mr-2">3.</span>
-                    <span>Sube el archivo aquí</span>
+                    <span>{t('instructions.processStep3')}</span>
                   </p>
                   <p className="flex items-start">
                     <span className="mr-2">4.</span>
-                    <span>Procesa y descarga resultados en Excel</span>
+                    <span>{t('instructions.processStep4')}</span>
                   </p>
                 </div>
               </div>
@@ -269,7 +272,7 @@ export default function BulkCalculatorPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>Descargar archivo de ejemplo</span>
+                <span>{t('instructions.downloadSample')}</span>
               </button>
             </div>
           </div>
@@ -285,20 +288,20 @@ export default function BulkCalculatorPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-[#0A3D5C]">Subir archivo CSV</h3>
+                <h3 className="text-xl font-bold text-[#0A3D5C]">{t('upload.title')}</h3>
               </div>
             </div>
             <div className="p-8">
               {/* Nombre del lote */}
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Nombre del lote (opcional)
+                  {t('upload.batchLabel')}
                 </label>
                 <input
                   type="text"
                   value={batchName}
                   onChange={(e) => setBatchName(e.target.value)}
-                  placeholder={`Lote ${new Date().toLocaleDateString('es-ES')}`}
+                  placeholder={`${t('upload.batchPlaceholder')} ${new Date().toLocaleDateString('es-ES')}`}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition-all"
                 />
               </div>
@@ -325,10 +328,10 @@ export default function BulkCalculatorPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                   <p className="text-lg font-bold text-gray-700 mb-2">
-                    {file ? file.name : 'Arrastra tu archivo CSV aquí'}
+                    {file ? file.name : t('upload.dragText')}
                   </p>
                   <p className="text-sm text-gray-500">
-                    o haz click para seleccionar
+                    {t('upload.clickText')}
                   </p>
                 </div>
               </div>
@@ -337,16 +340,16 @@ export default function BulkCalculatorPage() {
               {parsedData && parsedData.items.length > 0 && (
                 <div className="mt-6">
                   <h4 className="font-bold text-gray-900 mb-4">
-                    Vista previa ({parsedData.items.length} productos detectados)
+                    {t('upload.preview')} ({parsedData.items.length} {t('upload.productsDetected')})
                   </h4>
                   <div className="overflow-x-auto rounded-xl border border-gray-200">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Línea</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Código HS</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Valor CIF</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">País</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">{t('upload.colLine')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">{t('upload.colHsCode')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">{t('upload.colCifValue')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">{t('upload.colCountry')}</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -363,7 +366,7 @@ export default function BulkCalculatorPage() {
                   </div>
                   {parsedData.items.length > 5 && (
                     <p className="text-sm text-gray-500 mt-2 text-center">
-                      ... y {parsedData.items.length - 5} productos más
+                      ... {t('upload.andMore').replace('{count}', parsedData.items.length - 5)}
                     </p>
                   )}
                 </div>
@@ -376,12 +379,12 @@ export default function BulkCalculatorPage() {
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Errores encontrados ({parsedData.errors.length})
+                    {t('upload.errorsFound')} ({parsedData.errors.length})
                   </h4>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {parsedData.errors.map((err, index) => (
                       <p key={index} className="text-sm text-red-700">
-                        • Línea {err.line}: {err.message}
+                        • {t('upload.errorLine').replace('{line}', err.line)} {err.message}
                       </p>
                     ))}
                   </div>
@@ -395,7 +398,7 @@ export default function BulkCalculatorPage() {
                     onClick={resetForm}
                     className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all"
                   >
-                    Cancelar
+                    {t('upload.cancel')}
                   </button>
                   <button
                     onClick={handleProcess}
@@ -408,14 +411,14 @@ export default function BulkCalculatorPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Procesando...</span>
+                        <span>{t('upload.processing')}</span>
                       </>
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                         </svg>
-                        <span>Procesar {parsedData.items.length} productos</span>
+                        <span>{t('upload.process')} {parsedData.items.length} {t('upload.products')}</span>
                       </>
                     )}
                   </button>
@@ -450,7 +453,7 @@ export default function BulkCalculatorPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-white">Resultados del procesamiento</h3>
+                    <h3 className="text-xl font-bold text-white">{t('results.title')}</h3>
                   </div>
                   <div className="flex space-x-3">
                     <button
@@ -460,13 +463,13 @@ export default function BulkCalculatorPage() {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <span>Exportar a Excel</span>
+                      <span>{t('results.exportExcel')}</span>
                     </button>
                     <button
                       onClick={resetForm}
                       className="px-6 py-3 bg-white/20 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/30 transition-all"
                     >
-                      Nuevo lote
+                      {t('results.newBatch')}
                     </button>
                   </div>
                 </div>
@@ -477,7 +480,7 @@ export default function BulkCalculatorPage() {
                 <div className="grid md:grid-cols-4 gap-6 mb-8">
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">Total procesados</span>
+                      <span className="text-sm font-medium text-gray-600">{t('results.totalProcessed')}</span>
                       <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
@@ -487,7 +490,7 @@ export default function BulkCalculatorPage() {
 
                   <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-100">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">Exitosos</span>
+                      <span className="text-sm font-medium text-gray-600">{t('results.successful')}</span>
                       <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -497,7 +500,7 @@ export default function BulkCalculatorPage() {
 
                   <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-6 border border-red-100">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">Con errores</span>
+                      <span className="text-sm font-medium text-gray-600">{t('results.withErrors')}</span>
                       <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -507,7 +510,7 @@ export default function BulkCalculatorPage() {
 
                   <div className="bg-gradient-to-br from-[#F4C542]/20 to-amber-50 rounded-xl p-6 border border-amber-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">Total a pagar</span>
+                      <span className="text-sm font-medium text-gray-600">{t('results.totalPayable')}</span>
                       <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -520,18 +523,18 @@ export default function BulkCalculatorPage() {
 
                 {/* Desglose financiero */}
                 <div className="bg-gray-50 rounded-xl p-6 mb-8">
-                  <h4 className="font-bold text-gray-900 mb-4">Desglose financiero</h4>
+                  <h4 className="font-bold text-gray-900 mb-4">{t('results.financialBreakdown')}</h4>
                   <div className="grid md:grid-cols-3 gap-4 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Valor CIF total:</span>
+                      <span className="text-gray-600">{t('results.totalCif')}</span>
                       <span className="font-bold text-gray-900">{formatCurrency(results.summary.totals.totalCIF)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Total aranceles:</span>
+                      <span className="text-gray-600">{t('results.totalDuties')}</span>
                       <span className="font-bold text-gray-900">{formatCurrency(results.summary.totals.totalDuties)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Total IVA:</span>
+                      <span className="text-gray-600">{t('results.totalVat')}</span>
                       <span className="font-bold text-gray-900">{formatCurrency(results.summary.totals.totalVAT)}</span>
                     </div>
                   </div>
@@ -539,18 +542,18 @@ export default function BulkCalculatorPage() {
 
                 {/* Tabla de resultados */}
                 <div>
-                  <h4 className="font-bold text-gray-900 mb-4">Detalle de productos</h4>
+                  <h4 className="font-bold text-gray-900 mb-4">{t('results.productDetail')}</h4>
                   <div className="overflow-x-auto rounded-xl border border-gray-200">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Código HS</th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">País</th>
-                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Valor CIF</th>
-                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Aranceles</th>
-                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">IVA</th>
-                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total</th>
-                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Estado</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">{t('results.colHsCode')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">{t('results.colCountry')}</th>
+                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">{t('results.colCifValue')}</th>
+                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">{t('results.colDuties')}</th>
+                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">{t('results.colVat')}</th>
+                          <th className="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">{t('results.colTotal')}</th>
+                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">{t('results.colStatus')}</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -562,7 +565,7 @@ export default function BulkCalculatorPage() {
                                   {item.hsCode}
                                   {item.savings > 0 && (
                                     <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                      -{item.savings > 0 ? formatCurrency(item.savings) : ''} ahorro
+                                      -{item.savings > 0 ? formatCurrency(item.savings) : ''} {t('results.savings')}
                                     </span>
                                   )}
                                 </td>
@@ -619,12 +622,12 @@ export default function BulkCalculatorPage() {
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Productos con errores ({results.errors.length})
+                      {t('results.productsWithErrors')} ({results.errors.length})
                     </h4>
                     <div className="space-y-2">
                       {results.errors.map((err, index) => (
                         <div key={index} className="text-sm text-red-700 bg-white rounded-lg p-3">
-                          <p className="font-medium">Línea {err.line} - Código HS: {err.hsCode}</p>
+                          <p className="font-medium">{t('results.errorLine').replace('{line}', err.line).replace('{code}', err.hsCode)}</p>
                           <p className="text-red-600 mt-1">{err.error}</p>
                         </div>
                       ))}

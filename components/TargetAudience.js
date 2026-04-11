@@ -1,44 +1,50 @@
+'use client'
+
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { landingDict } from '@/lib/i18n/landing'
 
 export default function TargetAudience() {
+  const t = useTranslation(landingDict)
+
   const profiles = [
     {
       icon: '🏢',
-      title: 'Importadores',
-      subtitle: 'Empresas que importan regularmente',
+      title: t('audience.p1Title'),
+      subtitle: t('audience.p1Subtitle'),
       benefits: [
-        'Control total de costes de importación',
-        'Historial completo de cálculos',
-        'Exportación a Excel para contabilidad',
-        'Conversión automática de monedas'
+        t('audience.p1B1'),
+        t('audience.p1B2'),
+        t('audience.p1B3'),
+        t('audience.p1B4'),
       ],
-      cta: 'Optimiza tus importaciones',
+      cta: t('audience.p1Cta'),
       color: 'blue'
     },
     {
       icon: '🛃',
-      title: 'Agentes de Aduanas',
-      subtitle: 'Profesionales del despacho',
+      title: t('audience.p2Title'),
+      subtitle: t('audience.p2Subtitle'),
       benefits: [
-        'Cálculos rápidos y precisos',
-        'Alertas TARIC automáticas',
-        'Procesamiento masivo (bulk)',
-        'Datos oficiales actualizados'
+        t('audience.p2B1'),
+        t('audience.p2B2'),
+        t('audience.p2B3'),
+        t('audience.p2B4'),
       ],
-      cta: 'Acelera tus despachos',
+      cta: t('audience.p2Cta'),
       color: 'yellow'
     },
     {
       icon: '💼',
-      title: 'Consultores Fiscales',
-      subtitle: 'Asesores especializados',
+      title: t('audience.p3Title'),
+      subtitle: t('audience.p3Subtitle'),
       benefits: [
-        'Herramienta profesional para clientes',
-        'Cumplimiento normativo garantizado',
-        'Reportes exportables',
-        'Base de datos completa TARIC'
+        t('audience.p3B1'),
+        t('audience.p3B2'),
+        t('audience.p3B3'),
+        t('audience.p3B4'),
       ],
-      cta: 'Asesora con precisión',
+      cta: t('audience.p3Cta'),
       color: 'green'
     }
   ]
@@ -50,26 +56,26 @@ export default function TargetAudience() {
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#0A3D5C] mb-4">
-              ¿Para quién es LexAduana?
+              {t('audience.sectionTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              Profesionales que necesitan cálculos precisos y cumplimiento garantizado
+              {t('audience.sectionSubtitle')}
             </p>
           </div>
 
           {/* Grid de perfiles */}
           <div className="grid md:grid-cols-3 gap-8">
             {profiles.map((profile, index) => (
-              <div 
+              <div
                 key={index}
                 className="bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition-shadow"
               >
                 <div className="text-6xl mb-4 text-center">{profile.icon}</div>
-                
+
                 <h3 className="text-2xl font-bold text-[#0A3D5C] mb-2 text-center">
                   {profile.title}
                 </h3>
-                
+
                 <p className="text-gray-600 text-center mb-6">
                   {profile.subtitle}
                 </p>

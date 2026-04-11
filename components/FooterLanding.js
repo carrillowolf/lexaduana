@@ -1,7 +1,13 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { footerDict } from '@/lib/i18n/footer'
 
 export default function FooterLanding() {
+  const t = useTranslation(footerDict)
+
   return (
     <footer className="bg-[#0A3D5C] text-white">
       {/* Main Footer */}
@@ -11,20 +17,19 @@ export default function FooterLanding() {
             {/* Logo + Descripción */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <Image 
-                  src="/logo.png" 
-                  alt="LexAduana" 
-                  width={50} 
+                <Image
+                  src="/logo.png"
+                  alt="LexAduana"
+                  width={50}
                   height={50}
                 />
                 <div>
-                  <h3 className="text-xl font-bold">LEXADUANA</h3>
-                  <p className="text-sm text-[#F4C542]">Plataforma Profesional Aduanera</p>
+                  <h3 className="text-xl font-bold">{t('brand.name')}</h3>
+                  <p className="text-sm text-[#F4C542]">{t('brand.tagline')}</p>
                 </div>
               </div>
               <p className="text-gray-300 mb-4">
-                Calculadora TARIC profesional con 49,700 registros oficiales. 
-                Cumplimiento garantizado según normativa UE 2447/2015.
+                {t('brand.description')}
               </p>
               <div className="flex gap-4">
                 <a href="#" className="text-gray-300 hover:text-[#F4C542] transition">
@@ -42,31 +47,31 @@ export default function FooterLanding() {
 
             {/* Producto */}
             <div>
-              <h4 className="font-bold text-lg mb-4 text-[#F4C542]">Producto</h4>
+              <h4 className="font-bold text-lg mb-4 text-[#F4C542]">{t('product.title')}</h4>
               <ul className="space-y-2">
                 <li>
                   <a href="#calculator" className="text-gray-300 hover:text-white transition">
-                    Calculadora
+                    {t('product.calculator')}
                   </a>
                 </li>
                 <li>
                   <Link href="/bulk" className="text-gray-300 hover:text-white transition">
-                    Cálculo Masivo
+                    {t('product.bulkCalc')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/tipos-cambio" className="text-gray-300 hover:text-white transition">
-                    Tipos de Cambio
+                    {t('product.exchangeRates')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/glosario" className="text-gray-300 hover:text-white transition">
-                    Glosario
+                    {t('product.glossary')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/dashboard" className="text-gray-300 hover:text-white transition">
-                    Dashboard
+                    {t('product.dashboard')}
                   </Link>
                 </li>
               </ul>
@@ -74,31 +79,31 @@ export default function FooterLanding() {
 
             {/* Empresa */}
             <div>
-              <h4 className="font-bold text-lg mb-4 text-[#F4C542]">Empresa</h4>
+              <h4 className="font-bold text-lg mb-4 text-[#F4C542]">{t('company.title')}</h4>
               <ul className="space-y-2">
                 <li>
                   <a href="mailto:soporte@lexaduana.es" className="text-gray-300 hover:text-white transition">
-                    Contacto
+                    {t('company.contact')}
                   </a>
                 </li>
                 <li>
                   <Link href="/auth/register" className="text-gray-300 hover:text-white transition">
-                    Registrarse
+                    {t('company.register')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/auth/login" className="text-gray-300 hover:text-white transition">
-                    Iniciar Sesión
+                    {t('company.login')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/politica-privacidad" className="text-gray-300 hover:text-white transition">
-                    Política de Privacidad
+                    {t('company.privacy')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/terminos-uso" className="text-gray-300 hover:text-white transition">
-                    Términos de Uso
+                    {t('company.terms')}
                   </Link>
                 </li>
               </ul>
@@ -114,22 +119,22 @@ export default function FooterLanding() {
             <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-400">
               <div>
                 <p className="mb-2">
-                  <strong className="text-[#F4C542]">Normativa aplicable:</strong>
+                  <strong className="text-[#F4C542]">{t('legal.regulationsTitle')}</strong>
                 </p>
                 <ul className="space-y-1">
-                  <li>• Reglamento (UE) 2447/2015 - Código Aduanero de la Unión</li>
-                  <li>• Ley 46/1998 - Introducción del Euro</li>
-                  <li>• Base de datos TARIC oficial</li>
+                  <li>• {t('legal.reg1')}</li>
+                  <li>• {t('legal.reg2')}</li>
+                  <li>• {t('legal.reg3')}</li>
                 </ul>
               </div>
               <div>
                 <p className="mb-2">
-                  <strong className="text-[#F4C542]">Fuentes oficiales:</strong>
+                  <strong className="text-[#F4C542]">{t('legal.sourcesTitle')}</strong>
                 </p>
                 <ul className="space-y-1">
-                  <li>• Boletín Oficial del Estado (BOE)</li>
-                  <li>• Banco Central Europeo (BCE)</li>
-                  <li>• Comisión Europea - DG TAXUD</li>
+                  <li>• {t('legal.src1')}</li>
+                  <li>• {t('legal.src2')}</li>
+                  <li>• {t('legal.src3')}</li>
                 </ul>
               </div>
             </div>
@@ -142,10 +147,10 @@ export default function FooterLanding() {
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
             <p>
-              © {new Date().getFullYear()} LexAduana. Todos los derechos reservados.
+              {t('copyright.rights').replace('{year}', new Date().getFullYear())}
             </p>
             <p className="mt-2 md:mt-0">
-              Datos actualizados según normativa vigente. Para importaciones oficiales, consulte con las autoridades aduaneras competentes.
+              {t('copyright.disclaimer')}
             </p>
           </div>
         </div>

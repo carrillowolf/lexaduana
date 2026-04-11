@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useTranslation } from '@/lib/i18n'
+import { sharedComponentsDict } from '@/lib/i18n/shared-components'
 
 export default function DispatchChecklist({ dispatchId, dispatchType }) {
   const [checklist, setChecklist] = useState([])
@@ -12,6 +14,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
   const [selectedCategory, setSelectedCategory] = useState('')
   
   const supabase = createClient()
+  const t = useTranslation(sharedComponentsDict)
 
   useEffect(() => {
     if (dispatchId) {
@@ -57,7 +60,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
       ))
     } catch (error) {
       console.error('Error actualizando item:', error)
-      alert('Error al actualizar el checklist')
+      alert(t('checklist.errorUpdating'))
     } finally {
       setSaving(false)
     }
@@ -90,14 +93,14 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
       setShowAddItem(false)
     } catch (error) {
       console.error('Error añadiendo item:', error)
-      alert('Error al añadir item')
+      alert(t('checklist.errorAdding'))
     } finally {
       setSaving(false)
     }
   }
 
   const deleteCustomItem = async (itemId) => {
-    if (!confirm('¿Eliminar este item del checklist?')) return
+    if (!confirm(t('checklist.deleteConfirm'))) return
 
     setSaving(true)
     try {
@@ -111,7 +114,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
       setChecklist(prev => prev.filter(item => item.id !== itemId))
     } catch (error) {
       console.error('Error eliminando item:', error)
-      alert('Error al eliminar item')
+      alert(t('checklist.errorDeleting'))
     } finally {
       setSaving(false)
     }
@@ -146,19 +149,9 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
     return icons[category] || '📋'
   }
 
-  // Nombre categoría en español
+  // Nombre categoría traducido
   const getCategoryName = (category) => {
-    const names = {
-      'recepcion': 'RECEPCIÓN',
-      'documentacion': 'DOCUMENTACIÓN',
-      'gastos': 'GASTOS',
-      'llegada': 'LLEGADA',
-      'despacho': 'DESPACHO ADUANAS',
-      'cierre': 'CIERRE',
-      'salida': 'SALIDA',
-      'transito': 'TRÁNSITO'
-    }
-    return names[category] || category.toUpperCase()
+    return t(`checklist.categories.${category}`) || category.toUpperCase()
   }
 
   if (loading) {
@@ -182,11 +175,11 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-bold text-gray-900">
-            Checklist {saving && <span className="text-xs text-gray-500 ml-2">Guardando...</span>}
+            {t('checklist.title')} {saving && <span className="text-xs text-gray-500 ml-2">{t('checklist.saving')}</span>}
           </h3>
           <div className="text-right">
             <p className="text-sm font-bold text-gray-900">
-              {completedItems}/{totalItems} completados
+              {completedItems}/{totalItems} {t('checklist.completed')}
             </p>
             <p className="text-xs text-gray-500">{progressPercent}%</p>
           </div>
@@ -263,7 +256,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
                         {item.item_text}
                         {item.is_custom && (
                           <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                            Personalizado
+                            {t('checklist.custom')}
                           </span>
                         )}
                       </p>
@@ -284,7 +277,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
                       <button
                         onClick={() => deleteCustomItem(item.id)}
                         className="flex-shrink-0 text-red-500 hover:text-red-700 transition"
-                        title="Eliminar item personalizado"
+                        title={t('checklist.deleteCustomTitle')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -309,18 +302,18 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-sm font-medium">Añadir item personalizado</span>
+            <span className="text-sm font-medium">{t('checklist.addCustomItem')}</span>
           </button>
         ) : (
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('checklist.category')}</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none"
               >
-                <option value="">Seleccionar categoría...</option>
+                <option value="">{t('checklist.selectCategory')}</option>
                 {Object.keys(groupedChecklist).map(category => (
                   <option key={category} value={category}>
                     {getCategoryIcon(category)} {getCategoryName(category)}
@@ -330,12 +323,12 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('checklist.description')}</label>
               <input
                 type="text"
                 value={newItemText}
                 onChange={(e) => setNewItemText(e.target.value)}
-                placeholder="Ej: Solicitar análisis especial..."
+                placeholder={t('checklist.descPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none"
                 onKeyPress={(e) => e.key === 'Enter' && addCustomItem()}
               />
@@ -347,7 +340,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
                 disabled={!newItemText.trim() || !selectedCategory || saving}
                 className="flex-1 px-4 py-2 bg-[#0A3D5C] text-white font-medium rounded-lg hover:bg-[#083049] disabled:bg-gray-300 disabled:cursor-not-allowed transition"
               >
-                Añadir
+                {t('checklist.add')}
               </button>
               <button
                 onClick={() => {
@@ -357,7 +350,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
               >
-                Cancelar
+                {t('checklist.cancel')}
               </button>
             </div>
           </div>

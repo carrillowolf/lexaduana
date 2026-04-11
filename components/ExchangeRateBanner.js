@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { sharedComponentsDict } from '@/lib/i18n/shared-components'
 
 export default function ExchangeRateBanner() {
   const [upcomingRates, setUpcomingRates] = useState(null)
   const [showBanner, setShowBanner] = useState(false)
   const supabase = createClient()
+  const t = useTranslation(sharedComponentsDict)
 
   useEffect(() => {
     const checkUpcomingRates = async () => {
@@ -70,13 +73,13 @@ export default function ExchangeRateBanner() {
             </div>
             <div>
               <p className="font-bold text-sm sm:text-base">
-                🔔 Nuevos tipos de cambio próximos
+                🔔 {t('exchangeRate.upcoming')}
               </p>
               <p className="text-xs sm:text-sm text-amber-50">
                 Publicados el {publicationDate} ({upcomingRates.boe_reference}) • 
-                Vigentes desde <strong>{effectiveDate}</strong>
-                {upcomingRates.daysUntilChange === 0 && ' (¡HOY!)'}
-                {upcomingRates.daysUntilChange === 1 && ' (¡MAÑANA!)'}
+                {t('exchangeRate.effectiveFrom')} <strong>{effectiveDate}</strong>
+                {upcomingRates.daysUntilChange === 0 && ` (${t('exchangeRate.today')})`}
+                {upcomingRates.daysUntilChange === 1 && ` (${t('exchangeRate.tomorrow')})`}
                 {upcomingRates.daysUntilChange > 1 && ` (en ${upcomingRates.daysUntilChange} días)`}
               </p>
             </div>
@@ -87,7 +90,7 @@ export default function ExchangeRateBanner() {
               href="/tipos-cambio"
               className="px-4 py-2 bg-white text-amber-600 font-bold text-sm rounded-lg hover:bg-amber-50 transition-all shadow-md"
             >
-              Ver tipos nuevos →
+              {t('exchangeRate.viewNew')}
             </Link>
             <button
               onClick={() => setShowBanner(false)}

@@ -3,8 +3,11 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import glossaryData from '@/data/glossary.json'
+import { useTranslation } from '@/lib/i18n'
+import { glosarioDict } from '@/lib/i18n/glosario'
 
 export default function GlosarioPage() {
+  const t = useTranslation(glosarioDict)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedTerm, setSelectedTerm] = useState(null)
@@ -45,10 +48,10 @@ export default function GlosarioPage() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-            Glosario de <span className="text-[#F4C542]">Comercio Exterior</span>
+            {t('hero.title')} <span className="text-[#F4C542]">{t('hero.titleHighlight')}</span>
           </h1>
           <p className="text-white/60 max-w-xl mx-auto">
-            Más de {glossaryData.terms.length} términos de aduanas, logística y normativa europea explicados para profesionales.
+            {t('hero.subtitle').replace('{count}', glossaryData.terms.length)}
           </p>
         </div>
       </section>
@@ -61,13 +64,13 @@ export default function GlosarioPage() {
               {/* Búsqueda */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🔍 Buscar
+                  {`🔍 ${t('sidebar.search')}`}
                 </label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="ej: arancel, IVA..."
+                  placeholder={t('sidebar.searchPlaceholder')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A3D5C] focus:border-transparent"
                 />
               </div>
@@ -75,7 +78,7 @@ export default function GlosarioPage() {
               {/* Categorías */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  📂 Categorías
+                  {`📂 ${t('sidebar.categories')}`}
                 </label>
                 <div className="space-y-2">
                   {categories.map(cat => (
@@ -88,7 +91,7 @@ export default function GlosarioPage() {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {cat === 'all' ? 'Todos' : cat}
+                      {cat === 'all' ? t('sidebar.all') : cat}
                     </button>
                   ))}
                 </div>
@@ -97,7 +100,7 @@ export default function GlosarioPage() {
               {/* Alfabeto */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🔤 Navegar A-Z
+                  {`🔤 ${t('sidebar.navigateAZ')}`}
                 </label>
                 <div className="grid grid-cols-7 gap-1">
                   {alphabet.map(letter => {
@@ -107,7 +110,7 @@ export default function GlosarioPage() {
                         key={letter}
                         onClick={() => {
                           if (hasTerms) {
-                            document.getElementById(`letter-${letter}`)?.scrollIntoView({ 
+                            document.getElementById(`letter-${letter}`)?.scrollIntoView({
                               behavior: 'smooth',
                               block: 'start'
                             })
@@ -129,7 +132,7 @@ export default function GlosarioPage() {
 
               {/* Stats */}
               <div className="mt-6 p-4 bg-[#0A3D5C]/5 border border-[#0A3D5C]/10 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Total términos</p>
+                <p className="text-sm text-gray-600 mb-1">{t('sidebar.totalTerms')}</p>
                 <p className="text-2xl font-bold text-[#0A3D5C]">{filteredTerms.length}</p>
               </div>
             </div>
@@ -144,7 +147,7 @@ export default function GlosarioPage() {
                   onClick={() => setSelectedTerm(null)}
                   className="mb-4 text-[#0A3D5C] hover:text-blue-700 flex items-center"
                 >
-                  ← Volver al glosario
+                  {t('detail.backToGlossary')}
                 </button>
 
                 <div className="mb-4">
@@ -157,17 +160,17 @@ export default function GlosarioPage() {
                 </div>
 
                 <div className="prose max-w-none">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">📖 Definición</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{`📖 ${t('detail.definition')}`}</h3>
                   <p className="text-gray-700 mb-6">{selectedTerm.definition}</p>
 
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">💡 Ejemplo práctico</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{`💡 ${t('detail.example')}`}</h3>
                   <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 mb-6">
                     <p className="text-gray-700">{selectedTerm.example}</p>
                   </div>
 
                   {selectedTerm.related && selectedTerm.related.length > 0 && (
                     <>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">🔗 Términos relacionados</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{`🔗 ${t('detail.relatedTerms')}`}</h3>
                       <div className="flex flex-wrap gap-2">
                         {selectedTerm.related.map(relatedId => {
                           const relatedTerm = glossaryData.terms.find(t => t.id === relatedId)
@@ -189,16 +192,16 @@ export default function GlosarioPage() {
                 {/* CTA Calculadora */}
                 <div className="mt-8 p-6 bg-[#0A3D5C]/5 border border-[#0A3D5C]/10 rounded-lg border border-blue-200">
                   <h3 className="font-semibold text-gray-800 mb-2">
-                    🧮 ¿Necesitas calcular aranceles?
+                    {`🧮 ${t('detail.calcCta')}`}
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Usa nuestra calculadora profesional para obtener cálculos precisos
+                    {t('detail.calcCtaDesc')}
                   </p>
                   <Link
                     href="/"
                     className="inline-block px-6 py-3 bg-[#0A3D5C] text-white rounded-lg hover:bg-[#0A3D5C]/90 transition"
                   >
-                    Ir a la Calculadora
+                    {t('detail.calcCtaButton')}
                   </Link>
                 </div>
               </div>
@@ -233,7 +236,7 @@ export default function GlosarioPage() {
                             {term.definition}
                           </p>
                           <div className="mt-2 text-[#0A3D5C] text-sm flex items-center">
-                            Ver más →
+                            {t('list.viewMore')}
                           </div>
                         </button>
                       ))}
@@ -245,10 +248,10 @@ export default function GlosarioPage() {
                   <div className="bg-white rounded-xl shadow-lg p-12 text-center">
                     <div className="text-6xl mb-4">🔍</div>
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                      No se encontraron términos
+                      {t('list.noResults')}
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      Intenta con otra búsqueda o categoría
+                      {t('list.noResultsHint')}
                     </p>
                     <button
                       onClick={() => {
@@ -257,7 +260,7 @@ export default function GlosarioPage() {
                       }}
                       className="px-6 py-2 bg-[#0A3D5C] text-white rounded-lg hover:bg-[#0A3D5C]/90 transition"
                     >
-                      Limpiar filtros
+                      {t('list.clearFilters')}
                     </button>
                   </div>
                 )}

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { validateExtractedInvoice, summarizeValidation } from '@/lib/invoiceValidator'
 import { exportInvoiceToExcel } from '@/lib/excelExporter'
+import { useTranslation } from '@/lib/i18n'
+import { facturaOcrDict } from '@/lib/i18n/factura-ocr'
 
 const INCOTERMS = ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF']
 const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY', 'CHF', 'HKD', 'TRY', 'INR', 'BRL']
@@ -12,6 +14,7 @@ const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY', 'CHF', 'HKD', 'TRY
 export default function FacturaOCRPage() {
   const router = useRouter()
   const fileInputRef = useRef(null)
+  const t = useTranslation(facturaOcrDict)
 
   const [authChecked, setAuthChecked] = useState(false)
   const [authed, setAuthed] = useState(false)
@@ -69,19 +72,19 @@ export default function FacturaOCRPage() {
   }, [invoiceData])
 
   const deleteExtraction = async (id) => {
-    if (!confirm('¿Borrar esta extracción del historial? No se puede deshacer.')) return
+    if (!confirm(t('history.deleteConfirm'))) return
     try {
       const res = await fetch(`/api/extract-invoice/history?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
       })
       const json = await res.json()
       if (!res.ok || !json.success) {
-        alert(json.error || 'Error al borrar')
+        alert(json.error || t('history.deleteError'))
         return
       }
       setHistory((h) => h.filter((x) => x.id !== id))
     } catch {
-      alert('Error de red al borrar')
+      alert(t('history.networkError'))
     }
   }
 
@@ -90,12 +93,12 @@ export default function FacturaOCRPage() {
       const res = await fetch(`/api/extract-invoice/history?id=${encodeURIComponent(id)}`)
       const json = await res.json()
       if (!res.ok || !json.success) {
-        alert(json.error || 'Error al cargar extracción')
+        alert(json.error || t('history.downloadError'))
         return
       }
       exportInvoiceToExcel(json.data.extracted_data, {}, null)
     } catch {
-      alert('Error de red al descargar')
+      alert(t('history.networkError'))
     }
   }
 
@@ -139,11 +142,11 @@ export default function FacturaOCRPage() {
     if (!f) return
     const allowed = ['application/pdf', 'image/png', 'image/jpeg']
     if (!allowed.includes(f.type)) {
-      setExtractError('Formato no soportado. Solo PDF, PNG o JPG.')
+      setExtractError(t('step1.errorFormat'))
       return
     }
     if (f.size > 10 * 1024 * 1024) {
-      setExtractError('El archivo supera el tamaño máximo de 10 MB.')
+      setExtractError(t('step1.errorSize'))
       return
     }
     setFile(f)
@@ -168,14 +171,14 @@ export default function FacturaOCRPage() {
       const res = await fetch('/api/extract-invoice', { method: 'POST', body: fd })
       const json = await res.json()
       if (!res.ok || !json.success) {
-        setExtractError(json.error || 'Error al extraer la factura.')
+        setExtractError(json.error || t('step1.errorExtract'))
         return
       }
       setInvoiceData(json.data)
       setUsage(json.usage?.daily || null)
       setStep(2)
     } catch (err) {
-      setExtractError('Error de red. Inténtalo de nuevo.')
+      setExtractError(t('step1.errorNetwork'))
     } finally {
       setExtracting(false)
     }
@@ -233,7 +236,7 @@ export default function FacturaOCRPage() {
         })
         setClassifications(map)
       } else {
-        alert(json.error || 'Error al clasificar')
+        alert(json.error || t('history.classifyError'))
       }
     } finally {
       setClassifying(false)
@@ -290,7 +293,7 @@ export default function FacturaOCRPage() {
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500">Cargando…</div>
+        <div className="text-slate-500">{t('loading')}</div>
       </div>
     )
   }
@@ -301,18 +304,18 @@ export default function FacturaOCRPage() {
         <section className="bg-[#0A3D5C] py-16">
           <div className="max-w-3xl mx-auto px-4 text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-              Extractor de Facturas <span className="text-[#F4C542]">con IA</span>
+              {t('auth.title')} <span className="text-[#F4C542]">{t('auth.titleHighlight')}</span>
             </h1>
             <p className="text-white/70 mb-8">
-              Sube tu factura comercial y obtén datos, código TARIC y aranceles automáticamente.
+              {t('auth.subtitle')}
             </p>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
-              <p className="text-white/80 mb-4">Necesitas iniciar sesión para usar esta herramienta.</p>
+              <p className="text-white/80 mb-4">{t('auth.loginRequired')}</p>
               <button
                 onClick={() => router.push('/auth/login?redirect=/factura-ocr')}
                 className="px-7 py-3 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-xl hover:bg-[#F4C542]/90 transition"
               >
-                Iniciar sesión
+                {t('auth.login')}
               </button>
             </div>
           </div>
@@ -327,13 +330,13 @@ export default function FacturaOCRPage() {
       <section className="relative overflow-hidden bg-[#0A3D5C] py-12 md:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="inline-block px-4 py-1.5 bg-white/10 border border-white/10 text-white/70 rounded-full text-sm font-medium mb-5">
-            Powered by Claude Vision · Free tier: 2/día
+            {t('hero.badge')}
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-            Extractor de Facturas <span className="text-[#F4C542]">Comerciales</span>
+            {t('hero.title')} <span className="text-[#F4C542]">{t('hero.titleHighlight')}</span>
           </h1>
           <p className="text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
-            Sube una factura PDF o imagen y obtén automáticamente proveedor, líneas, código TARIC y cálculo de aranceles.
+            {t('hero.subtitle')}
           </p>
         </div>
       </section>
@@ -344,13 +347,13 @@ export default function FacturaOCRPage() {
           <div className="flex items-start gap-3">
             <span className="text-2xl">🔒</span>
             <div className="text-sm text-slate-700 leading-relaxed">
-              <p className="font-semibold text-slate-900 mb-2">Tu factura está protegida</p>
+              <p className="font-semibold text-slate-900 mb-2">{t('security.title')}</p>
               <ul className="space-y-1 text-slate-600">
-                <li>• El archivo se procesa en memoria y <strong>NO se almacena</strong> en nuestros servidores</li>
-                <li>• Los datos viajan cifrados (TLS) a la API de Anthropic (Claude)</li>
-                <li>• Anthropic no entrena con datos enviados vía API (política Zero Data Retention)</li>
-                <li>• Solo se guardan los <strong>datos extraídos</strong> en tu cuenta privada</li>
-                <li>• Puedes eliminar tus extracciones en cualquier momento desde tu dashboard</li>
+                <li dangerouslySetInnerHTML={{ __html: `• ${t('security.point1')}` }} />
+                <li>• {t('security.point2')}</li>
+                <li>• {t('security.point3')}</li>
+                <li dangerouslySetInnerHTML={{ __html: `• ${t('security.point4')}` }} />
+                <li>• {t('security.point5')}</li>
               </ul>
             </div>
           </div>
@@ -363,7 +366,7 @@ export default function FacturaOCRPage() {
         <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-8 h-8 rounded-full bg-[#0A3D5C] text-white flex items-center justify-center font-bold text-sm">1</div>
-            <h2 className="text-xl font-bold text-slate-900">Sube tu factura</h2>
+            <h2 className="text-xl font-bold text-slate-900">{t('step1.title')}</h2>
           </div>
 
           <div
@@ -390,14 +393,14 @@ export default function FacturaOCRPage() {
                   onClick={(e) => { e.stopPropagation(); setFile(null) }}
                   className="mt-3 text-sm text-red-600 hover:underline"
                 >
-                  Quitar archivo
+                  {t('step1.removeFile')}
                 </button>
               </div>
             ) : (
               <div>
                 <div className="text-5xl mb-3">📄</div>
-                <p className="text-slate-700 font-medium">Arrastra tu factura aquí o haz clic para seleccionar</p>
-                <p className="text-slate-500 text-sm mt-2">PDF, PNG o JPG · Máximo 10 MB · Hasta 20 páginas</p>
+                <p className="text-slate-700 font-medium">{t('step1.dragText')}</p>
+                <p className="text-slate-500 text-sm mt-2">{t('step1.fileTypes')}</p>
               </div>
             )}
           </div>
@@ -411,17 +414,17 @@ export default function FacturaOCRPage() {
           <div className="mt-5 flex items-center justify-between flex-wrap gap-3">
             <p className="text-xs text-slate-500">
               {usage?.unlimited
-                ? '👑 Sin límite (admin)'
+                ? `👑 ${t('step1.usageUnlimited')}`
                 : usage
-                  ? `Has usado ${usage.used}/${usage.limit} extracciones hoy.`
-                  : 'Free tier: 2 extracciones por día.'}
+                  ? t('step1.usageInfo').replace('{used}', usage.used).replace('{limit}', usage.limit)
+                  : t('step1.usageFree')}
             </p>
             <button
               onClick={extract}
               disabled={!file || extracting}
               className="px-6 py-3 bg-[#0A3D5C] text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0A3D5C]/90 transition"
             >
-              {extracting ? 'Extrayendo con IA…' : 'Extraer datos'}
+              {extracting ? t('step1.extracting') : t('step1.extract')}
             </button>
           </div>
         </section>
@@ -431,7 +434,7 @@ export default function FacturaOCRPage() {
           <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-8 h-8 rounded-full bg-[#0A3D5C] text-white flex items-center justify-center font-bold text-sm">2</div>
-              <h2 className="text-xl font-bold text-slate-900">Revisa los datos extraídos</h2>
+              <h2 className="text-xl font-bold text-slate-900">{t('step2.title')}</h2>
             </div>
 
             {/* PANEL DE VALIDACIÓN */}
@@ -447,10 +450,10 @@ export default function FacturaOCRPage() {
                   validation.errors > 0 ? 'text-red-800' : validation.warnings > 0 ? 'text-amber-800' : 'text-blue-800'
                 }`}>
                   {validation.errors > 0
-                    ? `⚠️ Se han detectado ${validation.errors} inconsistencia${validation.errors > 1 ? 's' : ''}. Revisa antes de calcular.`
+                    ? `⚠️ ${t('step2.validationErrors').replace('{count}', validation.errors)}`
                     : validation.warnings > 0
-                      ? `Datos extraídos con ${validation.warnings} observacion${validation.warnings > 1 ? 'es' : ''}.`
-                      : 'Información adicional'}
+                      ? t('step2.validationWarnings').replace('{count}', validation.warnings)
+                      : t('step2.validationInfo')}
                 </p>
                 <ul className="text-sm space-y-1">
                   {validation.issues.map((iss, i) => (
@@ -467,7 +470,7 @@ export default function FacturaOCRPage() {
 
             {validation && validation.errors === 0 && validation.warnings === 0 && (
               <div className="mb-6 p-4 rounded-xl border bg-green-50 border-green-200 text-green-800 text-sm font-medium">
-                ✓ Datos verificados — totales cuadran y campos completos.
+                {t('step2.validationOk')}
               </div>
             )}
 
@@ -476,13 +479,13 @@ export default function FacturaOCRPage() {
               <table className="w-full text-xs border-collapse">
                 <thead className="bg-slate-100 text-[10px] uppercase tracking-wider text-slate-600">
                   <tr>
-                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold">Proveedor</th>
-                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-16">País</th>
-                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-32">Nº factura</th>
-                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-32">Fecha</th>
-                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-20">Divisa</th>
-                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-24">Incoterm</th>
-                    <th className="px-2 py-1.5 text-right font-semibold w-32">Total factura</th>
+                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold">{t('step2.thSupplier')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-16">{t('step2.thCountry')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-32">{t('step2.thInvoiceNo')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-32">{t('step2.thDate')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-20">{t('step2.thCurrency')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-slate-300 font-semibold w-24">{t('step2.thIncoterm')}</th>
+                    <th className="px-2 py-1.5 text-right font-semibold w-32">{t('step2.thTotal')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -560,15 +563,15 @@ export default function FacturaOCRPage() {
             {/* TABLA DE LÍNEAS */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
               <h3 className="font-semibold text-slate-900">
-                Líneas de producto ({invoiceData.lines?.length || 0})
+                {t('step2.productLines')} ({invoiceData.lines?.length || 0})
                 {linesFilter && (
-                  <span className="text-slate-500 font-normal ml-2">· {filteredLineIndexes.length} visibles</span>
+                  <span className="text-slate-500 font-normal ml-2">· {filteredLineIndexes.length} {t('step2.visible')}</span>
                 )}
               </h3>
               <div className="flex flex-wrap gap-2 items-center">
                 <input
                   type="search"
-                  placeholder="🔍 Filtrar líneas…"
+                  placeholder={`🔍 ${t('step2.filterPlaceholder')}`}
                   value={linesFilter}
                   onChange={(e) => setLinesFilter(e.target.value)}
                   className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#0A3D5C]/30"
@@ -578,7 +581,7 @@ export default function FacturaOCRPage() {
                   className="px-3 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-1.5"
                   title="Descargar todos los datos extraídos en Excel (3 hojas: cabecera, líneas, resumen)"
                 >
-                  📊 Exportar a Excel
+                  📊 {t('step2.exportExcel')}
                 </button>
               </div>
             </div>
@@ -587,15 +590,15 @@ export default function FacturaOCRPage() {
                 <thead className="bg-slate-100 text-[10px] uppercase tracking-wider text-slate-600 sticky top-0 z-10">
                   <tr>
                     <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-10">#</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold min-w-[260px]">Descripción</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-20">Qty</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-16">Ud.</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-24">P. unit.</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-28">Total</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-16">Origen</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-20">Peso (kg)</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">TARIC</th>
-                    <th className="px-2 py-1.5 text-left border-b border-slate-300 font-semibold w-28">Sugerencia IA</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold min-w-[260px]">{t('step2.thDescription')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-20">{t('step2.thQty')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-16">{t('step2.thUnit')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-24">{t('step2.thUnitPrice')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-28">{t('step2.thTotalPrice')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-16">{t('step2.thOrigin')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-20">{t('step2.thWeight')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">{t('step2.thTaric')}</th>
+                    <th className="px-2 py-1.5 text-left border-b border-slate-300 font-semibold w-28">{t('step2.thSuggestion')}</th>
                   </tr>
                 </thead>
                 <tbody className="font-mono tabular-nums">
@@ -690,7 +693,7 @@ export default function FacturaOCRPage() {
                 {invoiceData.lines?.length > 0 && (
                   <tfoot className="bg-slate-100 font-mono tabular-nums sticky bottom-0 z-10">
                     <tr>
-                      <td className="border-t border-r border-slate-300 px-2 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 font-semibold" colSpan={2}>Totales</td>
+                      <td className="border-t border-r border-slate-300 px-2 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 font-semibold" colSpan={2}>{t('step2.totals')}</td>
                       <td className="border-t border-r border-slate-300 px-2 py-1.5 text-right font-semibold">
                         {invoiceData.lines.reduce((a, l) => a + (Number(l.quantity) || 0), 0)}
                       </td>
@@ -711,7 +714,7 @@ export default function FacturaOCRPage() {
               </table>
               {filteredLineIndexes.length === 0 && (
                 <div className="px-4 py-6 text-center text-xs text-slate-500">
-                  Ninguna línea coincide con &quot;{linesFilter}&quot;.
+                  {t('step2.noMatch')} &quot;{linesFilter}&quot;.
                 </div>
               )}
             </div>
@@ -722,7 +725,7 @@ export default function FacturaOCRPage() {
                 disabled={classifying || !invoiceData.lines?.length}
                 className="px-5 py-2.5 bg-[#F4C542] text-[#0A3D5C] font-semibold rounded-xl disabled:opacity-50 hover:bg-[#F4C542]/90 transition"
               >
-                {classifying ? 'Clasificando con IA…' : '🤖 Clasificar líneas con IA'}
+                {classifying ? t('step2.classifying') : `🤖 ${t('step2.classifyBtn')}`}
               </button>
               {validation?.errors > 0 && (
                 <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -731,7 +734,7 @@ export default function FacturaOCRPage() {
                     checked={reviewedConfirmed}
                     onChange={(e) => setReviewedConfirmed(e.target.checked)}
                   />
-                  He revisado y confirmo los datos
+                  {t('step2.reviewConfirm')}
                 </label>
               )}
               <button
@@ -743,7 +746,7 @@ export default function FacturaOCRPage() {
                 }
                 className="px-5 py-2.5 bg-[#0A3D5C] text-white font-semibold rounded-xl disabled:opacity-50 hover:bg-[#0A3D5C]/90 transition"
               >
-                {calculating ? 'Calculando…' : '💰 Calcular tributos'}
+                {calculating ? t('step2.calculating') : `💰 ${t('step2.calculateBtn')}`}
               </button>
             </div>
           </section>
@@ -755,13 +758,13 @@ export default function FacturaOCRPage() {
             <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#0A3D5C] text-white flex items-center justify-center font-bold text-sm">3</div>
-                <h2 className="text-xl font-bold text-slate-900">Resultados del cálculo</h2>
+                <h2 className="text-xl font-bold text-slate-900">{t('step3.title')}</h2>
               </div>
               <button
                 onClick={handleExportExcel}
                 className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-1.5"
               >
-                📊 Exportar todo a Excel
+                📊 {t('step3.exportAll')}
               </button>
             </div>
 
@@ -773,19 +776,19 @@ export default function FacturaOCRPage() {
               return (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                    <div className="text-xs text-slate-500">Valor CIF total</div>
+                    <div className="text-xs text-slate-500">{t('step3.totalCif')}</div>
                     <div className="text-lg font-bold text-slate-900">{formatMoney(totalCif)}</div>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                    <div className="text-xs text-slate-500">Arancel total</div>
+                    <div className="text-xs text-slate-500">{t('step3.totalDuty')}</div>
                     <div className="text-lg font-bold text-slate-900">{formatMoney(totalDuty)}</div>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                    <div className="text-xs text-slate-500">IVA total</div>
+                    <div className="text-xs text-slate-500">{t('step3.totalVat')}</div>
                     <div className="text-lg font-bold text-slate-900">{formatMoney(totalVat)}</div>
                   </div>
                   <div className="bg-[#0A3D5C] text-white border border-[#0A3D5C] rounded-lg p-3">
-                    <div className="text-xs text-white/70">Total tributos</div>
+                    <div className="text-xs text-white/70">{t('step3.totalTax')}</div>
                     <div className="text-lg font-bold">{formatMoney(totalDuty + totalVat)}</div>
                   </div>
                 </div>
@@ -796,14 +799,14 @@ export default function FacturaOCRPage() {
               <table className="w-full text-xs border-collapse">
                 <thead className="bg-slate-100 text-[10px] uppercase tracking-wider text-slate-600 sticky top-0 z-10">
                   <tr>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-12">#</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">TARIC</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold">Valor CIF</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-20">Aran. %</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold">Arancel €</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-16">IVA %</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold">IVA €</th>
-                    <th className="px-2 py-1.5 text-right border-b border-slate-300 font-semibold">Total tributos</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-12">{t('step3.thLine')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">{t('step3.thTaric')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold">{t('step3.thCifValue')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-20">{t('step3.thDutyPct')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold">{t('step3.thDutyEur')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-16">{t('step3.thVatPct')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold">{t('step3.thVatEur')}</th>
+                    <th className="px-2 py-1.5 text-right border-b border-slate-300 font-semibold">{t('step3.thTotalTax')}</th>
                   </tr>
                 </thead>
                 <tbody className="font-mono tabular-nums">
@@ -824,7 +827,7 @@ export default function FacturaOCRPage() {
                 </tbody>
                 <tfoot className="bg-slate-100 font-mono tabular-nums sticky bottom-0 z-10">
                   <tr>
-                    <td className="border-t border-r border-slate-300 px-2 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 font-semibold" colSpan={2}>Totales</td>
+                    <td className="border-t border-r border-slate-300 px-2 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 font-semibold" colSpan={2}>{t('step3.totals')}</td>
                     <td className="border-t border-r border-slate-300 px-2 py-1.5 text-right font-semibold">
                       {formatMoney(calcResults.reduce((a, r) => a + (Number(r.cifValue) || 0), 0))}
                     </td>
@@ -852,8 +855,8 @@ export default function FacturaOCRPage() {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm">🗂</div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Historial de extracciones</h2>
-                <p className="text-xs text-slate-500">Solo se guardan los datos extraídos, nunca el archivo original.</p>
+                <h2 className="text-xl font-bold text-slate-900">{t('history.title')}</h2>
+                <p className="text-xs text-slate-500">{t('history.subtitle')}</p>
               </div>
             </div>
             <button
@@ -861,7 +864,7 @@ export default function FacturaOCRPage() {
               disabled={historyLoading}
               className="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50"
             >
-              {historyLoading ? 'Cargando…' : '↻ Actualizar'}
+              {historyLoading ? t('history.refreshing') : `↻ ${t('history.refresh')}`}
             </button>
           </div>
 
@@ -873,7 +876,7 @@ export default function FacturaOCRPage() {
 
           {!historyLoading && history.length === 0 && !historyError && (
             <div className="text-center py-10 text-sm text-slate-500">
-              Aún no has extraído ninguna factura. Sube una arriba para empezar.
+              {t('history.empty')}
             </div>
           )}
 
@@ -882,14 +885,14 @@ export default function FacturaOCRPage() {
               <table className="w-full text-xs border-collapse">
                 <thead className="bg-slate-100 text-[10px] uppercase tracking-wider text-slate-600 sticky top-0 z-10">
                   <tr>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">Fecha</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold">Proveedor</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-14">País</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">Nº factura</th>
-                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-20">Incoterm</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-14">Líneas</th>
-                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-28">Total</th>
-                    <th className="px-2 py-1.5 text-center border-b border-slate-300 font-semibold w-36">Acciones</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">{t('history.thDate')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold">{t('history.thSupplier')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-14">{t('history.thCountry')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-32">{t('history.thInvoiceNo')}</th>
+                    <th className="px-2 py-1.5 text-left border-r border-b border-slate-300 font-semibold w-20">{t('history.thIncoterm')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-14">{t('history.thLines')}</th>
+                    <th className="px-2 py-1.5 text-right border-r border-b border-slate-300 font-semibold w-28">{t('history.thTotal')}</th>
+                    <th className="px-2 py-1.5 text-center border-b border-slate-300 font-semibold w-36">{t('history.thActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="font-mono tabular-nums">

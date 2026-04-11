@@ -1,7 +1,13 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { landingDict } from '@/lib/i18n/landing'
 
 export default function HeroLanding() {
+  const t = useTranslation(landingDict)
+
   return (
     <div className="relative bg-[#0A3D5C] text-white overflow-hidden">
       {/* Patrón de fondo sutil */}
@@ -16,24 +22,24 @@ export default function HeroLanding() {
           {/* Logo + Nav */}
           <div className="flex justify-between items-center mb-16">
             <div className="flex items-center gap-3">
-              <Image 
-                src="/logo.png" 
-                alt="LexAduana" 
-                width={60} 
+              <Image
+                src="/logo.png"
+                alt="LexAduana"
+                width={60}
                 height={60}
                 className="drop-shadow-lg"
               />
               <div>
                 <h1 className="text-2xl font-bold">LEXADUANA</h1>
-                <p className="text-sm text-[#F4C542]">Plataforma Profesional Aduanera</p>
+                <p className="text-sm text-[#F4C542]">{t('hero.tagline')}</p>
               </div>
             </div>
             <div className="flex gap-4">
               <Link href="/auth/login" className="px-4 py-2 text-white hover:text-[#F4C542] transition">
-                Iniciar Sesión
+                {t('hero.login')}
               </Link>
               <Link href="/auth/register" className="px-6 py-2 bg-[#F4C542] text-[#0A3D5C] font-semibold rounded-lg hover:bg-[#E5B63A] transition">
-                Registrarse Gratis
+                {t('hero.register')}
               </Link>
             </div>
           </div>
@@ -43,50 +49,48 @@ export default function HeroLanding() {
             {/* Izquierda: Claim */}
             <div>
               <h2 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Gestión Aduanera
-                <span className="block text-[#F4C542]">Sin Errores</span>
+                {t('hero.title')}
+                <span className="block text-[#F4C542]">{t('hero.titleHighlightAlt')}</span>
               </h2>
-              
+
               <p className="text-xl mb-8 text-gray-300">
-                Calcula aranceles e IVA con precisión oficial. 
-                49,700 registros TARIC actualizados. 
-                195 países. 30 monedas.
+                {t('hero.subtitleAlt')}
               </p>
 
               {/* Estadísticas */}
               <div className="grid grid-cols-3 gap-4 mb-8">
                 <div className="text-center p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                   <div className="text-3xl font-bold text-[#F4C542]">49.7K</div>
-                  <div className="text-sm text-gray-300">Registros TARIC</div>
+                  <div className="text-sm text-gray-300">{t('hero.statTaric')}</div>
                 </div>
                 <div className="text-center p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                   <div className="text-3xl font-bold text-[#F4C542]">195</div>
-                  <div className="text-sm text-gray-300">Países</div>
+                  <div className="text-sm text-gray-300">{t('hero.statCountries')}</div>
                 </div>
                 <div className="text-center p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                   <div className="text-3xl font-bold text-[#F4C542]">30</div>
-                  <div className="text-sm text-gray-300">Monedas BCE</div>
+                  <div className="text-sm text-gray-300">{t('hero.statCurrencies')}</div>
                 </div>
               </div>
 
               {/* CTAs */}
               <div className="flex gap-4">
-                <a 
+                <a
                   href="#calculator"
                   className="px-8 py-4 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-lg hover:bg-[#E5B63A] transition text-lg"
                 >
-                  Calcular Ahora
+                  {t('hero.ctaPrimary')}
                 </a>
                 <Link
                   href="/bulk"
                   className="px-8 py-4 border-2 border-[#F4C542] text-[#F4C542] font-semibold rounded-lg hover:bg-[#F4C542] hover:text-[#0A3D5C] transition text-lg"
                 >
-                  Cálculo Masivo
+                  {t('hero.ctaSecondaryAlt')}
                 </Link>
               </div>
 
               <p className="text-sm text-gray-400 mt-4">
-                ✓ Sin tarjeta de crédito · ✓ Registro gratuito · ✓ Datos oficiales BOE
+                {t('hero.trust')}
               </p>
             </div>
 
@@ -96,35 +100,35 @@ export default function HeroLanding() {
               <div className="bg-white rounded-xl shadow-2xl p-8">
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    Ejemplo en Tiempo Real
+                    {t('hero.exampleTitle')}
                   </h3>
                   <p className="text-gray-600">
-                    Importación de China → España
+                    {t('hero.exampleRoute')}
                   </p>
                 </div>
 
                 {/* Simulación de cálculo */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <span className="text-gray-700">Código HS:</span>
+                    <span className="text-gray-700">{t('hero.hsCode')}</span>
                     <span className="font-mono font-bold text-[#0A3D5C]">8471300000</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <span className="text-gray-700">Valor CIF:</span>
+                    <span className="text-gray-700">{t('hero.cifValue')}</span>
                     <span className="font-bold text-gray-900">1,000.00 €</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <span className="text-gray-700">País:</span>
+                    <span className="text-gray-700">{t('hero.country')}</span>
                     <span className="font-semibold text-gray-900">🇨🇳 China</span>
                   </div>
 
                   <div className="border-t-2 border-gray-200 pt-4 mt-4">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-600">Arancel (3.5%):</span>
+                      <span className="text-gray-600">{t('hero.duty')}</span>
                       <span className="font-semibold text-gray-900">35.00 €</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-600">IVA (21%):</span>
+                      <span className="text-gray-600">{t('hero.vat')}</span>
                       <span className="font-semibold text-gray-900">217.35 €</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-[#F4C542]/20 rounded-lg">
@@ -136,14 +140,14 @@ export default function HeroLanding() {
 
                 <div className="mt-6 p-3 bg-green-50 rounded-lg border border-green-200">
                   <p className="text-sm text-green-800">
-                    ✓ Cálculo validado con datos oficiales TARIC
+                    {t('hero.validated')}
                   </p>
                 </div>
               </div>
 
               {/* Badge flotante */}
               <div className="absolute -top-4 -right-4 bg-[#F4C542] text-[#0A3D5C] px-4 py-2 rounded-full font-bold shadow-lg">
-                Actualizado 2025
+                {t('hero.updatedBadge')}
               </div>
             </div>
           </div>

@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useTranslation } from '@/lib/i18n'
+import { tiposCambioDict } from '@/lib/i18n/tipos-cambio'
 
 export default function TiposCambioPage() {
   const [currentRates, setCurrentRates] = useState([])
   const [upcomingRates, setUpcomingRates] = useState([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+  const t = useTranslation(tiposCambioDict)
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -43,10 +46,10 @@ export default function TiposCambioPage() {
               </svg>
               <div className="ml-3">
                 <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-                  ⚠️ Nuevos tipos de cambio publicados
+                  {`⚠️ ${t('upcoming.title')}`}
                 </h3>
                 <p className="text-yellow-700">
-                  Vigentes desde el <strong>{new Date(upcomingRates[0].effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+                  {t('upcoming.effectiveFrom')} <strong>{new Date(upcomingRates[0].effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
                 </p>
               </div>
             </div>
@@ -56,7 +59,7 @@ export default function TiposCambioPage() {
         {/* Tipos actuales */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            📊 Tipos vigentes actualmente
+            {`📊 ${t('current.title')}`}
           </h2>
 
           {loading ? (
@@ -67,10 +70,10 @@ export default function TiposCambioPage() {
             <>
               <div className="mb-4 p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-700">
-                  <strong>Vigencia:</strong> Desde el {new Date(currentRates[0]?.effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  <strong>{t('current.effectiveLabel')}</strong> {t('current.effectiveFrom')} {new Date(currentRates[0]?.effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Referencia BOE: {currentRates[0]?.boe_reference}
+                  {t('current.boeRef')} {currentRates[0]?.boe_reference}
                 </p>
               </div>
 
@@ -78,9 +81,9 @@ export default function TiposCambioPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Moneda</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">1 EUR =</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.code')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.currency')}</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('table.rate')}</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -113,15 +116,15 @@ export default function TiposCambioPage() {
         {upcomingRates.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              📅 Tipos próximos
+              {`📅 ${t('upcoming_section.title')}`}
             </h2>
 
             <div className="mb-4 p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-gray-700">
-                <strong>Vigencia:</strong> Desde el {new Date(upcomingRates[0]?.effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                <strong>{t('current.effectiveLabel')}</strong> {t('current.effectiveFrom')} {new Date(upcomingRates[0]?.effective_from).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                Referencia BOE: {upcomingRates[0]?.boe_reference}
+                {t('current.boeRef')} {upcomingRates[0]?.boe_reference}
               </p>
             </div>
 
@@ -129,9 +132,9 @@ export default function TiposCambioPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Moneda</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">1 EUR =</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.code')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.currency')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('table.rate')}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -161,13 +164,9 @@ export default function TiposCambioPage() {
 
         {/* Info legal */}
         <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-          <h3 className="font-semibold text-gray-800 mb-2">ℹ️ Información legal</h3>
-          <p className="text-sm text-gray-600 mb-2">
-            Los tipos de cambio se publican el <strong>penúltimo miércoles de cada mes</strong> en el Boletín Oficial del Estado (BOE).
-          </p>
-          <p className="text-sm text-gray-600">
-            Según el <strong>Reglamento de Ejecución (UE) 2447/2015, artículo 146</strong>, estos tipos son aplicables a partir del <strong>primer día del mes siguiente</strong> a su publicación.
-          </p>
+          <h3 className="font-semibold text-gray-800 mb-2">{`ℹ️ ${t('legal.title')}`}</h3>
+          <p className="text-sm text-gray-600 mb-2" dangerouslySetInnerHTML={{ __html: t('legal.publication') }} />
+          <p className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: t('legal.application') }} />
         </div>
       </div>
     </div>

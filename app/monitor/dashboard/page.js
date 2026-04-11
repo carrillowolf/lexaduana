@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '@/lib/i18n'
+import { monitorDict } from '@/lib/i18n/monitor'
 
 export default function MonitorDashboard() {
   const router = useRouter()
@@ -15,6 +17,7 @@ export default function MonitorDashboard() {
   const [newCode, setNewCode] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [addingCode, setAddingCode] = useState(false)
+  const t = useTranslation(monitorDict)
 
   useEffect(() => {
     checkUser()
@@ -96,11 +99,11 @@ export default function MonitorDashboard() {
       
     } catch (error) {
       if (error.message?.includes('monitor limit')) {
-        alert('Has alcanzado el límite de códigos monitorizados en el plan gratuito (5)')
+        alert(t('dashboard.limitReached'))
       } else if (error.code === '23505') {
-        alert('Ya estás monitorizando este código')
+        alert(t('dashboard.alreadyMonitoring'))
       } else {
-        alert('Error al añadir el código: ' + error.message)
+        alert(t('dashboard.addError') + error.message)
       }
     } finally {
       setAddingCode(false)
@@ -108,7 +111,7 @@ export default function MonitorDashboard() {
   }
 
   const removeMonitor = async (id) => {
-    if (!confirm('¿Eliminar este código de la monitorización?')) return
+    if (!confirm(t('dashboard.deleteConfirm'))) return
     
     try {
       const { error } = await supabase
@@ -120,7 +123,7 @@ export default function MonitorDashboard() {
         await loadMonitors(user.id)
       }
     } catch (error) {
-      alert('Error al eliminar: ' + error.message)
+      alert(t('dashboard.deleteError') + error.message)
     }
   }
 
@@ -137,7 +140,7 @@ export default function MonitorDashboard() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          <p className="mt-4 text-gray-600">{t('dashboard.loading')}</p>
         </div>
       </div>
     )
@@ -152,7 +155,7 @@ export default function MonitorDashboard() {
             <div className="flex items-center space-x-4">
               <Image src="/logo.png" alt="Lex Aduana" width={40} height={40} />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Monitor de Aranceles</h1>
+                <h1 className="text-xl font-bold text-gray-900">{t('dashboard.title')}</h1>
                 <p className="text-sm text-gray-600">{profile?.company_name}</p>
               </div>
             </div>
@@ -161,14 +164,14 @@ export default function MonitorDashboard() {
               <div className="text-right">
                 <p className="text-sm text-gray-600">{user?.email}</p>
                 <p className="text-xs text-gray-500">
-                  Plan: <span className="font-semibold capitalize">{profile?.plan_type}</span>
+                  {t('dashboard.plan')}: <span className="font-semibold capitalize">{profile?.plan_type}</span>
                 </p>
               </div>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
               >
-                Salir
+                {t('dashboard.logout')}
               </button>
             </div>
           </div>
@@ -181,26 +184,26 @@ export default function MonitorDashboard() {
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-3xl font-bold text-blue-600">{monitors.length}</div>
-            <div className="text-gray-600">Códigos monitorizados</div>
+            <div className="text-gray-600">{t('dashboard.monitoredCodes')}</div>
             <div className="text-xs text-gray-500 mt-1">
-              Límite: {monitors.length}/{profile?.max_monitors || 5}
+              {t('dashboard.limit')}: {monitors.length}/{profile?.max_monitors || 5}
             </div>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-3xl font-bold text-green-600">0</div>
-            <div className="text-gray-600">Cambios este mes</div>
-            <div className="text-xs text-gray-500 mt-1">Última revisión: {new Date().toLocaleDateString('es-ES')}</div>
+            <div className="text-gray-600">{t('dashboard.changesThisMonth')}</div>
+            <div className="text-xs text-gray-500 mt-1">{t('dashboard.lastCheck')}: {new Date().toLocaleDateString('es-ES')}</div>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-3xl font-bold text-purple-600">
-              {profile?.plan_type === 'free' ? 'Gratis' : 'Pro'}
+              {profile?.plan_type === 'free' ? t('dashboard.free') : t('dashboard.pro')}
             </div>
-            <div className="text-gray-600">Tu plan actual</div>
+            <div className="text-gray-600">{t('dashboard.yourPlan')}</div>
             {profile?.plan_type === 'free' && (
               <button className="text-xs text-blue-600 hover:underline mt-1">
-                Mejorar plan →
+                {t('dashboard.upgradePlan')}
               </button>
             )}
           </div>
@@ -210,14 +213,14 @@ export default function MonitorDashboard() {
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
-              Códigos HS monitorizados
+              {t('dashboard.hsCodesTitle')}
             </h2>
             <button
               onClick={() => setShowAddModal(true)}
               disabled={monitors.length >= (profile?.max_monitors || 5)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + Añadir código
+              {t('dashboard.addCode')}
             </button>
           </div>
           
@@ -227,12 +230,12 @@ export default function MonitorDashboard() {
                 <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <p className="text-gray-500 mb-4">No hay códigos monitorizados</p>
+                <p className="text-gray-500 mb-4">{t('dashboard.noCodesTitle')}</p>
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="text-blue-600 hover:underline"
                 >
-                  Añadir tu primer código
+                  {t('dashboard.addFirstCode')}
                 </button>
               </div>
             ) : (
@@ -240,11 +243,11 @@ export default function MonitorDashboard() {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left text-sm text-gray-600 border-b">
-                      <th className="pb-3">Código HS</th>
-                      <th className="pb-3">Descripción</th>
-                      <th className="pb-3">Arancel actual</th>
-                      <th className="pb-3">Última revisión</th>
-                      <th className="pb-3">Acciones</th>
+                      <th className="pb-3">{t('dashboard.colHsCode')}</th>
+                      <th className="pb-3">{t('dashboard.colDescription')}</th>
+                      <th className="pb-3">{t('dashboard.colCurrentDuty')}</th>
+                      <th className="pb-3">{t('dashboard.colLastCheck')}</th>
+                      <th className="pb-3">{t('dashboard.colActions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -252,7 +255,7 @@ export default function MonitorDashboard() {
                       <tr key={monitor.id} className="border-b hover:bg-gray-50">
                         <td className="py-4 font-mono font-semibold">{monitor.goods_code}</td>
                         <td className="py-4 text-gray-600">
-                          {monitor.product_description || 'Sin descripción'}
+                          {monitor.product_description || t('dashboard.noDescription')}
                         </td>
                         <td className="py-4">
                           <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
@@ -267,7 +270,7 @@ export default function MonitorDashboard() {
                             onClick={() => removeMonitor(monitor.id)}
                             className="text-red-600 hover:text-red-800"
                           >
-                            Eliminar
+                            {t('dashboard.delete')}
                           </button>
                         </td>
                       </tr>
@@ -282,13 +285,13 @@ export default function MonitorDashboard() {
         {/* Info adicional */}
         <div className="mt-8 bg-blue-50 rounded-lg p-6">
           <h3 className="font-semibold text-blue-900 mb-2">
-            ℹ️ Cómo funciona el monitor
+            {t('dashboard.howItWorks')}
           </h3>
           <ul className="text-sm text-blue-700 space-y-1">
-            <li>• Revisamos los aranceles mensualmente (día 1 de cada mes)</li>
-            <li>• Recibirás un email si algún arancel cambia</li>
-            <li>• Puedes ver el historial de cambios en tu dashboard</li>
-            <li>• Plan Pro: Hasta 100 códigos y revisión semanal</li>
+            <li>{t('dashboard.how1')}</li>
+            <li>{t('dashboard.how2')}</li>
+            <li>{t('dashboard.how3')}</li>
+            <li>{t('dashboard.how4')}</li>
           </ul>
         </div>
       </div>
@@ -297,33 +300,33 @@ export default function MonitorDashboard() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Añadir código a monitorizar</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('dashboard.modalTitle')}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Código HS
+                  {t('dashboard.modalHsCode')}
                 </label>
                 <input
                   type="text"
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="ej: 8471300000"
+                  placeholder={t('dashboard.modalHsPlaceholder')}
                   maxLength={10}
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Descripción (opcional)
+                  {t('dashboard.modalDesc')}
                 </label>
                 <input
                   type="text"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="ej: Portátiles para oficina"
+                  placeholder={t('dashboard.modalDescPlaceholder')}
                 />
               </div>
             </div>
@@ -333,14 +336,14 @@ export default function MonitorDashboard() {
                 onClick={() => setShowAddModal(false)}
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
               >
-                Cancelar
+                {t('dashboard.cancel')}
               </button>
               <button
                 onClick={addMonitor}
                 disabled={addingCode || !newCode}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {addingCode ? 'Añadiendo...' : 'Añadir'}
+                {addingCode ? t('dashboard.adding') : t('dashboard.add')}
               </button>
             </div>
           </div>

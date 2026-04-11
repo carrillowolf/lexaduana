@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { useTranslation } from '@/lib/i18n'
+import { despachosDict } from '@/lib/i18n/despachos'
 import { logActivity, getDispatchAlerts } from '@/lib/dispatchActivity'
 import DispatchChecklist from '@/components/DispatchChecklist'
 import ActivityTimeline from '@/components/despachos/ActivityTimeline'
@@ -21,6 +23,7 @@ export default function DespachoDetalle() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useTranslation(despachosDict)
 
   // Si la URL trae #comentarios, abrir esa pestaña
   useEffect(() => {
@@ -134,12 +137,12 @@ export default function DespachoDetalle() {
 
   const getStageLabel = (stage) => {
     switch(stage) {
-      case 'ok': return 'Completado'
-      case 'pending': return 'Pendiente'
-      case 'blocked': return 'Bloqueado'
-      case 'in_progress': return 'En proceso'
-      case 'na': return 'No aplica'
-      default: return 'Pendiente'
+      case 'ok': return t('stages.ok')
+      case 'pending': return t('stages.pending')
+      case 'blocked': return t('stages.blocked')
+      case 'in_progress': return t('stages.in_progress')
+      case 'na': return t('stages.na')
+      default: return t('stages.pending')
     }
   }
 
@@ -159,13 +162,13 @@ export default function DespachoDetalle() {
 
   const getOperationName = (type) => {
     const names = {
-      'import_maritime': 'Importación Marítima',
-      'import_air': 'Importación Aérea',
-      'import_road': 'Importación Terrestre',
-      'export_maritime': 'Exportación Marítima',
-      'export_air': 'Exportación Aérea',
-      'export_road': 'Exportación Terrestre',
-      'transit': 'Tránsito'
+      'import_maritime': t('operations.import_maritime'),
+      'import_air': t('operations.import_air'),
+      'import_road': t('operations.import_road'),
+      'export_maritime': t('operations.export_maritime'),
+      'export_air': t('operations.export_air'),
+      'export_road': t('operations.export_road'),
+      'transit': t('operations.transit')
     }
     return names[type] || type
   }
@@ -175,7 +178,7 @@ export default function DespachoDetalle() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-[#0A3D5C]"></div>
-          <p className="text-gray-600 mt-4">Cargando despacho...</p>
+          <p className="text-gray-600 mt-4">{t('detail.loadingDispatch')}</p>
         </div>
       </div>
     )
@@ -188,9 +191,9 @@ export default function DespachoDetalle() {
           <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Despacho no encontrado</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('common.notFound')}</h2>
           <Link href="/despachos" className="text-[#0A3D5C] hover:underline">
-            ← Volver a despachos
+            {t('common.backToDispatches')}
           </Link>
         </div>
       </div>
@@ -216,12 +219,12 @@ export default function DespachoDetalle() {
             </Link>
 
             <div className="flex items-center space-x-3">
-              {saving && <span className="text-xs text-gray-500">Guardando...</span>}
+              {saving && <span className="text-xs text-gray-500">{t('common.saving')}</span>}
               <Link
                 href="/despachos"
                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0A3D5C] hover:bg-gray-50 rounded-lg transition"
               >
-                ← Volver
+                {t('common.back')}
               </Link>
             </div>
           </div>
@@ -238,12 +241,12 @@ export default function DespachoDetalle() {
                 <h2 className="text-3xl font-bold mb-1">{dispatch.expediente_number}</h2>
                 <p className="text-blue-100">{getOperationName(dispatch.operation_type)}</p>
                 <p className="text-sm text-blue-200 mt-1">
-                  {dispatch.product_description || 'Sin descripción'}
+                  {dispatch.product_description || t('detail.noDescription')}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs text-blue-200">Estado</p>
+              <p className="text-xs text-blue-200">{t('detail.status')}</p>
               <p className="text-lg font-bold capitalize">{dispatch.status}</p>
               {dispatch.eta && (
                 <p className="text-sm text-blue-200 mt-2">
@@ -259,7 +262,7 @@ export default function DespachoDetalle() {
           <div className="mb-6 bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
               <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                <span>⚠️</span> Alertas activas <span className="text-gray-400 font-normal">({activeAlerts.length})</span>
+                <span>⚠️</span> {t('detail.activeAlerts')} <span className="text-gray-400 font-normal">({activeAlerts.length})</span>
               </h3>
             </div>
             <ul className="divide-y divide-gray-100">
@@ -287,7 +290,7 @@ export default function DespachoDetalle() {
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Cliente</p>
+                <p className="text-xs text-gray-500 mb-1">{t('detail.client')}</p>
                 <p className="text-lg font-bold text-gray-900">{dispatch.client_name}</p>
               </div>
               <svg className="w-10 h-10 text-[#0A3D5C] opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +302,7 @@ export default function DespachoDetalle() {
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Incoterm</p>
+                <p className="text-xs text-gray-500 mb-1">{t('detail.incoterm')}</p>
                 <p className="text-lg font-bold text-gray-900">{dispatch.incoterm || '-'}</p>
               </div>
               <svg className="w-10 h-10 text-[#0A3D5C] opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,7 +314,7 @@ export default function DespachoDetalle() {
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Gastos</p>
+                <p className="text-xs text-gray-500 mb-1">{t('detail.expenses')}</p>
                 <p className="text-lg font-bold text-gray-900 capitalize">{dispatch.expenses_status}</p>
               </div>
               <svg className="w-10 h-10 text-[#0A3D5C] opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,7 +326,7 @@ export default function DespachoDetalle() {
 
         {/* Barra de progreso con etapas */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
-          <h3 className="text-sm font-bold text-gray-900 mb-4">Progreso del despacho</h3>
+          <h3 className="text-sm font-bold text-gray-900 mb-4">{t('detail.progress')}</h3>
           <div className="flex items-center justify-between">
             {/* Docs */}
             <div className="text-center">
@@ -427,7 +430,7 @@ export default function DespachoDetalle() {
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-4 text-center">
-            Click en cada etapa para cambiar su estado
+            {t('detail.clickToChange')}
           </p>
         </div>
 
@@ -442,7 +445,7 @@ export default function DespachoDetalle() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Información
+              {t('detail.tabs.info')}
             </button>
             <button
               onClick={() => setActiveTab('checklist')}
@@ -452,7 +455,7 @@ export default function DespachoDetalle() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Checklist
+              {t('detail.tabs.checklist')}
             </button>
             <button
               onClick={() => setActiveTab('comentarios')}
@@ -462,7 +465,7 @@ export default function DespachoDetalle() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Comentarios
+              {t('detail.tabs.comments')}
             </button>
             <button
               onClick={() => setActiveTab('docs')}
@@ -472,7 +475,7 @@ export default function DespachoDetalle() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Documentos
+              {t('detail.tabs.docs')}
             </button>
             <button
               onClick={() => setActiveTab('timeline')}
@@ -482,7 +485,7 @@ export default function DespachoDetalle() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Timeline
+              {t('detail.tabs.timeline')}
             </button>
           </div>
         </div>
@@ -490,27 +493,27 @@ export default function DespachoDetalle() {
         {/* Contenido tabs */}
         {activeTab === 'info' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Información del despacho</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{t('detail.info.title')}</h3>
             <div className="grid md:grid-cols-2 gap-6">
               {/* Datos básicos */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Cliente</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.client')}</label>
                 <p className="text-gray-900 font-medium">{dispatch.client_name}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Producto</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.product')}</label>
                 <p className="text-gray-900">{dispatch.product_description || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Código HS</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.hsCode')}</label>
                 <p className="text-gray-900 font-mono">{dispatch.hs_code || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Incoterm</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.incoterm')}</label>
                 <p className="text-gray-900">{dispatch.incoterm || '-'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Referencia transporte</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.transportRef')}</label>
                 <p className="text-gray-900 font-mono">{dispatch.transport_reference || '-'}</p>
               </div>
               <div>
@@ -528,14 +531,14 @@ export default function DespachoDetalle() {
               {dispatch.operation_type === 'import_maritime' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Tipo contenedor</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.containerType')}</label>
                     <p className="text-gray-900">{dispatch.container_type || '-'}</p>
                   </div>
                   {dispatch.container_type === 'LCL' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Desconsolidación</label>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.deconsolidation')}</label>
                       <p className="text-gray-900">
-                        {dispatch.waiting_deconsolidation ? '⏳ Esperando' : '✓ Completado'}
+                        {dispatch.waiting_deconsolidation ? t('detail.info.waiting') : t('detail.info.completed')}
                       </p>
                     </div>
                   )}
@@ -544,14 +547,14 @@ export default function DespachoDetalle() {
 
               {/* Estado gastos */}
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Gastos</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.expenses')}</label>
                 <p className="text-gray-900 capitalize">{dispatch.expenses_status}</p>
               </div>
 
               {/* MRN (si tiene predeclaración) */}
               {dispatch.mrn_number && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">MRN</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.mrn')}</label>
                   <p className="text-gray-900 font-mono">{dispatch.mrn_number}</p>
                 </div>
               )}
@@ -559,7 +562,7 @@ export default function DespachoDetalle() {
               {/* Notas internas */}
               {dispatch.internal_notes && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Notas internas</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('detail.info.internalNotes')}</label>
                   <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{dispatch.internal_notes}</p>
                 </div>
               )}
@@ -576,21 +579,21 @@ export default function DespachoDetalle() {
 
         {activeTab === 'comentarios' && (
           <div id="comentarios" className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Comentarios</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{t('detail.comments.title')}</h3>
             <CommentThread dispatchId={dispatch.id} />
           </div>
         )}
 
         {activeTab === 'docs' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Documentos</h3>
-            <p className="text-gray-600">Próximamente: Subida y gestión de documentos</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{t('detail.docs.title')}</h3>
+            <p className="text-gray-600">{t('detail.docs.comingSoon')}</p>
           </div>
         )}
 
         {activeTab === 'timeline' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Historial de actividad</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{t('detail.timeline.title')}</h3>
             <ActivityTimeline dispatchId={dispatch.id} />
           </div>
         )}

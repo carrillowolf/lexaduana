@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase-browser'
 import { logActivity, getDispatchAlerts } from '@/lib/dispatchActivity'
 import KanbanView from '@/components/despachos/KanbanView'
 import Link from 'next/link'
+import { useTranslation } from '@/lib/i18n'
+import { despachosDict } from '@/lib/i18n/despachos'
 
 export default function DespachosTableV2() {
   const [user, setUser] = useState(null)
@@ -25,6 +27,7 @@ export default function DespachosTableV2() {
 
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslation(despachosDict)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -321,7 +324,7 @@ export default function DespachosTableV2() {
                   </div>
                 </>
               ) : (
-                <span className="text-gray-400">Sin fecha</span>
+                <span className="text-gray-400">—</span>
               )}
             </button>
           )}
@@ -409,7 +412,7 @@ export default function DespachosTableV2() {
                     })()}
                   </div>
                 ) : (
-                  <span className="text-gray-400">Añadir...</span>
+                  <span className="text-gray-400">{t('list.addComment')}</span>
                 )}
               </button>
 
@@ -424,7 +427,7 @@ export default function DespachosTableV2() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center justify-between">
-                      <span>Paraaduaneros - Añadir Expedientes</span>
+                      <span>{t('list.paraaduanerosTitle')}</span>
                       <button
                         onClick={() => setOpenParaDropdown(null)}
                         className="text-gray-400 hover:text-gray-600 text-lg"
@@ -504,7 +507,7 @@ export default function DespachosTableV2() {
                         }}
                         className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                       >
-                        Limpiar todo
+                        {t('common.cancel')}
                       </button>
                       <button
                         onClick={() => setOpenParaDropdown(null)}
@@ -568,7 +571,7 @@ export default function DespachosTableV2() {
             <Dropdown
               value={dispatch.dua_status || 'pendiente'}
               options={[
-                { value: 'pendiente', label: 'Pendiente' },
+                { value: 'pendiente', label: t('stages.pending') },
                 { value: 'picado', label: 'Picado' },
                 { value: 'mrn', label: 'MRN' }
               ]}
@@ -673,7 +676,7 @@ export default function DespachosTableV2() {
                 className={`flex-1 text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${
                   summary?.last ? 'text-gray-700' : 'text-gray-400'
                 }`}
-                title={summary?.last || 'Añadir comentario'}
+                title={summary?.last || t('list.addComment')}
               >
                 {summary?.last ? (
                   <span className="flex items-center gap-1">
@@ -686,7 +689,7 @@ export default function DespachosTableV2() {
                     )}
                   </span>
                 ) : (
-                  <span>💬 Añadir comentario...</span>
+                  <span>💬 {t('list.addComment')}</span>
                 )}
               </button>
             </div>
@@ -702,7 +705,7 @@ export default function DespachosTableV2() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-[#0A3D5C]"></div>
-          <p className="text-gray-600 mt-4">Cargando despachos...</p>
+          <p className="text-gray-600 mt-4">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -738,7 +741,7 @@ export default function DespachosTableV2() {
             <div className="flex items-center space-x-2">
               <input
                 type="text"
-                placeholder="Buscar..."
+                placeholder={t('list.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none w-48"
@@ -749,7 +752,7 @@ export default function DespachosTableV2() {
                 onChange={(e) => setFilterType(e.target.value)}
                 className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none"
               >
-                <option value="all">Todos</option>
+                <option value="all">{t('list.filterAll')}</option>
                 <option value="import">Importaciones</option>
                 <option value="export">Exportaciones</option>
                 <option value="transit">Tránsitos</option>
@@ -760,8 +763,8 @@ export default function DespachosTableV2() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C] outline-none"
               >
-                <option value="eta">Por ETA</option>
-                <option value="expediente">Por Expediente</option>
+                <option value="eta">{t('list.colEta')}</option>
+                <option value="expediente">{t('list.colExpediente')}</option>
               </select>
 
               <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
@@ -773,7 +776,7 @@ export default function DespachosTableV2() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Tabla
+                  {t('list.tableView')}
                 </button>
                 <button
                   onClick={() => setViewMode('kanban')}
@@ -783,7 +786,7 @@ export default function DespachosTableV2() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Kanban
+                  {t('list.kanbanView')}
                 </button>
               </div>
 
@@ -791,7 +794,7 @@ export default function DespachosTableV2() {
                 href="/despachos/nuevo"
                 className="px-4 py-1 bg-[#0A3D5C] text-white text-sm font-bold rounded-lg hover:bg-[#083049] transition"
               >
-                + Nuevo
+                + {t('list.newDispatch')}
               </Link>
             </div>
           </div>
@@ -819,17 +822,17 @@ export default function DespachosTableV2() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">Expediente</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">ETA</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Docs</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">{t('list.colExpediente')}</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">{t('list.colEta')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colDocs')}</th>
                     <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Gastos</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">Sumaria</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">Paraaduanero</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">Tipo</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">DUA</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Levante</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">TDocs</th>
-                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Notas/Alertas</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">{t('list.colSumaria')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">{t('list.colParaaduaneros')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">{t('list.colType')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">{t('list.colDua')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colLevante')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colClosure')}</th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">{t('list.colNotes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -853,17 +856,17 @@ export default function DespachosTableV2() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">Expediente</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">ETD</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Docs</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">{t('list.colExpediente')}</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">{t('list.colEtd')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colDocs')}</th>
                     <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Gastos</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">Paraaduanero</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">Tipo</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">{t('list.colParaaduaneros')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">{t('list.colType')}</th>
                     <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-32">EUR1/ATR</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">DUA</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Levante</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">TDocs</th>
-                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Notas/Alertas</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-48">{t('list.colDua')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colLevante')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colClosure')}</th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">{t('list.colNotes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -887,12 +890,12 @@ export default function DespachosTableV2() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">Expediente</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">Fecha</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">Docs</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-32">{t('list.colExpediente')}</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 w-20">{t('list.sortDate')}</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colDocs')}</th>
                     <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-28">T1/T2</th>
-                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">TDocs</th>
-                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">Notas/Alertas</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-24">{t('list.colClosure')}</th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">{t('list.colNotes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -907,12 +910,12 @@ export default function DespachosTableV2() {
 
         {totalDispatches === 0 && (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600 mb-4">No hay despachos</p>
+            <p className="text-gray-600 mb-4">{t('list.emptyTitle')}</p>
             <Link
               href="/despachos/nuevo"
               className="inline-flex items-center px-6 py-3 bg-[#0A3D5C] text-white font-bold rounded-lg hover:bg-[#083049] transition"
             >
-              + Crear primer despacho
+              + {t('list.emptyDesc')}
             </Link>
           </div>
         )}
@@ -923,7 +926,7 @@ export default function DespachosTableV2() {
       {/* Leyenda */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4">
         <div className="max-w-[1800px] mx-auto flex items-center space-x-6 text-xs text-gray-600">
-          <span className="font-semibold">Estados:</span>
+          <span className="font-semibold">{t('list.sortStatus')}:</span>
           <div className="flex items-center space-x-1">
             <span className="px-1 py-0.5 bg-green-100 text-green-700 border border-green-300 rounded">✓ OK</span>
           </div>

@@ -2,19 +2,22 @@
 
 import Link from 'next/link'
 import { checkCBAM } from '@/lib/cbamData'
+import { useTranslation } from '@/lib/i18n'
+import { sharedComponentsDict } from '@/lib/i18n/shared-components'
 
 /**
  * Badge pequeño para mostrar junto al código HS
  */
 export function CBAMBadge({ hsCode }) {
   const result = checkCBAM(hsCode)
-  
+  const t = useTranslation(sharedComponentsDict)
+
   if (!result?.affected) return null
   
   return (
     <span className="inline-flex items-center px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full ml-2">
       <span className="mr-1">🌍</span>
-      CBAM
+      {t('cbam.badge')}
     </span>
   )
 }
@@ -24,7 +27,8 @@ export function CBAMBadge({ hsCode }) {
  */
 export function CBAMAlert({ hsCode, className = '' }) {
   const result = checkCBAM(hsCode)
-  
+  const t = useTranslation(sharedComponentsDict)
+
   if (!result?.affected) return null
   
   return (
@@ -39,7 +43,7 @@ export function CBAMAlert({ hsCode, className = '' }) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="font-bold text-amber-800">
-              🌍 Producto afectado por CBAM
+              {'🌍 ' + t('cbam.affected')}
             </h3>
             <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">
               {result.sector.name}
@@ -70,7 +74,7 @@ export function CBAMAlert({ hsCode, className = '' }) {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Ver obligaciones CBAM
+              {t('cbam.viewObligations')}
             </Link>
             <a
               href="https://cbam.ec.europa.eu/"
@@ -81,7 +85,7 @@ export function CBAMAlert({ hsCode, className = '' }) {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              Registro UE
+              {t('cbam.euRegistry')}
             </a>
           </div>
         </div>
@@ -95,7 +99,8 @@ export function CBAMAlert({ hsCode, className = '' }) {
  */
 export function CBAMAlertCompact({ hsCode }) {
   const result = checkCBAM(hsCode)
-  
+  const t = useTranslation(sharedComponentsDict)
+
   if (!result?.affected) return null
   
   return (
@@ -105,7 +110,7 @@ export function CBAMAlertCompact({ hsCode }) {
         <strong>CBAM:</strong> {result.sector.name}
       </span>
       <Link href="/cbam" className="text-amber-600 hover:text-amber-800 underline ml-auto">
-        Ver más
+        {t('cbam.learnMore')}
       </Link>
     </div>
   )

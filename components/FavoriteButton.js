@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useTranslation } from '@/lib/i18n';
+import { sharedComponentsDict } from '@/lib/i18n/shared-components';
 
 export default function FavoriteButton({ hsCode, countryCode, cifValue, calculationData }) {
     const [isFavorite, setIsFavorite] = useState(false);
@@ -9,6 +11,7 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState(null);
     const supabase = createClientComponentClient();
+    const t = useTranslation(sharedComponentsDict);
 
     useEffect(() => {
         checkAuth();
@@ -53,7 +56,7 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
 
     async function toggleFavorite() {
         if (!user) {
-            alert('Debes iniciar sesión para guardar favoritos');
+            alert(t('favorite.loginRequired'));
             return;
         }
 
@@ -89,12 +92,12 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
                     setIsFavorite(true);
                     setFavoriteId(data.favorite.id);
                 } else if (response.status === 409) {
-                    alert('Este producto ya está en favoritos');
+                    alert(t('favorite.alreadyExists'));
                 }
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
-            alert('Error al guardar favorito');
+            alert(t('favorite.errorSaving'));
         } finally {
             setLoading(false);
         }
@@ -114,11 +117,11 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
                 }
         ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
       `}
-            title={isFavorite ? 'Eliminar de favoritos' : 'Añadir a favoritos'}
+            title={isFavorite ? t('favorite.removeTitle') : t('favorite.addTitle')}
         >
             {isFavorite ? '★' : '☆'}
             <span className="hidden sm:inline">
-                {isFavorite ? 'En favoritos' : 'Guardar'}
+                {isFavorite ? t('favorite.inFavorites') : t('favorite.save')}
             </span>
         </button>
     );

@@ -13,9 +13,12 @@ import Link from 'next/link'
 import { CBAMAlert } from '../../components/CBAMAlert'
 import ExchangeRateBanner from '../../components/ExchangeRateBanner'
 import { trackEvent } from '@/lib/analytics'
+import { useTranslation } from '@/lib/i18n'
+import { calculadoraDict } from '@/lib/i18n/calculadora'
 
 export default function Home() {
   const searchParams = useSearchParams()
+  const t = useTranslation(calculadoraDict)
   const [user, setUser] = useState(null)
   const supabase = createClient()
   const [hsCode, setHsCode] = useState(() => searchParams.get('hsCode') || '')
@@ -270,8 +273,8 @@ export default function Home() {
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <h3 className="font-bold text-sm">Dashboard</h3>
-                  <p className="text-xs text-blue-100">Historial y stats</p>
+                  <h3 className="font-bold text-sm">{t('quickAccess.dashboard')}</h3>
+                  <p className="text-xs text-blue-100">{t('quickAccess.dashboardDesc')}</p>
                 </div>
               </Link>
 
@@ -284,8 +287,8 @@ export default function Home() {
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h3 className="font-bold text-sm">Comparador</h3>
-                  <p className="text-xs text-emerald-100">5 países</p>
+                  <h3 className="font-bold text-sm">{t('quickAccess.comparator')}</h3>
+                  <p className="text-xs text-emerald-100">{t('quickAccess.comparatorDesc')}</p>
                 </div>
               </Link>
 
@@ -298,8 +301,8 @@ export default function Home() {
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                   </svg>
-                  <h3 className="font-bold text-sm">Favoritos</h3>
-                  <p className="text-xs text-amber-100">Guardados</p>
+                  <h3 className="font-bold text-sm">{t('quickAccess.favorites')}</h3>
+                  <p className="text-xs text-amber-100">{t('quickAccess.favoritesDesc')}</p>
                 </div>
               </Link>
 
@@ -312,8 +315,8 @@ export default function Home() {
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h3 className="font-bold text-sm">Calc. Masiva</h3>
-                  <p className="text-xs text-purple-100">100 productos</p>
+                  <h3 className="font-bold text-sm">{t('quickAccess.bulkCalc')}</h3>
+                  <p className="text-xs text-purple-100">{t('quickAccess.bulkCalcDesc')}</p>
                 </div>
               </Link>
 
@@ -326,8 +329,8 @@ export default function Home() {
                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
-                  <h3 className="font-bold text-sm">Clasificador IA</h3>
-                  <p className="text-xs text-pink-100">Con Claude 4.5</p>
+                  <h3 className="font-bold text-sm">{t('quickAccess.classifier')}</h3>
+                  <p className="text-xs text-pink-100">{t('quickAccess.classifierDesc')}</p>
                 </div>
               </Link>
               {/* CBAM */}
@@ -337,8 +340,8 @@ export default function Home() {
               >
                 <div className="flex flex-col items-center text-white">
                   <span className="text-3xl mb-2">🌍</span>
-                  <h3 className="font-bold text-sm">CBAM</h3>
-                  <p className="text-xs text-teal-100">Verificador</p>
+                  <h3 className="font-bold text-sm">{t('quickAccess.cbam')}</h3>
+                  <p className="text-xs text-teal-100">{t('quickAccess.cbamDesc')}</p>
                 </div>
               </Link>
             </div>
@@ -354,8 +357,8 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 {/* Header con gradiente */}
                 <div className="bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] px-8 py-6">
-                  <h2 className="text-2xl font-bold text-white mb-2">Calculadora de Aranceles</h2>
-                  <p className="text-blue-100 text-sm">Calcula aranceles e IVA para tus importaciones a España</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">{t('header.title')}</h2>
+                  <p className="text-blue-100 text-sm">{t('header.subtitle')}</p>
                 </div>
 
                 {/* Formulario */}
@@ -364,8 +367,8 @@ export default function Home() {
                   {/* Código HS */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      Código TARIC (HS)
-                      <span className="ml-2 text-xs font-normal text-gray-500">10 dígitos</span>
+                      {t('form.hsCodeLabel')}
+                      <span className="ml-2 text-xs font-normal text-gray-500">{t('form.hsCodeDigits')}</span>
                     </label>
                     <HSCodeAutocomplete
                       value={hsCode}
@@ -377,15 +380,15 @@ export default function Home() {
                   {/* Valor CIF con selector de moneda */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      Valor CIF
-                      <span className="ml-2 text-xs font-normal text-gray-500">Coste + Seguro + Flete</span>
+                      {t('form.cifLabel')}
+                      <span className="ml-2 text-xs font-normal text-gray-500">{t('form.cifHint')}</span>
                     </label>
                     <div className="flex gap-3">
                       <input
                         type="number"
                         value={cifValue}
                         onChange={handleCifValueChange}
-                        placeholder="Ej: 10000"
+                        placeholder={t('form.cifPlaceholder')}
                         min="0"
                         step="0.01"
                         required
@@ -419,7 +422,7 @@ export default function Home() {
                             {formatCurrency(convertedValue.eurValue)}
                           </span>
                           <span className="ml-2 text-xs text-gray-500">
-                            (Tipo: {convertedValue.rate.toFixed(6)})
+                            ({t('form.rateLabel')} {convertedValue.rate.toFixed(6)})
                           </span>
                         </p>
                       </div>
@@ -429,8 +432,8 @@ export default function Home() {
                   {/* País de origen */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      País de Origen
-                      <span className="ml-2 text-xs font-normal text-gray-500">Selecciona el origen de la mercancía</span>
+                      {t('form.countryLabel')}
+                      <span className="ml-2 text-xs font-normal text-gray-500">{t('form.countryHint')}</span>
                     </label>
                     <select
                       value={countryCode}
@@ -438,7 +441,7 @@ export default function Home() {
                       required
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0A3D5C] focus:ring-4 focus:ring-[#0A3D5C]/10 outline-none transition-all bg-white font-medium"
                     >
-                      <option value="ERGA OMNES">Terceros países (ERGA OMNES)</option>
+                      <option value="ERGA OMNES">{t('form.countryDefault')}</option>
                       {Object.entries(groupedCountries).map(([group, countriesInGroup]) => (
                         <optgroup key={group} label={group}>
                           {countriesInGroup.map(country => (
@@ -464,14 +467,14 @@ export default function Home() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Calculando...</span>
+                        <span>{t('form.calculating')}</span>
                       </>
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
-                        <span>Calcular Aranceles</span>
+                        <span>{t('form.calculate')}</span>
                       </>
                     )}
                   </button>
@@ -486,7 +489,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="ml-3">
-                      <h3 className="font-semibold text-red-800">Error en el cálculo</h3>
+                      <h3 className="font-semibold text-red-800">{t('error.title')}</h3>
                       <p className="text-sm text-red-700 mt-1">{error}</p>
                     </div>
                   </div>
@@ -503,8 +506,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900">Código incompleto</h3>
-                      <p className="text-sm text-gray-600 mt-1">Selecciona una clasificación más específica:</p>
+                      <h3 className="font-bold text-lg text-gray-900">{t('suggestions.title')}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{t('suggestions.subtitle')}</p>
                     </div>
                   </div>
                   
@@ -537,8 +540,8 @@ export default function Home() {
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-fadeIn">
                   {/* Header de resultados */}
                   <div className="bg-gradient-to-r from-emerald-500 to-green-500 px-8 py-6">
-                    <h3 className="text-2xl font-bold text-white mb-1">Resultado del Cálculo</h3>
-                    <p className="text-emerald-50 text-sm">Desglose completo de costes de importación</p>
+                    <h3 className="text-2xl font-bold text-white mb-1">{t('results.title')}</h3>
+                    <p className="text-emerald-50 text-sm">{t('results.subtitle')}</p>
                   </div>
 
                   <div className="p-8 space-y-6">
@@ -547,16 +550,16 @@ export default function Home() {
                     <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-6 border border-gray-100">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Código TARIC</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('results.hsCodeLabel')}</p>
                           <p className="font-mono text-lg font-bold text-[#0A3D5C]">{result.hsCode}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">País de Origen</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('results.countryLabel')}</p>
                           <p className="text-lg font-bold text-[#0A3D5C]">{result.country.name}</p>
                         </div>
                       </div>
                       <div className="mt-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Descripción</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('results.descriptionLabel')}</p>
                         <p className="text-sm text-gray-700 leading-relaxed">{result.description}</p>
                       </div>
 
@@ -571,7 +574,7 @@ export default function Home() {
                           <svg className="w-5 h-5 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <h4 className="font-bold text-gray-900">Conversión de Moneda</h4>
+                          <h4 className="font-bold text-gray-900">{t('results.currencyConversion')}</h4>
                         </div>
                         <p className="text-sm text-gray-700">
                           <span className="font-semibold">{result.conversionInfo.original.toLocaleString('es-ES', {minimumFractionDigits: 2})} {result.conversionInfo.currency}</span>
@@ -593,13 +596,13 @@ export default function Home() {
                             </svg>
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-bold text-[#0A3D5C] mb-1">Arancel Preferencial Aplicado</h4>
+                            <h4 className="font-bold text-[#0A3D5C] mb-1">{t('results.preferentialApplied')}</h4>
                             <p className="text-sm text-gray-700 mb-3">
-                              Se aplica arancel reducido por acuerdo comercial con {result.country.name}
+                              {t('results.preferentialDesc')} {result.country.name}
                             </p>
                             {result.duty.certificationRequired && (
                               <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                <p className="text-xs font-semibold text-gray-700 mb-1">📋 Documentación requerida:</p>
+                                <p className="text-xs font-semibold text-gray-700 mb-1">📋 {t('results.certRequired')}</p>
                                 <p className="text-xs text-gray-600">{result.duty.certificationMessage}</p>
                               </div>
                             )}
@@ -613,8 +616,8 @@ export default function Home() {
                       <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-200">
                         <div className="flex items-center space-x-2 mb-3">
                           <span className="text-xl">📋</span>
-                          <h4 className="font-bold text-gray-900">Condiciones y Certificados</h4>
-                          <span className="text-xs text-gray-500">({result.duty.conditions.length} requeridos)</span>
+                          <h4 className="font-bold text-gray-900">{t('results.conditions')}</h4>
+                          <span className="text-xs text-gray-500">({result.duty.conditions.length} {t('results.conditionsRequired')})</span>
                         </div>
                         <div className="space-y-2">
                           {result.duty.conditions.map((cond, i) => (
@@ -627,7 +630,7 @@ export default function Home() {
                           ))}
                         </div>
                         <p className="text-xs text-gray-500 mt-3 italic">
-                          Verifique con las autoridades aduaneras qué documentación es obligatoria para su operación.
+                          {t('results.conditionsNote')}
                         </p>
                       </div>
                     )}
@@ -639,8 +642,8 @@ export default function Home() {
                           <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                           </svg>
-                          <span>Alertas y Requisitos TARIC</span>
-                          <span className="text-xs font-normal text-gray-500">({result.alerts.length} aplicables)</span>
+                          <span>{t('results.alerts')}</span>
+                          <span className="text-xs font-normal text-gray-500">({result.alerts.length} {t('results.alertsApplicable')})</span>
                         </h4>
                         
                         {result.alerts.map((alert, index) => (
@@ -665,7 +668,7 @@ export default function Home() {
                                       {alert.translated?.measure?.text || alert.code}
                                     </h5>
                                     {alert.translated?.measure?.code && (
-                                      <span className="text-xs text-gray-500">Medida {alert.translated.measure.code}</span>
+                                      <span className="text-xs text-gray-500">{t('results.alertsMeasure')} {alert.translated.measure.code}</span>
                                     )}
                                   </div>
                                 </div>
@@ -678,7 +681,7 @@ export default function Home() {
                                       <p className="text-sm font-medium text-gray-800">
                                         {alert.translated.certificate.text}
                                       </p>
-                                      <span className="text-xs text-gray-500">Código: {alert.certificate}</span>
+                                      <span className="text-xs text-gray-500">{t('results.alertsCertCode')} {alert.certificate}</span>
                                     </div>
                                   </div>
                                 )}
@@ -688,7 +691,7 @@ export default function Home() {
                                   <div className="flex items-center space-x-2 mb-2 ml-10">
                                     <span className="text-lg">{alert.translated.origin.icon}</span>
                                     <p className="text-sm text-gray-700">
-                                      Aplica a: <span className="font-medium">{alert.translated.origin.text}</span>
+                                      {t('results.alertsAppliesTo')} <span className="font-medium">{alert.translated.origin.text}</span>
                                     </p>
                                   </div>
                                 )}
@@ -704,7 +707,7 @@ export default function Home() {
                                 {alert.full_text && (
                                   <details className="mt-3 ml-10">
                                     <summary className="cursor-pointer text-xs font-medium text-[#0A3D5C] hover:text-[#083049]">
-                                      Ver texto original EUR-Lex ↓
+                                      {t('results.alertsViewOriginal')}
                                     </summary>
                                     <div className="mt-2 p-3 bg-white rounded-lg text-xs text-gray-700 whitespace-pre-line border border-gray-200">
                                       {alert.full_text}
@@ -720,8 +723,8 @@ export default function Home() {
                                 'bg-blue-200 text-blue-800'
                               }`}>
                                 {alert.translated?.priorityLabel || (
-                                  alert.priority === 1 ? 'CRÍTICO' : 
-                                  alert.priority === 2 ? 'IMPORTANTE' : 'INFO'
+                                  alert.priority === 1 ? t('results.alertsCritical') :
+                                  alert.priority === 2 ? t('results.alertsImportant') : t('results.alertsInfo')
                                 )}
                               </span>
                             </div>
@@ -730,22 +733,18 @@ export default function Home() {
 
                         {/* Nota informativa */}
                         <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
-                          <p className="text-xs text-gray-700">
-                            <strong>💡 Leyenda de certificados:</strong> Los códigos C0XX son certificados sanitarios/fitosanitarios, 
-                            U0XX son licencias de importación, Y0XX son declaraciones, E0XX documentos electrónicos SOIVRE.
-                            <strong className="text-[#0A3D5C]"> Verifique siempre con las autoridades aduaneras</strong> qué documentación es obligatoria.
-                          </p>
+                          <p className="text-xs text-gray-700" dangerouslySetInnerHTML={{ __html: '💡 ' + t('results.alertsCertLegend') }} />
                         </div>
                       </div>
                     )}
 
                     {/* ═══ BLOQUE 1: Liquidación aduanera (tributos) ═══ */}
                     <div className="pt-4">
-                      <h3 className="text-sm font-bold text-[#0A3D5C] uppercase tracking-wider mb-3">Liquidación aduanera</h3>
+                      <h3 className="text-sm font-bold text-[#0A3D5C] uppercase tracking-wider mb-3">{t('settlement.title')}</h3>
                       <div className="bg-white border-2 border-[#0A3D5C]/10 rounded-2xl p-5 space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-100">
                           <div>
-                            <span className="text-gray-600 font-medium">Derechos de arancel </span>
+                            <span className="text-gray-600 font-medium">{t('settlement.dutyRights')} </span>
                             {result.duty.standardRate !== result.duty.appliedRate && (
                               <span className="text-xs text-gray-400 line-through ml-1">
                                 ({result.duty.standardRate}%)
@@ -761,14 +760,14 @@ export default function Home() {
                         <div className="py-2 border-b border-gray-100">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-600 font-medium">IVA importación ({result.vat.rate}%)</span>
+                              <span className="text-gray-600 font-medium">{t('settlement.importVat')} ({result.vat.rate}%)</span>
                               {result.vat.type && result.vat.type !== 'general' && (
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                                   result.vat.type === 'superreducido'
                                     ? 'bg-green-100 text-green-700'
                                     : 'bg-blue-100 text-blue-700'
                                 }`}>
-                                  {result.vat.type === 'superreducido' ? '4% Superreducido' : '10% Reducido'}
+                                  {result.vat.type === 'superreducido' ? t('settlement.superReduced') : t('settlement.reduced')}
                                 </span>
                               )}
                             </div>
@@ -779,46 +778,46 @@ export default function Home() {
                           {result.vat.type && result.vat.type !== 'general' && (
                             <p className="text-xs text-gray-500 mt-1">
                               {result.vat.type === 'superreducido'
-                                ? '📦 Productos básicos de primera necesidad'
-                                : '🍽️ Alimentos y servicios esenciales'}
+                                ? `📦 ${t('settlement.superReducedDesc')}`
+                                : `🍽️ ${t('settlement.reducedDesc')}`}
                             </p>
                           )}
                         </div>
 
                         {/* Total suplidos */}
                         <div className="flex justify-between items-center pt-2">
-                          <span className="text-lg font-bold text-[#0A3D5C]">Total suplidos</span>
+                          <span className="text-lg font-bold text-[#0A3D5C]">{t('settlement.totalDisbursements')}</span>
                           <span className="text-2xl font-bold text-[#0A3D5C]">
                             {formatCurrency(result.duty.amount + result.vat.amount)}
                           </span>
                         </div>
                         {result.duty.savings > 0 && (
                           <p className="text-xs text-emerald-600 font-medium">
-                            Ahorro de {formatCurrency(result.duty.savings)} por acuerdo comercial
+                            {t('settlement.savingsNote').replace('{amount}', formatCurrency(result.duty.savings))}
                           </p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1">*IVA deducible para empresas dadas de alta en el ROI</p>
+                        <p className="text-xs text-gray-400 mt-1">{t('settlement.vatNote')}</p>
                       </div>
                     </div>
 
                     {/* ═══ BLOQUE 2: Coste total de la importación ═══ */}
                     <div className="pt-4">
-                      <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">Coste total de la importación</h3>
+                      <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">{t('totalCost.title')}</h3>
                       <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-2">
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-gray-500 text-sm">Valor CIF mercancía</span>
+                          <span className="text-gray-500 text-sm">{t('totalCost.cifValue')}</span>
                           <span className="font-semibold text-gray-700">{formatCurrency(result.cifValue)}</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-gray-500 text-sm">Derechos de arancel</span>
+                          <span className="text-gray-500 text-sm">{t('totalCost.dutyRights')}</span>
                           <span className="font-semibold text-gray-700">{formatCurrency(result.duty.amount)}</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200 pb-3">
-                          <span className="text-gray-500 text-sm">IVA importación</span>
+                          <span className="text-gray-500 text-sm">{t('totalCost.importVat')}</span>
                           <span className="font-semibold text-gray-700">{formatCurrency(result.vat.amount)}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2">
-                          <span className="font-semibold text-gray-600">Coste total importación</span>
+                          <span className="font-semibold text-gray-600">{t('totalCost.totalImport')}</span>
                           <span className="text-xl font-bold text-gray-900">{formatCurrency(result.total)}</span>
                         </div>
                       </div>
@@ -843,7 +842,7 @@ export default function Home() {
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        Exportar PDF
+                        {t('actions.exportPdf')}
                       </button>
                       <button 
                         onClick={() => window.print()}
@@ -852,7 +851,7 @@ export default function Home() {
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
-                        Imprimir
+                        {t('actions.print')}
                       </button>
                       <button 
                         onClick={clearAll}
@@ -861,7 +860,7 @@ export default function Home() {
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Nuevo Cálculo
+                        {t('actions.newCalc')}
                       </button>
                     </div>
                   </div>
@@ -879,7 +878,7 @@ export default function Home() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Tipos de Cambio BCE</span>
+                    <span>{t('sidebar.exchangeRates')}</span>
                   </h3>
                 </div>
                 <div className="p-4">
@@ -892,11 +891,11 @@ export default function Home() {
                         </div>
                       ))}
                       <a href="/tipos-cambio" className="text-xs text-[#0A3D5C] hover:underline block mt-2">
-                        Ver todos →
+                        {t('sidebar.viewAll')}
                       </a>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">Cargando...</p>
+                    <p className="text-sm text-gray-500">{t('sidebar.loading')}</p>
                   )}
                 </div>
               </div>
@@ -909,7 +908,7 @@ export default function Home() {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>Búsquedas Recientes</span>
+                      <span>{t('sidebar.recentSearches')}</span>
                     </h3>
                   </div>
                   <div className="p-4 space-y-2">
@@ -952,8 +951,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">Documentación de origen</h4>
-                      <p className="text-xs text-gray-600">EUR.1, REX o Declaración en factura según acuerdo</p>
+                      <h4 className="font-bold text-gray-900 text-sm mb-1">{t('sidebar.originDocs')}</h4>
+                      <p className="text-xs text-gray-600">{t('sidebar.originDocsDesc')}</p>
                     </div>
                   </div>
                 </div>
@@ -966,8 +965,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">Importante</h4>
-                      <p className="text-xs text-gray-600">Las preferencias dependen del producto específico</p>
+                      <h4 className="font-bold text-gray-900 text-sm mb-1">{t('sidebar.important')}</h4>
+                      <p className="text-xs text-gray-600">{t('sidebar.importantDesc')}</p>
                     </div>
                   </div>
                 </div>
@@ -980,8 +979,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">Siempre verificar</h4>
-                      <p className="text-xs text-gray-600">Consultar acuerdo específico y reglas de origen</p>
+                      <h4 className="font-bold text-gray-900 text-sm mb-1">{t('sidebar.alwaysVerify')}</h4>
+                      <p className="text-xs text-gray-600">{t('sidebar.alwaysVerifyDesc')}</p>
                     </div>
                   </div>
                 </div>

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { exportBulkToExcel } from '@/lib/excelExporter'
+import { useTranslation } from '@/lib/i18n'
+import { dashboardDict } from '@/lib/i18n/dashboard'
 
 // Admin email
 const ADMIN_EMAIL = 'ccarrillodelolmo@gmail.com'
@@ -16,6 +18,7 @@ export default function DashboardPage() {
   const [loadingHistory, setLoadingHistory] = useState(true)
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslation(dashboardDict)
 
   useEffect(() => {
     const getUser = async () => {
@@ -79,7 +82,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#0A3D5C] border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Cargando dashboard...</p>
+          <p className="mt-4 text-gray-600 font-medium">{t('loading')}</p>
         </div>
       </div>
     )
@@ -95,8 +98,8 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30"></div>
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <h2 className="text-2xl font-bold mb-1">¡Bienvenido de nuevo!</h2>
-              <p className="text-white/60 text-sm">Aquí tienes un resumen de tu actividad</p>
+              <h2 className="text-2xl font-bold mb-1">{t('welcome.title')}</h2>
+              <p className="text-white/60 text-sm">{t('welcome.subtitle')}</p>
             </div>
             <div className="hidden md:block text-4xl">📊</div>
           </div>
@@ -112,12 +115,12 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-500 mb-1">Total Cálculos</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">{t('stats.totalCalcs')}</p>
                 <p className="text-4xl font-bold text-[#0A3D5C]">{calculations.length}</p>
               </div>
             </div>
             <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Desde que creaste tu cuenta</p>
+              <p className="text-xs text-gray-500">{t('stats.sinceAccount')}</p>
             </div>
           </div>
 
@@ -129,7 +132,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-500 mb-1">Últimos 7 días</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">{t('stats.last7days')}</p>
                 <p className="text-4xl font-bold text-emerald-600">
                   {calculations.filter(c => {
                     const date = new Date(c.created_at)
@@ -141,7 +144,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Actividad reciente</p>
+              <p className="text-xs text-gray-500">{t('stats.recentActivity')}</p>
             </div>
           </div>
 
@@ -153,14 +156,14 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-500 mb-1">Países consultados</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">{t('stats.countriesConsulted')}</p>
                 <p className="text-4xl font-bold text-[#F4C542]">
                   {new Set(calculations.map(c => c.country_code)).size}
                 </p>
               </div>
             </div>
             <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Orígenes diferentes</p>
+              <p className="text-xs text-gray-500">{t('stats.differentOrigins')}</p>
             </div>
           </div>
         </div>
@@ -171,8 +174,8 @@ export default function DashboardPage() {
           <div className="px-8 py-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">Historial de Cálculos</h2>
-                <p className="text-sm text-gray-600">Tus 10 cálculos más recientes</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">{t('history.title')}</h2>
+                <p className="text-sm text-gray-600">{t('history.subtitle')}</p>
               </div>
               <button
                 onClick={loadHistory}
@@ -181,7 +184,7 @@ export default function DashboardPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>Actualizar</span>
+                <span>{t('history.refresh')}</span>
               </button>
             </div>
           </div>
@@ -191,7 +194,7 @@ export default function DashboardPage() {
             {loadingHistory ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#0A3D5C] border-t-transparent mx-auto"></div>
-                <p className="mt-4 text-gray-600">Cargando historial...</p>
+                <p className="mt-4 text-gray-600">{t('history.loading')}</p>
               </div>
             ) : calculations.length === 0 ? (
               <div className="text-center py-16">
@@ -200,8 +203,8 @@ export default function DashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay cálculos todavía</h3>
-                <p className="text-gray-600 mb-6">Comienza haciendo tu primer cálculo de aranceles</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('history.emptyTitle')}</h3>
+                <p className="text-gray-600 mb-6">{t('history.emptyDesc')}</p>
                 <Link
                   href="/calculadora"
                   className="inline-flex items-center px-6 py-3 bg-[#0A3D5C] text-white font-semibold rounded-xl hover:bg-[#083049] transition-all shadow-lg hover:shadow-xl"
@@ -209,7 +212,7 @@ export default function DashboardPage() {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Hacer primer cálculo
+                  {t('history.firstCalc')}
                 </Link>
               </div>
             ) : (
@@ -217,12 +220,12 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-gray-200">
-                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fecha</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">HS Code</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Descripción</th>
-                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">País</th>
-                      <th className="px-4 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Valor CIF</th>
-                      <th className="px-4 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Total</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">{t('history.colDate')}</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">{t('history.colHsCode')}</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">{t('history.colDescription')}</th>
+                      <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">{t('history.colCountry')}</th>
+                      <th className="px-4 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">{t('history.colCifValue')}</th>
+                      <th className="px-4 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">{t('history.colTotal')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -237,7 +240,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-700 max-w-xs truncate">
-                          {calc.description?.split('→')[0] || 'Sin descripción'}
+                          {calc.description?.split('→')[0] || t('history.noDescription')}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                           {calc.country_name}
@@ -259,7 +262,7 @@ export default function DashboardPage() {
 
         {/* Accesos rápidos */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Accesos rápidos</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">{t('quickAccess.title')}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link
               href="/calculadora"
@@ -269,8 +272,8 @@ export default function DashboardPage() {
                 <span className="text-2xl">🧮</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Calculadora</h3>
-                <p className="text-sm text-gray-500">Aranceles e impuestos</p>
+                <h3 className="font-semibold text-gray-800">{t('quickAccess.calculator')}</h3>
+                <p className="text-sm text-gray-500">{t('quickAccess.calculatorDesc')}</p>
               </div>
             </Link>
 
@@ -282,8 +285,8 @@ export default function DashboardPage() {
                 <span className="text-2xl">⚖️</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Comparador</h3>
-                <p className="text-sm text-gray-500">Multi-origen</p>
+                <h3 className="font-semibold text-gray-800">{t('quickAccess.comparator')}</h3>
+                <p className="text-sm text-gray-500">{t('quickAccess.comparatorDesc')}</p>
               </div>
             </Link>
 
@@ -295,8 +298,8 @@ export default function DashboardPage() {
                 <span className="text-2xl">🏭</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">CBAM</h3>
-                <p className="text-sm text-gray-500">Verificador y simulador</p>
+                <h3 className="font-semibold text-gray-800">{t('quickAccess.cbam')}</h3>
+                <p className="text-sm text-gray-500">{t('quickAccess.cbamDesc')}</p>
               </div>
             </Link>
 
@@ -308,8 +311,8 @@ export default function DashboardPage() {
                 <span className="text-2xl">🤖</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Clasificador IA</h3>
-                <p className="text-sm text-gray-500">Claude Sonnet 4.5</p>
+                <h3 className="font-semibold text-gray-800">{t('quickAccess.classifier')}</h3>
+                <p className="text-sm text-gray-500">{t('quickAccess.classifierDesc')}</p>
               </div>
             </Link>
 
@@ -322,8 +325,8 @@ export default function DashboardPage() {
                 <span className="text-2xl">📄</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Extractor Facturas</h3>
-                <p className="text-sm text-gray-500">OCR + TARIC + aranceles</p>
+                <h3 className="font-semibold text-gray-800">{t('quickAccess.invoiceExtractor')}</h3>
+                <p className="text-sm text-gray-500">{t('quickAccess.invoiceExtractorDesc')}</p>
               </div>
             </Link>
 
@@ -335,8 +338,8 @@ export default function DashboardPage() {
                 <span className="text-2xl">📊</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Cálculo masivo</h3>
-                <p className="text-sm text-gray-500">Hasta 100 productos</p>
+                <h3 className="font-semibold text-gray-800">{t('quickAccess.bulkCalc')}</h3>
+                <p className="text-sm text-gray-500">{t('quickAccess.bulkCalcDesc')}</p>
               </div>
             </Link>
 
@@ -351,8 +354,8 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">Exportar Excel</h3>
-                  <p className="text-sm text-gray-500">Descargar historial</p>
+                  <h3 className="font-semibold text-gray-800">{t('quickAccess.exportExcel')}</h3>
+                  <p className="text-sm text-gray-500">{t('quickAccess.exportExcelDesc')}</p>
                 </div>
               </button>
             )}
@@ -370,8 +373,8 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">Panel Admin</h3>
-                  <p className="text-sm text-gray-500">Gestionar IA</p>
+                  <h3 className="font-semibold text-gray-800">{t('quickAccess.adminPanel')}</h3>
+                  <p className="text-sm text-gray-500">{t('quickAccess.adminPanelDesc')}</p>
                 </div>
               </Link>
             )}
