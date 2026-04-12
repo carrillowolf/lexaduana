@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.12.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.13.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -48,66 +48,93 @@ lexaduana.es
 │   ├── DV1 + tabla casillas DUA/H1
 │   └── 6 casos problemáticos reales
 ├── 🌐 Soporte bilingüe ES/EN    (disponible)
-│   └── 10 páginas públicas traducidas
+│   └── 85%+ cobertura — 28 páginas/componentes
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
 
 ---
 
-## 🆕 Novedades v5.12.0 (Abril 2026)
+## 🆕 Novedades v5.13.0 (Abril 2026)
 
-### 🌐 Soporte bilingüe ES/EN — Páginas públicas e internacionales
+### 🌐 Soporte bilingüe ES/EN completo — 85%+ cobertura
 
-Implementación completa de internacionalización (i18n) en todas las páginas orientadas al público internacional, manteniendo las herramientas internas (calculadora, CBAM, comparador, despachos, bulk) en español.
+Expansión del sistema i18n a toda la plataforma: herramientas públicas, páginas autenticadas, landing page, monitor de aranceles y componentes compartidos. De 10 páginas públicas a **28 páginas/componentes traducidos** con **14 diccionarios** y **~2.000 strings**.
 
 #### Infraestructura i18n
 
 - **`lib/i18n.js`**: Core del sistema — `LocaleProvider` (React Context), hooks `useLocale()` y `useTranslation(dict)` con acceso por clave anidada (`t('hero.title')`)
 - **`components/LanguageSwitcher.js`**: Toggle ES/EN con persistencia en `localStorage`, integrado en sidebar (`AppTopbar`) y páginas standalone (auth, landing)
 - **`components/layout/AppShell.js`**: `LocaleProvider` envuelve toda la app (rutas bare y sidebar)
-- **Detección automática**: Idioma persistido entre sesiones vía `localStorage`
+- **Fallback chain**: Clave → español → fallback proporcionado → clave cruda
+- **Interpolación manual**: `.replace('{placeholder}', value)` para strings dinámicos
+- **HTML en traducciones**: Soportado vía `dangerouslySetInnerHTML` donde necesario
 
-#### Páginas traducidas (10 páginas, ~600 strings)
+#### Diccionarios de traducción (14 archivos)
 
-| Página | Diccionario | Strings | Notas |
-|--------|-------------|---------|-------|
-| Landing (`/`) | `lib/i18n/landing.js` | ~120 | Header, hero, 5 tools, stats, resources, audience, compliance, footer |
-| Login (`/auth/login`) | `lib/i18n/auth.js` | ~12 | Formulario completo + links |
-| Register (`/auth/register`) | `lib/i18n/auth.js` | ~15 | Validaciones traducidas |
-| Forgot password (`/auth/forgot-password`) | `lib/i18n/auth.js` | ~10 | Flujo de recuperación |
-| Reset password (`/auth/reset-password`) | `lib/i18n/auth.js` | ~18 | 3 estados: verificando, inválido, formulario |
-| EUDR (`/eudr`) | `lib/i18n/eudr.js` | ~120 | Convertida de Server a Client Component, metadata en layout.js |
-| Clasificador IA (`/clasificador`) | `lib/i18n/clasificador.js` | ~45 | Resultados, confianza, disclaimer |
-| Incoterms (`/incoterms`) | `lib/i18n/incoterms.js` | ~80 | Tabla, wizard, SEO, customs value |
-| OEA (`/oea`) | `lib/i18n/oea.js` | ~90 | Metadata en layout.js |
-| Valor en Aduana (`/valor-en-aduana`) | `lib/i18n/valor-en-aduana.js` + `lib/customsValueData.en.js` | ~250 | Traducción completa: 6 métodos, 3 ejemplos numéricos, DV1, 16 campos DUA/H1, ajustes art.71/72, 6 casos problemáticos |
+| Diccionario | Cobertura | Strings | Notas |
+|---|---|---|---|
+| `landing.js` | Hero, Features, Audiencia, QuickAccess | ~100 | Landing page completa |
+| `auth.js` | Login, Register, Forgot/Reset password | ~55 | 4 páginas de auth |
+| `calculadora.js` | Calculadora TARIC completa | ~80 | Form, resultados, liquidación, sidebar |
+| `comparador.js` | Comparador multi-origen | ~70 | Hero, form, resultados, recomendación |
+| `clasificador.js` | Clasificador IA | ~45 | Resultados, confianza, disclaimer |
+| `glosario.js` | Glosario aduanero | ~25 | Hero, sidebar, detalle, lista |
+| `tipos-cambio.js` | Tipos de cambio | ~20 | Tablas, secciones, legal |
+| `factura-ocr.js` | Extractor de facturas | ~90 | Wizard 3 pasos, historial, seguridad |
+| `bulk.js` | Cálculo masivo | ~60 | Hero, instrucciones, upload, resultados |
+| `dashboard.js` | Dashboard usuario | ~40 | Welcome, stats, historial, accesos rápidos |
+| `favoritos.js` | Favoritos | ~13 | Lista, empty state, acciones |
+| `despachos.js` | Gestor despachos (3 páginas) | ~120 | Listado, nuevo, detalle, stages, operaciones |
+| `monitor.js` | Monitor de aranceles (2 páginas) | ~70 | Auth, dashboard, modal, info |
+| `shared-components.js` | Componentes compartidos | ~60 | CBAM, ExchangeRate, Favorite, Checklist |
+| `footer.js` | Footer | ~25 | Brand, producto, legal |
+| `common.js` | Navegación, topbar | ~30 | Sidebar, topbar |
+
+#### Páginas y componentes traducidos (28 total)
+
+**Fase 1 — Herramientas públicas (7):**
+Calculadora, Comparador, Glosario, Tipos de cambio, Factura OCR, Cálculo masivo, Footer
+
+**Fase 2 — Páginas autenticadas + componentes compartidos (8):**
+Dashboard, Favoritos, Despachos (listado + nuevo + detalle), CBAMAlert, ExchangeRateBanner, FavoriteButton
+
+**Fase 3 — Landing, monitor y componentes restantes (9):**
+HeroLanding, FeaturesLanding, TargetAudience, QuickAccessButton, Monitor auth, Monitor dashboard, ExchangeRateWidget, DispatchChecklist
+
+**Sesiones anteriores (10):**
+Landing `/`, Auth (4 páginas), EUDR, Clasificador IA, Incoterms, OEA, Valor en Aduana, Sidebar, Topbar, CBAM (8 páginas)
 
 #### Enfoque de datos bilingües (Valor en Aduana)
 
-- **`lib/customsValueData.en.js`** (~490 líneas): Versión inglesa completa de todos los datos estructurados — métodos de valoración, ejemplos numéricos, DV1, campos DUA/H1, ajustes CAU, casos problemáticos, notas generales, tabla comparativa
+- **`lib/customsValueData.en.js`** (~490 líneas): Versión inglesa completa de todos los datos estructurados
 - **Hook `useLocalizedData()`**: Selecciona automáticamente datos ES/EN según locale activo
 - **Números formateados por locale**: `toLocaleString('en-GB')` vs `toLocaleString('es-ES')`
 
-#### Sidebar y navegación bilingüe
+#### Qué queda sin traducir (intencional)
 
-- **`components/layout/AppSidebar.js`**: Todas las secciones (Herramientas, Regulaciones UE, Recursos), labels y tooltips traducidos
-- **`components/layout/AppTopbar.js`**: Títulos de página, botones de acción, `LanguageSwitcher` integrado
-- **FAQ schemas dinámicos**: Generación de JSON-LD según locale para SEO (EUDR)
+- **Páginas admin** (`/admin/*`): 4 páginas internas de gestión — solo las usa el admin
+- **Páginas legales** (`/politica-privacidad`, `/terminos-uso`): Requieren traducción legal profesional
+- **`ExportPDF.js`**: Función pura sin hooks — requeriría pasar locale como parámetro
+- **`CBAMInfoBanner`**: Texto regulatorio específico EU
 
-#### Decisiones de diseño
-- **Opción B**: Solo páginas públicas/internacionales traducidas — herramientas internas quedan en español (son de uso profesional en España)
-- **Glosario**: Pendiente para versión futura (200+ definiciones técnicas)
-- **Server → Client**: EUDR y OEA convertidas de Server Components a Client Components para soportar hooks de traducción; metadata movida a `layout.js`
-
-**Cambios técnicos:**
-- 21 ficheros modificados + 12 ficheros nuevos (diccionarios i18n, layouts, LanguageSwitcher, datos EN)
-- 0 dependencias nuevas (i18n implementada con React Context + localStorage)
-- Build limpio — sin impacto en bundle size significativo (tree-shaking de diccionarios no usados por página)
+**Cambios técnicos (v5.13.0):**
+- 36 ficheros modificados/creados (14 diccionarios + 28 páginas/componentes)
+- 0 dependencias nuevas (React Context + localStorage)
+- Build limpio — sin impacto significativo en bundle size
+- Componentes landing (`HeroLanding`, `FeaturesLanding`, `TargetAudience`) convertidos a Client Components (`'use client'`) para soportar hooks
 
 ---
 
-## 🆕 Novedades v5.11.0 (Abril 2026)
+## Novedades v5.12.0 (Abril 2026)
+
+### 🌐 Soporte bilingüe ES/EN — Páginas públicas (primera fase)
+
+Primera implementación i18n: 10 páginas públicas/internacionales traducidas (~600 strings). Landing, auth (4 páginas), EUDR, Clasificador IA, Incoterms, OEA, Valor en Aduana. Infraestructura base: `LocaleProvider`, `useTranslation`, `LanguageSwitcher`, persistencia localStorage. Sidebar y topbar bilingües. Posteriormente ampliado en v5.12.1 con la sección CBAM completa (8 páginas, 8 componentes) y en v5.13.0 con cobertura completa.
+
+---
+
+## Novedades v5.11.0 (Abril 2026)
 
 ### 🧾 Factura OCR + 🌍 Motor CBAM regulatorio v2
 
