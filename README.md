@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.13.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.14.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -47,15 +47,74 @@ lexaduana.es
 │   ├── Base arancel vs base IVA (3 ejemplos)
 │   ├── DV1 + tabla casillas DUA/H1
 │   └── 6 casos problemáticos reales
+├── 🔄 Monitor Cambios TARIC     (disponible)
+│   ├── Detección automática de cambios mensuales
+│   ├── Top 10 mayores cambios arancelarios
+│   ├── Tabla de capítulos con desglose
+│   ├── Detalle por partida/capítulo
+│   └── Conclusiones automáticas del mes
 ├── 🌐 Soporte bilingüe ES/EN    (disponible)
-│   └── 85%+ cobertura — 28 páginas/componentes
+│   └── 90%+ cobertura — 29 páginas/componentes
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
 
 ---
 
-## 🆕 Novedades v5.13.0 (Abril 2026)
+## 🆕 Novedades v5.14.0 (Abril 2026)
+
+### 🔄 Monitor de Cambios TARIC (`/cambios`) — Nueva herramienta
+
+Sistema completo de detección, análisis y visualización de cambios arancelarios mensuales del TARIC (Arancel Integrado de la UE). Compara automáticamente los datos nuevos de CIRCABC contra los vigentes en Supabase y presenta los cambios de forma accionable.
+
+#### Detección de cambios (`scripts/detectChanges.js`)
+
+- **Comparación Excel vs Supabase**: lee los 4 Excel del Block 2 (Duties, Conditions, Exclusions, Footnotes) y compara contra datos actuales en BD
+- **Clasificación inteligente**: cada cambio se categoriza como `added`/`removed`/`modified` con severidad `critical`/`warning`/`info`
+- **Separación medidas vs footnotes**: distingue cambios con impacto arancelario real de cambios cosméticos (footnotes)
+- **Modo dry-run**: `--dry-run` para previsualizar sin escribir en BD
+- **Almacenamiento**: tabla `taric_changes` con índices por mes, capítulo, goods_code y severidad
+
+#### API (`/api/changes`)
+
+- **Resumen mensual**: desglose de medidas (nuevas/eliminadas), cambios críticos, condiciones, capítulos afectados
+- **Top 10 cambios**: `rankTopChanges()` extrae y puntúa los mayores deltas arancelarios con `parseDutyValue()` para interpretar expresiones TARIC (`"5.800 %"`, `"237.000 EUR TNE I"`)
+- **Detalle paginado**: filtros por capítulo, código, severidad y tipo de cambio
+- **Lista de meses**: endpoint `?months=all` para navegación temporal
+
+#### Página `/cambios` — 11 componentes
+
+- **Hero navy** (`bg-[#0A3D5C]`): consistente con CBAM/Incoterms, badge, descripción y selector de mes
+- **ChangesSummary**: 4 KPIs — medidas, críticos, condiciones, capítulos afectados
+- **TopChanges**: Top 10 cambios con banderas de país, tipo de medida, delta formateado (NUEVO/↑/↓)
+- **ChapterTable**: tabla oscura (`bg-[#0F1A2E]`) con 97 capítulos HS, sort por capítulo/medidas/críticos, leyenda interactiva, sección colapsable de footnotes
+- **ChangesTable**: detalle paginado con filtros por tipo y severidad
+- **HighlightsSection**: conclusiones auto-generadas del mes (eliminadas, nuevas, críticas, footnotes)
+- **MonthSelector**, **ChangesSearch**, **SubscriptionCTA**, **SeverityBadge**, **ChangeTypeBadge**
+
+#### Diseño visual
+
+- Ritmo visual: hero oscuro → contenido claro → tabla oscura → contenido claro → CTA oscuro
+- Paleta: navy `#0A3D5C`, tabla `#0F1A2E`, gold `#C49B38`/`#B8860B`, grises estándar Tailwind
+- Light theme para todo el contenido (fondo blanco del body), contraste verificado
+
+#### Soporte bilingüe ES/EN completo
+
+- **Diccionario `lib/i18n/cambios.js`**: ~200 strings — hero, resumen, búsqueda, top changes, tabla capítulos, conclusiones, detalle, filtros, CTA, badges, estado vacío
+- **`CHAPTER_NAMES_I18N`**: 97 capítulos HS traducidos ES/EN, compartido entre ChapterTable y TopChanges
+- **Tipos de medida bilingües**: 12 tipos TARIC (anti-dumping, preferencia, contingente, etc.)
+- **Orígenes geográficos bilingües**: 28 países/grupos con banderas emoji
+- **Nombres de meses**: Enero→January, etc. en MonthSelector
+
+**Cambios técnicos:**
+- 1 script nuevo + 1 ruta API + 11 componentes React + 1 diccionario i18n
+- Tabla `taric_changes` + RPC `get_changes_by_chapter` en Supabase
+- 0 dependencias nuevas
+- Build limpio — `/cambios` 8.7 kB First Load
+
+---
+
+## Novedades v5.13.0 (Abril 2026)
 
 ### 🌐 Soporte bilingüe ES/EN completo — 85%+ cobertura
 
@@ -70,10 +129,11 @@ Expansión del sistema i18n a toda la plataforma: herramientas públicas, págin
 - **Interpolación manual**: `.replace('{placeholder}', value)` para strings dinámicos
 - **HTML en traducciones**: Soportado vía `dangerouslySetInnerHTML` donde necesario
 
-#### Diccionarios de traducción (14 archivos)
+#### Diccionarios de traducción (15 archivos)
 
 | Diccionario | Cobertura | Strings | Notas |
 |---|---|---|---|
+| `cambios.js` | Monitor cambios TARIC completo | ~200 | Hero, resumen, top, capítulos, detalle, badges + 97 capítulos HS bilingües |
 | `landing.js` | Hero, Features, Audiencia, QuickAccess | ~100 | Landing page completa |
 | `auth.js` | Login, Register, Forgot/Reset password | ~55 | 4 páginas de auth |
 | `calculadora.js` | Calculadora TARIC completa | ~80 | Form, resultados, liquidación, sidebar |
@@ -91,7 +151,7 @@ Expansión del sistema i18n a toda la plataforma: herramientas públicas, págin
 | `footer.js` | Footer | ~25 | Brand, producto, legal |
 | `common.js` | Navegación, topbar | ~30 | Sidebar, topbar |
 
-#### Páginas y componentes traducidos (28 total)
+#### Páginas y componentes traducidos (29 total)
 
 **Fase 1 — Herramientas públicas (7):**
 Calculadora, Comparador, Glosario, Tipos de cambio, Factura OCR, Cálculo masivo, Footer
@@ -99,8 +159,8 @@ Calculadora, Comparador, Glosario, Tipos de cambio, Factura OCR, Cálculo masivo
 **Fase 2 — Páginas autenticadas + componentes compartidos (8):**
 Dashboard, Favoritos, Despachos (listado + nuevo + detalle), CBAMAlert, ExchangeRateBanner, FavoriteButton
 
-**Fase 3 — Landing, monitor y componentes restantes (9):**
-HeroLanding, FeaturesLanding, TargetAudience, QuickAccessButton, Monitor auth, Monitor dashboard, ExchangeRateWidget, DispatchChecklist
+**Fase 3 — Landing, monitor y componentes restantes (10):**
+HeroLanding, FeaturesLanding, TargetAudience, QuickAccessButton, Monitor auth, Monitor dashboard, ExchangeRateWidget, DispatchChecklist, Cambios TARIC (11 componentes)
 
 **Sesiones anteriores (10):**
 Landing `/`, Auth (4 páginas), EUDR, Clasificador IA, Incoterms, OEA, Valor en Aduana, Sidebar, Topbar, CBAM (8 páginas)
@@ -119,7 +179,7 @@ Landing `/`, Auth (4 páginas), EUDR, Clasificador IA, Incoterms, OEA, Valor en 
 - **`CBAMInfoBanner`**: Texto regulatorio específico EU
 
 **Cambios técnicos (v5.13.0):**
-- 36 ficheros modificados/creados (14 diccionarios + 28 páginas/componentes)
+- 36 ficheros modificados/creados (15 diccionarios + 29 páginas/componentes)
 - 0 dependencias nuevas (React Context + localStorage)
 - Build limpio — sin impacto significativo en bundle size
 - Componentes landing (`HeroLanding`, `FeaturesLanding`, `TargetAudience`) convertidos a Client Components (`'use client'`) para soportar hooks
