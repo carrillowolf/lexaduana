@@ -95,22 +95,33 @@ export default function CambiosPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-[#E8E8E8]">Cambios Arancelarios del Mes</h1>
-          <p className="text-sm text-[#8B95A5] mt-0.5">
-            Análisis inteligente de cambios en el arancel integrado TARIC de la UE
-          </p>
+      {/* ═══ HERO ═══ */}
+      <div className="bg-[#0A3D5C] relative overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAyYzguODM3IDAgMTYgNy4xNjMgMTYgMTZzLTcuMTYzIDE2LTE2IDE2LTE2LTcuMTYzLTE2LTE2IDcuMTYzLTE2IDE2LTE2eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')] opacity-30" />
+        <div className="relative z-10 px-6 py-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+          <div className="flex-1">
+            <span className="inline-block px-3 py-1 bg-white/10 border border-white/10 rounded-full text-xs font-medium text-white/80 mb-3">
+              Arancel Integrado de la UE — Actualización mensual
+            </span>
+            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-3 tracking-tight">
+              Monitor de Cambios TARIC
+            </h1>
+            <p className="text-white/60 text-sm leading-relaxed max-w-lg">
+              Cada mes, la Comisión Europea actualiza el arancel integrado TARIC.
+              Aquí detectamos y analizamos qué ha cambiado: nuevos aranceles,
+              medidas anti-dumping, contingentes modificados y más.
+              <span className="text-white/90 font-medium"> Solo cambios con impacto real.</span>
+            </p>
+          </div>
+          <MonthSelector
+            months={months}
+            selected={selectedMonth}
+            onChange={(m) => {
+              setSelectedMonth(m)
+              handleClearFilters()
+            }}
+          />
         </div>
-        <MonthSelector
-          months={months}
-          selected={selectedMonth}
-          onChange={(m) => {
-            setSelectedMonth(m)
-            handleClearFilters()
-          }}
-        />
       </div>
 
       {/* Loading */}
@@ -139,13 +150,13 @@ export default function CambiosPage() {
           {/* Filtro activo */}
           {(selectedChapter || searchCode) && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#8B95A5]">Filtro activo:</span>
-              <span className="text-xs bg-[#C49B38]/20 text-[#C49B38] px-2 py-0.5 rounded border border-[#C49B38]/30">
+              <span className="text-xs text-gray-500">Filtro activo:</span>
+              <span className="text-xs bg-[#0A3D5C]/10 text-[#0A3D5C] px-2 py-0.5 rounded border border-[#0A3D5C]/20 font-medium">
                 {selectedChapter ? `Capítulo ${selectedChapter}` : `Código ${searchCode}`}
               </span>
               <button
                 onClick={handleClearFilters}
-                className="text-xs text-[#8B95A5] hover:text-[#E8E8E8] transition-colors underline"
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors underline"
               >
                 Limpiar
               </button>
@@ -164,9 +175,8 @@ export default function CambiosPage() {
                 onSelectChapter={handleSelectChapter}
               />
 
-              {/* Conclusiones + Críticos */}
+              {/* Conclusiones */}
               <HighlightsSection
-                highlights={data.highlights}
                 chapters={data.by_chapter}
               />
             </>

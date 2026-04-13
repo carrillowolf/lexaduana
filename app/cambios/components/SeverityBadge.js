@@ -1,9 +1,9 @@
 'use client'
 
 const SEVERITY_STYLES = {
-  critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-  warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  info: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  critical: 'bg-red-100 text-red-700 border-red-200',
+  warning: 'bg-amber-100 text-amber-700 border-amber-200',
+  info: 'bg-blue-100 text-blue-700 border-blue-200',
 }
 
 const SEVERITY_LABELS = {

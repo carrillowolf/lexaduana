@@ -1,9 +1,9 @@
 'use client'
 
 const TYPE_STYLES = {
-  added: 'bg-green-500/20 text-green-400 border-green-500/30',
-  removed: 'bg-red-500/20 text-red-400 border-red-500/30',
-  modified: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  added: 'bg-green-100 text-green-700 border-green-200',
+  removed: 'bg-red-100 text-red-700 border-red-200',
+  modified: 'bg-amber-100 text-amber-700 border-amber-200',
 }
 
 const TYPE_LABELS = {
