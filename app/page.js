@@ -51,8 +51,8 @@ const TOOL_HREFS = ['/calculadora', '/clasificador', '/cbam', '/oea', '/eudr']
 const TOOL_ACCENTS = ['#3B82F6', '#A855F7', '#10B981', '#EF4444', '#22C55E']
 const TOOL_ACCENT_BGS = ['rgba(59, 130, 246, 0.15)', 'rgba(168, 85, 247, 0.15)', 'rgba(16, 185, 129, 0.15)', 'rgba(239, 68, 68, 0.15)', 'rgba(34, 197, 94, 0.15)']
 
-const RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/bulk', '/despachos']
-const RESOURCE_BADGES = [null, null, null, null, null, 'BETA']
+const RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/bulk', '/despachos', '/cambios']
+const RESOURCE_BADGES = [null, null, null, null, null, 'BETA', 'NEW']
 const RESOURCE_ICONS = [
   <svg key="inc" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>,
   <svg key="val" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>,
@@ -60,6 +60,7 @@ const RESOURCE_ICONS = [
   <svg key="fx" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   <svg key="bulk" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>,
   <svg key="desp" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
+  <svg key="changes" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>,
 ]
 
 const ROLE_ICONS = [
@@ -72,7 +73,7 @@ const STAT_VALUES = [390735, 49700, 573, 195]
 const STAT_SUFFIXES = ['', '+', '', '']
 
 const FOOTER_TOOL_HREFS = ['/calculadora', '/clasificador', '/cbam', '/comparador', '/bulk', '/despachos']
-const FOOTER_RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/eudr']
+const FOOTER_RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/eudr', '/cambios']
 const FOOTER_LEGAL_HREFS = ['/politica-privacidad', '/terminos-uso', 'mailto:soporte@lexaduana.es']
 
 const HEADER_LINKS = ['/calculadora', '/incoterms', '/cbam', '/clasificador', '/valor-en-aduana']

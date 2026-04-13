@@ -44,7 +44,7 @@ const args = process.argv.slice(2)
 const DRY_RUN = args.includes('--dry-run')
 const ONLY = args.find(a => a.startsWith('--only='))?.split('=')[1] || null
 const EXCEL_PATH = args.find(a => a.startsWith('--excel-path='))?.split('=')[1]
-  || '/Users/carloscarrillo/Desktop/Archivos de Lexaduana/Marzo 26'
+  || path.resolve(__dirname, '..', 'data', 'nuevo-mes')
 
 const BATCH_SIZE = 500 // Supabase recomienda 500 para inserts masivos
 

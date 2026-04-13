@@ -25,6 +25,7 @@ function useNavSections() {
           { href: '/comparador', icon: '⚖️', label: t('nav.comparator') },
           { href: '/despachos', icon: '📋', label: t('nav.dispatches') },
           { href: '/bulk', icon: '📊', label: t('nav.bulkCalc') },
+          { href: '/cambios', icon: '🔄', label: t('nav.changes'), badge: 'New' },
         ],
       },
       {
