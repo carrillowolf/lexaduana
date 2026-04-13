@@ -1,67 +1,54 @@
 'use client'
 
-const CHAPTER_NAMES = {
-  '01': 'Animales vivos', '02': 'Carne', '03': 'Pescados',
-  '04': 'Leche, huevos', '05': 'Origen animal', '06': 'Plantas vivas',
-  '07': 'Hortalizas', '08': 'Frutas', '09': 'Café, té, especias',
-  '10': 'Cereales', '11': 'Molinería', '12': 'Semillas oleaginosas',
-  '13': 'Gomas, resinas', '14': 'Materias trenzables', '15': 'Grasas y aceites',
-  '16': 'Conservas', '17': 'Azúcares', '18': 'Cacao',
-  '19': 'Prep. cereales', '20': 'Prep. legumbres', '21': 'Prep. alimenticias',
-  '22': 'Bebidas', '23': 'Residuos alimentarios', '24': 'Tabaco',
-  '25': 'Sal, piedras', '26': 'Minerales', '27': 'Combustibles',
-  '28': 'Quím. inorgánicos', '29': 'Quím. orgánicos', '30': 'Farmacéuticos',
-  '31': 'Abonos', '32': 'Curtientes, tintas', '33': 'Perfumería',
-  '34': 'Jabones', '35': 'Colas', '36': 'Explosivos',
-  '37': 'Fotográficos', '38': 'Quím. diversos', '39': 'Plásticos',
-  '40': 'Caucho', '41': 'Pieles', '42': 'Cuero',
-  '43': 'Peletería', '44': 'Madera', '45': 'Corcho',
-  '46': 'Espartería', '47': 'Pasta madera', '48': 'Papel, cartón',
-  '49': 'Prensa', '50': 'Seda', '51': 'Lana',
-  '52': 'Algodón', '53': 'Fibras vegetales', '54': 'Filamentos sintéticos',
-  '55': 'Fibras sintéticas', '56': 'Guata, fieltro', '57': 'Alfombras',
-  '58': 'Tejidos especiales', '59': 'Telas impregnadas', '60': 'Tejidos de punto',
-  '61': 'Prendas de punto', '62': 'Prendas no punto', '63': 'Textiles confeccionados',
-  '64': 'Calzado', '65': 'Sombreros', '66': 'Paraguas',
-  '67': 'Plumas artificiales', '68': 'Piedra, yeso', '69': 'Cerámicos',
-  '70': 'Vidrio', '71': 'Piedras preciosas', '72': 'Hierro y acero',
-  '73': 'Manuf. hierro', '74': 'Cobre', '75': 'Níquel',
-  '76': 'Aluminio', '78': 'Plomo', '79': 'Cinc',
-  '80': 'Estaño', '81': 'Otros metales', '82': 'Herramientas',
-  '83': 'Manuf. metal', '84': 'Máquinas mecánicas', '85': 'Material eléctrico',
-  '86': 'Ferroviario', '87': 'Vehículos', '88': 'Aeronaves',
-  '89': 'Barcos', '90': 'Óptica, precisión', '91': 'Relojería',
-  '92': 'Instrumentos musicales', '93': 'Armas', '94': 'Muebles',
-  '95': 'Juguetes', '96': 'Manuf. diversas', '97': 'Arte, colección',
-}
+import { useLocale } from '@/lib/i18n'
+import { CHAPTER_NAMES_I18N } from '@/lib/i18n/cambios'
 
 const MEASURE_TYPES = {
-  '103': 'Arancel terceros países',
-  '142': 'Preferencia arancelaria',
-  '143': 'Contingente arancelario',
-  '551': 'Derecho anti-dumping provisional',
-  '552': 'Derecho anti-dumping definitivo',
-  '553': 'Derecho compensatorio provisional',
-  '554': 'Derecho compensatorio definitivo',
-  '695': 'Medida de salvaguardia',
-  '696': 'Vigilancia previa',
-  '714': 'Prohibición importación',
-  '750': 'Arancel adicional',
-  '490': 'Precio de entrada',
+  es: {
+    '103': 'Arancel terceros países', '142': 'Preferencia arancelaria',
+    '143': 'Contingente arancelario', '551': 'Derecho anti-dumping provisional',
+    '552': 'Derecho anti-dumping definitivo', '553': 'Derecho compensatorio provisional',
+    '554': 'Derecho compensatorio definitivo', '695': 'Medida de salvaguardia',
+    '696': 'Vigilancia previa', '714': 'Prohibición importación',
+    '750': 'Arancel adicional', '490': 'Precio de entrada',
+  },
+  en: {
+    '103': 'Third-country duty', '142': 'Tariff preference',
+    '143': 'Tariff quota', '551': 'Provisional anti-dumping duty',
+    '552': 'Definitive anti-dumping duty', '553': 'Provisional countervailing duty',
+    '554': 'Definitive countervailing duty', '695': 'Safeguard measure',
+    '696': 'Prior surveillance', '714': 'Import prohibition',
+    '750': 'Additional duty', '490': 'Entry price',
+  },
 }
 
 const ORIGINS = {
-  'CA': '🇨🇦 Canadá', 'CN': '🇨🇳 China', 'JP': '🇯🇵 Japón',
-  'US': '🇺🇸 EE.UU.', 'RU': '🇷🇺 Rusia', 'IN': '🇮🇳 India',
-  'KR': '🇰🇷 Corea del Sur', 'TR': '🇹🇷 Turquía', 'BR': '🇧🇷 Brasil',
-  'TW': '🇹🇼 Taiwán', 'ID': '🇮🇩 Indonesia', 'MY': '🇲🇾 Malasia',
-  'TH': '🇹🇭 Tailandia', 'VN': '🇻🇳 Vietnam', 'AR': '🇦🇷 Argentina',
-  'EG': '🇪🇬 Egipto', 'UA': '🇺🇦 Ucrania', 'NZ': '🇳🇿 Nueva Zelanda',
-  'MA': '🇲🇦 Marruecos', 'ZA': '🇿🇦 Sudáfrica', 'PK': '🇵🇰 Pakistán',
-  'BD': '🇧🇩 Bangladés', 'MX': '🇲🇽 México', 'CL': '🇨🇱 Chile',
-  'PE': '🇵🇪 Perú', 'CO': '🇨🇴 Colombia', 'BY': '🇧🇾 Bielorrusia',
-  '1008': '🌍 Todos los países', '1011': '🌍 Erga omnes',
-  '2005': '🌍 No-UE', '2020': '🌍 Países en desarrollo',
+  es: {
+    'CA': '🇨🇦 Canadá', 'CN': '🇨🇳 China', 'JP': '🇯🇵 Japón',
+    'US': '🇺🇸 EE.UU.', 'RU': '🇷🇺 Rusia', 'IN': '🇮🇳 India',
+    'KR': '🇰🇷 Corea del Sur', 'TR': '🇹🇷 Turquía', 'BR': '🇧🇷 Brasil',
+    'TW': '🇹🇼 Taiwán', 'ID': '🇮🇩 Indonesia', 'MY': '🇲🇾 Malasia',
+    'TH': '🇹🇭 Tailandia', 'VN': '🇻🇳 Vietnam', 'AR': '🇦🇷 Argentina',
+    'EG': '🇪🇬 Egipto', 'UA': '🇺🇦 Ucrania', 'NZ': '🇳🇿 Nueva Zelanda',
+    'MA': '🇲🇦 Marruecos', 'ZA': '🇿🇦 Sudáfrica', 'PK': '🇵🇰 Pakistán',
+    'BD': '🇧🇩 Bangladés', 'MX': '🇲🇽 México', 'CL': '🇨🇱 Chile',
+    'PE': '🇵🇪 Perú', 'CO': '🇨🇴 Colombia', 'BY': '🇧🇾 Bielorrusia',
+    '1008': '🌍 Todos los países', '1011': '🌍 Erga omnes',
+    '2005': '🌍 No-UE', '2020': '🌍 Países en desarrollo',
+  },
+  en: {
+    'CA': '🇨🇦 Canada', 'CN': '🇨🇳 China', 'JP': '🇯🇵 Japan',
+    'US': '🇺🇸 USA', 'RU': '🇷🇺 Russia', 'IN': '🇮🇳 India',
+    'KR': '🇰🇷 South Korea', 'TR': '🇹🇷 Turkey', 'BR': '🇧🇷 Brazil',
+    'TW': '🇹🇼 Taiwan', 'ID': '🇮🇩 Indonesia', 'MY': '🇲🇾 Malaysia',
+    'TH': '🇹🇭 Thailand', 'VN': '🇻🇳 Vietnam', 'AR': '🇦🇷 Argentina',
+    'EG': '🇪🇬 Egypt', 'UA': '🇺🇦 Ukraine', 'NZ': '🇳🇿 New Zealand',
+    'MA': '🇲🇦 Morocco', 'ZA': '🇿🇦 South Africa', 'PK': '🇵🇰 Pakistan',
+    'BD': '🇧🇩 Bangladesh', 'MX': '🇲🇽 Mexico', 'CL': '🇨🇱 Chile',
+    'PE': '🇵🇪 Peru', 'CO': '🇨🇴 Colombia', 'BY': '🇧🇾 Belarus',
+    '1008': '🌍 All countries', '1011': '🌍 Erga omnes',
+    '2005': '🌍 Non-EU', '2020': '🌍 Developing countries',
+  },
 }
 
 function formatDuty(value, unit) {
@@ -71,14 +58,14 @@ function formatDuty(value, unit) {
   return `${value} ${unit || ''}`
 }
 
-function DirectionArrow({ direction, delta, unit }) {
+function DirectionArrow({ direction, delta, unit, newLabel = 'NUEVO', typeChangedLabel = 'Cambio tipo' }) {
   if (direction === 'new') {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m0-16l-4 4m4-4l4 4" />
         </svg>
-        NUEVO
+        {newLabel}
       </span>
     )
   }
@@ -102,10 +89,13 @@ function DirectionArrow({ direction, delta, unit }) {
       </span>
     )
   }
-  return <span className="text-xs text-gray-500">Cambio tipo</span>
+  return <span className="text-xs text-gray-500">{typeChangedLabel}</span>
 }
 
-export default function TopChanges({ changes }) {
+export default function TopChanges({ changes, t }) {
+  const { locale } = useLocale()
+  const chapterNames = CHAPTER_NAMES_I18N[locale] || CHAPTER_NAMES_I18N.es
+
   if (!changes || changes.length === 0) return null
 
   return (
@@ -114,16 +104,18 @@ export default function TopChanges({ changes }) {
         <svg className="w-5 h-5 text-[#B8860B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
-        <h3 className="text-base font-bold text-gray-800">Top mayores cambios arancelarios</h3>
-        <span className="text-xs text-gray-400">Ordenados por magnitud</span>
+        <h3 className="text-base font-bold text-gray-800">{t('top.title')}</h3>
+        <span className="text-xs text-gray-400">{t('top.subtitle')}</span>
       </div>
 
       <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-100">
         {changes.map((ch, i) => {
           const chapter = ch.goods_code?.substring(0, 2)
-          const chapterName = CHAPTER_NAMES[chapter] || ''
-          const measureLabel = MEASURE_TYPES[ch.measure_type_code] || `Medida ${ch.measure_type_code}`
-          const originLabel = ORIGINS[ch.origin_code] || ch.origin_code
+          const chapterName = chapterNames[chapter] || ''
+          const measureTypes = MEASURE_TYPES[locale] || MEASURE_TYPES.es
+          const origins = ORIGINS[locale] || ORIGINS.es
+          const measureLabel = measureTypes[ch.measure_type_code] || `${locale === 'en' ? 'Measure' : 'Medida'} ${ch.measure_type_code}`
+          const originLabel = origins[ch.origin_code] || ch.origin_code
 
           return (
             <div key={`${ch.goods_code}-${ch.measure_type_code}-${i}`} className={`px-4 py-3 hover:bg-blue-50/40 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
@@ -145,7 +137,7 @@ export default function TopChanges({ changes }) {
                 </div>
 
                 <div className="flex-shrink-0 text-right">
-                  <DirectionArrow direction={ch.direction} delta={ch.delta} unit={ch.unit} />
+                  <DirectionArrow direction={ch.direction} delta={ch.delta} unit={ch.unit} newLabel={t('top.new')} typeChangedLabel={t('top.typeChanged')} />
                   <div className="text-xs text-gray-500 mt-1 space-x-1">
                     {ch.direction !== 'new' && (
                       <>

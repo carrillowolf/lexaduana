@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function ChangesSearch({ onSearch }) {
+export default function ChangesSearch({ onSearch, t }) {
   const [query, setQuery] = useState('')
 
   function handleSubmit(e) {
@@ -25,7 +25,7 @@ export default function ChangesSearch({ onSearch }) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por código de mercancía (ej: 7208, 720851...)"
+          placeholder={t('search.placeholder')}
           className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C]/20 transition-all shadow-sm"
         />
         {query && (
@@ -44,7 +44,7 @@ export default function ChangesSearch({ onSearch }) {
         type="submit"
         className="bg-[#0A3D5C] hover:bg-[#0C4A6E] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex-shrink-0 shadow-sm"
       >
-        Buscar
+        {t('search.button')}
       </button>
     </form>
   )

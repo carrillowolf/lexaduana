@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/lib/i18n'
+import { cambiosDict } from '@/lib/i18n/cambios'
 import MonthSelector from './components/MonthSelector'
 import ChangesSummary from './components/ChangesSummary'
 import ChapterTable from './components/ChapterTable'
@@ -11,6 +13,7 @@ import TopChanges from './components/TopChanges'
 import SubscriptionCTA from './components/SubscriptionCTA'
 
 export default function CambiosPage() {
+  const t = useTranslation(cambiosDict)
   const [months, setMonths] = useState([])
   const [selectedMonth, setSelectedMonth] = useState(null)
   const [data, setData] = useState(null)
@@ -83,10 +86,9 @@ export default function CambiosPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-[#E8E8E8] mb-2">Sin datos de cambios</h2>
+          <h2 className="text-xl font-bold text-[#E8E8E8] mb-2">{t('empty.title')}</h2>
           <p className="text-sm text-[#8B95A5]">
-            El sistema de detección de cambios TARIC se ejecuta con cada actualización mensual de datos.
-            Los cambios aparecerán aquí tras la próxima actualización.
+            {t('empty.description')}
           </p>
         </div>
       </div>
@@ -101,21 +103,20 @@ export default function CambiosPage() {
         <div className="relative z-10 px-6 py-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
           <div className="flex-1">
             <span className="inline-block px-3 py-1 bg-white/10 border border-white/10 rounded-full text-xs font-medium text-white/80 mb-3">
-              Arancel Integrado de la UE — Actualización mensual
+              {t('hero.badge')}
             </span>
             <h1 className="text-2xl lg:text-3xl font-bold text-white mb-3 tracking-tight">
-              Monitor de Cambios TARIC
+              {t('hero.title')}
             </h1>
             <p className="text-white/60 text-sm leading-relaxed max-w-lg">
-              Cada mes, la Comisión Europea actualiza el arancel integrado TARIC.
-              Aquí detectamos y analizamos qué ha cambiado: nuevos aranceles,
-              medidas anti-dumping, contingentes modificados y más.
-              <span className="text-white/90 font-medium"> Solo cambios con impacto real.</span>
+              {t('hero.description')}
+              <span className="text-white/90 font-medium"> {t('hero.highlight')}</span>
             </p>
           </div>
           <MonthSelector
             months={months}
             selected={selectedMonth}
+            t={t}
             onChange={(m) => {
               setSelectedMonth(m)
               handleClearFilters()
@@ -142,23 +143,23 @@ export default function CambiosPage() {
       {!loading && data && (
         <>
           {/* Resumen con desglose */}
-          <ChangesSummary summary={data.summary} />
+          <ChangesSummary summary={data.summary} t={t} />
 
           {/* Buscador */}
-          <ChangesSearch onSearch={handleSearch} />
+          <ChangesSearch onSearch={handleSearch} t={t} />
 
           {/* Filtro activo */}
           {(selectedChapter || searchCode) && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Filtro activo:</span>
+              <span className="text-xs text-gray-500">{t('filter.active')}</span>
               <span className="text-xs bg-[#0A3D5C]/10 text-[#0A3D5C] px-2 py-0.5 rounded border border-[#0A3D5C]/20 font-medium">
-                {selectedChapter ? `Capítulo ${selectedChapter}` : `Código ${searchCode}`}
+                {selectedChapter ? `${t('filter.chapter')} ${selectedChapter}` : `${t('filter.code')} ${searchCode}`}
               </span>
               <button
                 onClick={handleClearFilters}
                 className="text-xs text-gray-400 hover:text-gray-700 transition-colors underline"
               >
-                Limpiar
+                {t('filter.clear')}
               </button>
             </div>
           )}
@@ -167,17 +168,19 @@ export default function CambiosPage() {
           {!showDetail && (
             <>
               {/* Top mayores cambios */}
-              <TopChanges changes={data.top_changes} />
+              <TopChanges changes={data.top_changes} t={t} />
 
               {/* Capítulos */}
               <ChapterTable
                 chapters={data.by_chapter}
                 onSelectChapter={handleSelectChapter}
+                t={t}
               />
 
               {/* Conclusiones */}
               <HighlightsSection
                 chapters={data.by_chapter}
+                t={t}
               />
             </>
           )}
@@ -188,11 +191,12 @@ export default function CambiosPage() {
               month={selectedMonth}
               chapter={selectedChapter}
               searchCode={searchCode}
+              t={t}
             />
           )}
 
           {/* CTA suscripción */}
-          <SubscriptionCTA />
+          <SubscriptionCTA t={t} />
         </>
       )}
     </div>

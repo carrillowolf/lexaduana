@@ -6,21 +6,15 @@ const TYPE_STYLES = {
   modified: 'bg-amber-100 text-amber-700 border-amber-200',
 }
 
-const TYPE_LABELS = {
-  added: 'Añadido',
-  removed: 'Eliminado',
-  modified: 'Modificado',
-}
-
 const TYPE_ICONS = {
   added: '+',
   removed: '−',
   modified: '~',
 }
 
-export default function ChangeTypeBadge({ type }) {
+export default function ChangeTypeBadge({ type, t }) {
   const style = TYPE_STYLES[type] || TYPE_STYLES.modified
-  const label = TYPE_LABELS[type] || type
+  const label = t ? t(`badges.${type}`) : (type === 'added' ? 'Añadido' : type === 'removed' ? 'Eliminado' : 'Modificado')
   const icon = TYPE_ICONS[type] || '?'
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${style}`}>

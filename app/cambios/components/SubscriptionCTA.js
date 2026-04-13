@@ -1,17 +1,16 @@
 'use client'
 
-export default function SubscriptionCTA() {
+export default function SubscriptionCTA({ t }) {
   return (
     <div className="bg-[#0A3D5C] rounded-xl p-6 text-center">
       <h3 className="text-lg font-semibold text-white mb-2">
-        Alertas de cambios arancelarios
+        {t('cta.title')}
       </h3>
       <p className="text-sm text-white/60 mb-4 max-w-md mx-auto">
-        Recibe notificaciones cuando cambien los aranceles de tus partidas.
-        Configuración por código HS, capítulo o tipo de medida.
+        {t('cta.description')}
       </p>
       <span className="inline-flex items-center px-4 py-2 bg-white/10 text-white/80 rounded-lg text-sm font-medium border border-white/20">
-        Próximamente
+        {t('cta.soon')}
       </span>
     </div>
   )

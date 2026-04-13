@@ -1,17 +1,27 @@
 'use client'
 
-const MONTH_NAMES = {
+const MONTH_NAMES_ES = {
   '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
   '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
   '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
 }
-
-function formatMonth(yyyymm) {
-  const [year, month] = yyyymm.split('-')
-  return `${MONTH_NAMES[month] || month} ${year}`
+const MONTH_NAMES_EN = {
+  '01': 'January', '02': 'February', '03': 'March', '04': 'April',
+  '05': 'May', '06': 'June', '07': 'July', '08': 'August',
+  '09': 'September', '10': 'October', '11': 'November', '12': 'December',
 }
 
-export default function MonthSelector({ months, selected, onChange }) {
+import { useLocale } from '@/lib/i18n'
+
+function formatMonth(yyyymm, locale) {
+  const [year, month] = yyyymm.split('-')
+  const names = locale === 'en' ? MONTH_NAMES_EN : MONTH_NAMES_ES
+  return `${names[month] || month} ${year}`
+}
+
+export default function MonthSelector({ months, selected, onChange, t }) {
+  const { locale } = useLocale()
+
   if (!months || months.length === 0) return null
 
   const current = months.find(m => m.month === selected)
@@ -26,13 +36,13 @@ export default function MonthSelector({ months, selected, onChange }) {
       >
         {months.map((m) => (
           <option key={m.month} value={m.month} className="bg-[#0A3D5C] text-white">
-            {formatMonth(m.month)}
+            {formatMonth(m.month, locale)}
           </option>
         ))}
       </select>
       {current && (
         <span className="text-xs text-white/50">
-          {current.total_changes?.toLocaleString('es-ES')} cambios detectados
+          {current.total_changes?.toLocaleString(locale === 'en' ? 'en-GB' : 'es-ES')} {t('month.detected')}
         </span>
       )}
     </div>

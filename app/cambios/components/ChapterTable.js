@@ -1,8 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from '@/lib/i18n'
+import { CHAPTER_NAMES_I18N } from '@/lib/i18n/cambios'
 
-export default function ChapterTable({ chapters, onSelectChapter }) {
+export default function ChapterTable({ chapters, onSelectChapter, t }) {
+  const { locale } = useLocale()
+  const chapterNames = CHAPTER_NAMES_I18N[locale] || CHAPTER_NAMES_I18N.es
   const [showAll, setShowAll] = useState(false)
   const [sortBy, setSortBy] = useState('chapter')
 
@@ -35,19 +39,18 @@ export default function ChapterTable({ chapters, onSelectChapter }) {
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-bold text-white">
-            Capítulos con cambios reales
-            <span className="text-gray-500 font-normal text-sm ml-2">({withMeasures.length} de 97)</span>
+            {t('chapters.title')}
+            <span className="text-gray-500 font-normal text-sm ml-2">({withMeasures.length} {t('chapters.of97')})</span>
           </h3>
           <div className="flex gap-0.5 bg-white/5 rounded-lg p-0.5 border border-white/10">
-            <SortButton field="chapter" label="Cap." />
-            <SortButton field="measures" label="Medidas" />
-            <SortButton field="critical" label="Críticos" />
+            <SortButton field="chapter" label={t('chapters.sortChapter')} />
+            <SortButton field="measures" label={t('chapters.sortMeasures')} />
+            <SortButton field="critical" label={t('chapters.sortCritical')} />
           </div>
         </div>
         <p className="text-xs text-gray-400 leading-relaxed">
-          Cada fila muestra un capítulo del Sistema Armonizado con cambios este mes.
-          <span className="text-emerald-400"> +Nuevas</span> y <span className="text-red-400">-Eliminadas</span> son medidas arancelarias.
-          Haz clic en una fila para ver el detalle de ese capítulo.
+          {t('chapters.legend')}
+          <span className="text-emerald-400"> {t('chapters.legendColors')}</span> {t('chapters.legendColorsAnd')} <span className="text-red-400">{t('chapters.legendColors2')}</span> {t('chapters.legendColors3')}
         </p>
       </div>
 
@@ -56,13 +59,13 @@ export default function ChapterTable({ chapters, onSelectChapter }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-gray-500 text-xs uppercase tracking-wider border-t border-white/10">
-              <th className="text-left px-5 py-2.5 font-semibold">Cap.</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Descripción</th>
-              <th className="text-right px-4 py-2.5 font-semibold">Medidas</th>
-              <th className="text-right px-4 py-2.5 font-semibold hidden sm:table-cell">Nuevas</th>
-              <th className="text-right px-4 py-2.5 font-semibold hidden sm:table-cell">Eliminadas</th>
-              <th className="text-right px-4 py-2.5 font-semibold hidden md:table-cell">Condiciones</th>
-              <th className="text-right px-5 py-2.5 font-semibold">Críticos</th>
+              <th className="text-left px-5 py-2.5 font-semibold">{t('chapters.colChapter')}</th>
+              <th className="text-left px-4 py-2.5 font-semibold">{t('chapters.colDescription')}</th>
+              <th className="text-right px-4 py-2.5 font-semibold">{t('chapters.colMeasures')}</th>
+              <th className="text-right px-4 py-2.5 font-semibold hidden sm:table-cell">{t('chapters.colNew')}</th>
+              <th className="text-right px-4 py-2.5 font-semibold hidden sm:table-cell">{t('chapters.colRemoved')}</th>
+              <th className="text-right px-4 py-2.5 font-semibold hidden md:table-cell">{t('chapters.colConditions')}</th>
+              <th className="text-right px-5 py-2.5 font-semibold">{t('chapters.colCritical')}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,7 +76,7 @@ export default function ChapterTable({ chapters, onSelectChapter }) {
                 className={`cursor-pointer transition-colors hover:bg-white/[0.06] border-t border-white/[0.04] ${i % 2 === 0 ? '' : 'bg-white/[0.02]'}`}
               >
                 <td className="px-5 py-2.5 text-[#C49B38] font-mono font-bold">{ch.chapter}</td>
-                <td className="px-4 py-2.5 text-gray-300 truncate max-w-[200px]">{ch.name}</td>
+                <td className="px-4 py-2.5 text-gray-300 truncate max-w-[200px]">{chapterNames[ch.chapter] || ch.name}</td>
                 <td className="px-4 py-2.5 text-right text-white font-semibold">
                   {ch.measures.toLocaleString('es-ES')}
                 </td>
@@ -105,7 +108,7 @@ export default function ChapterTable({ chapters, onSelectChapter }) {
             onClick={() => setShowAll(!showAll)}
             className="w-full px-5 py-2.5 flex items-center justify-between text-xs text-gray-500 hover:text-gray-300 transition-colors"
           >
-            <span>+ {footnotesOnly.length} capítulos con solo cambios de footnotes (sin impacto)</span>
+            <span>+ {footnotesOnly.length} {t('chapters.footnotesOnly')}</span>
             <svg className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
@@ -119,7 +122,7 @@ export default function ChapterTable({ chapters, onSelectChapter }) {
                   className="text-xs px-2 py-1 rounded bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors border border-white/10"
                   title={`${ch.name}: ${ch.footnotes} footnotes`}
                 >
-                  Cap. {ch.chapter} <span className="opacity-50">({ch.footnotes})</span>
+                  {t('chapters.colChapter')} {ch.chapter} <span className="opacity-50">({ch.footnotes})</span>
                 </button>
               ))}
             </div>
