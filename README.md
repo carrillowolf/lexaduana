@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.14.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.16.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -21,6 +21,7 @@ LexAduana evoluciona de calculadora a **suite profesional de comercio exterior**
 ```
 lexaduana.es
 ├── 🧮 Calculadora TARIC        (disponible)
+│   └── 🆕 Requisitos Documentales (motor de interpretación TARIC)
 ├── 🤖 Clasificador IA          (disponible)
 ├── ⚖️ Comparador Multi-Origen  (disponible)
 ├── 📋 Gestor de Despachos      (disponible)
@@ -53,11 +54,109 @@ lexaduana.es
 │   ├── Tabla de capítulos con desglose
 │   ├── Detalle por partida/capítulo
 │   └── Conclusiones automáticas del mes
+├── 📑 Solicitud RRM             (disponible)
+│   ├── Wizard 4 pasos (selector → H1 → revisión → DOCX)
+│   ├── 6 tipos de caso (preferencia, clasificación, origen, valoración, defectuosa, error autoridad)
+│   ├── Parser H1 XML tolerante (extrae MRN, EORIs, partidas)
+│   ├── Generador DOCX AEAT (art. 116-120 CAU)
+│   └── Borradores en Supabase (sin datos bancarios, GDPR)
 ├── 🌐 Soporte bilingüe ES/EN    (disponible)
 │   └── 90%+ cobertura — 29 páginas/componentes
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.16.0 (Abril 2026)
+
+### 📄 Requisitos Documentales — Motor de interpretación TARIC
+
+Nueva sección en la calculadora que interpreta las condiciones TARIC de cada partida y las muestra como información práctica: qué documentos necesita el despachante, qué alternativas tiene, y qué pasa si no presenta ninguno.
+
+#### Motor de interpretación (`lib/measureInterpreter.js`)
+
+- **Parser de `duty_expression`**: extrae certificados, fallbacks y umbrales de exención del texto crudo TARIC
+- Soporta condition types de 1-2 caracteres (Y, B, E, YA, YB, YC…) — 482 medidas con tipos compuestos
+- 8 action codes: 29/09 (CITES), 24/04 (sanciones/licencias), 01 (derecho condicional), 27/7/8 (preferencias)
+- Patrón directo (cert → autorizado) e invertido (cert → restringido, ej: D023/D024 anti-circumvención)
+- Umbrales de exención (`E 10.000/KGM(29)` → "Exento si peso neto < 10 kg")
+
+#### Dos fuentes de datos
+
+- **Fuente 1** (`duty_expression` en `taric_measures`): condiciones paraaduaneras (CITES 710, sanitario 410, CBAM 775, sanciones 474…)
+- **Fuente 2** (`measure_conditions`): preferencias (142, 143), suspensiones (117, 119), contingentes (122)
+- Enriquecimiento con `certificate_types` (883 certificados ES/EN) y `footnote_descriptions` (notas explicativas)
+
+#### Componente visual (`components/DocumentRequirements.jsx`)
+
+- Tarjetas colapsables por medida con badge de severidad (Obligatorio / Condicional / Si aplica / Informativo)
+- Opciones de certificado con código monospace, descripción, y styling diferenciado para declaraciones negativas (Y900, etc.)
+- Umbrales de exención, fallback de denegación, notas explicativas colapsables, base legal
+- Nota sobre casilla 44 DUA / SupportingDocument H1
+- Categorización: paraaduanero, restricción, CBAM, derechos, informativo
+- i18n bilingüe ES/EN completo (`lib/i18n/documentRequirements.js`)
+
+#### Traducciones TARIC ampliadas (`lib/taricTranslations.js`)
+
++15 measure types: 710 (CITES import), 711/715 (CITES export), 474/475 (sanciones), 724 (food/feed safety), 726 (ozono), 728 (lujo), 731/732 (controles), 755/760/761/762 (residuos, REACH, POP, fluorados)
+
+---
+
+### Novedades v5.15.0 (Abril 2026)
+
+### 📑 Solicitud RRM (`/rrm`) — Nueva herramienta
+
+Generador de **Solicitudes de Devolución/Condonación de Derechos** (art. 116-120 CAU) en formato DOCX editable, listo para presentar ante la AEAT. Wizard guiado de 4 pasos que parte del DUA H1 original y produce el documento oficial con la liquidación a regularizar.
+
+#### Wizard en 4 pasos (`app/rrm/page.js`)
+
+1. **Selector de caso**: 6 supuestos tipificados (preferencia arancelaria no aplicada, error de clasificación, error de origen, error de valoración, mercancía defectuosa, error de la autoridad aduanera) + selector REM (Remisión) / REP (Devolución) + base legal (art. 117/118/119/120/116.1)
+2. **Carga H1**: dropzone XML + parser tolerante a namespaces que extrae MRN, fecha de aceptación, aduana, procedimiento, importador/representante (EORI), partidas, país de origen, preferencia declarada. Campos editables manualmente. Aviso automático si la fecha de aceptación está cerca del límite de 3 años (art. 121.1.a CAU)
+3. **Revisión**: tabla comparativa **DICE / DEBE DECIR** con códigos de tributo (A00, B00…), textarea de motivación pre-rellenada por tipo de caso, contacto, aduana competente, datos bancarios con validación IBAN (solo si REP)
+4. **Generación**: resumen + descarga DOCX + checkbox opcional para guardar borrador en Supabase
+
+#### Parser H1 (`lib/rrmParser.js`)
+
+- `parseH1Xml(xml)` basado en `xml2js` (`parseStringPromise`)
+- Tolerante a cualquier prefijo de namespace (`stripNs`, `findAll`, `findFirst`)
+- Extrae documento completo: MRN, fechas, oficinas aduaneras, partes (importador/declarante/representante con EORI), partidas con código mercancía/descripción/masa neta/unidades/origen/preferencia/valor en aduana/tributos declarados, documentos de soporte
+
+#### Generador DOCX (`lib/rrmDocxGenerator.js`)
+
+- Basado en `docx` v9.6.1 (Document, Packer, Paragraph, Table, ShadingType, BorderStyle)
+- Tipografía Arial 10pt, A4 (11906×16838 DXA), cabeceras con shading `D5E8F0`
+- Estructura fiel al formulario AEAT:
+  - Cabecera con datos del solicitante
+  - **REQUISITOS COMUNES**: casillas 31 01, 32, 33, 34, 35, 38
+  - **REQUISITOS ESPECÍFICOS**: casillas 48 01–48 14 según base legal
+  - **Anexo I** con tabla comparativa DICE/DEBE DECIR por código de tributo + total a devolver
+- Devuelve `Buffer` listo para descargar
+
+#### API endpoints
+
+- `POST /api/rrm/parse-h1`: acepta JSON `{xml}` o cuerpo `text/xml`, máx 2 MB, rate-limit `generalLimiter`
+- `POST /api/rrm/generate-docx`: valida `requestType ∈ {REM,REP}`, genera DOCX con `Content-Disposition: attachment`. Si `saveDraft: true` y usuario autenticado, inserta borrador en `rrm_requests` (sin datos bancarios)
+
+#### Base de datos — tabla `rrm_requests`
+
+- Columnas: `user_id`, `request_type`, `case_type`, `legal_basis`, `mrn`, `customs_office`, `importer_eori/name`, `representative_eori/name`, `commodity_code`, `goods_description`, `country_of_origin`, `preference_declared`, `customs_value`, `corrected_data` (JSONB), `duties_declared/corrected` (JSONB), `amount_to_recover`, `motivos_text`, `status` (draft/generated/submitted), timestamps
+- Índices en `user_id`, `mrn`, `created_at DESC`
+- RLS: `auth.uid() = user_id` (propietario ve/edita solo sus borradores)
+- Trigger `set_updated_at`
+- **Sin columnas bancarias** por decisión de privacidad (IBAN nunca se persiste, solo viaja al DOCX descargado)
+
+#### Soporte bilingüe ES/EN
+
+- **Diccionario `lib/i18n/rrm.js`**: hero, progreso, 4 pasos completos, estado común
+- Integrado con `useTranslation(rrmDict)` del patrón existente
+- Entrada en sidebar (`nav.rrm`) y topbar con badge "New"
+
+**Cambios técnicos:**
+- 2 rutas API + 6 componentes (RRMProgressBar + 4 Steps + page/layout) + 4 libs (`rrmData`, `rrmParser`, `rrmDocxGenerator`, `i18n/rrm`)
+- 1 migración Supabase (`create_rrm_requests`) con RLS
+- 1 dependencia nueva: `docx@^9.6.1`
+- Build limpio — `/rrm` operativo en `lexaduana.es/rrm`
 
 ---
 

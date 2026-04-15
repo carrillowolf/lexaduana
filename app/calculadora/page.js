@@ -15,6 +15,7 @@ import ExchangeRateBanner from '../../components/ExchangeRateBanner'
 import { trackEvent } from '@/lib/analytics'
 import { useTranslation } from '@/lib/i18n'
 import { calculadoraDict } from '@/lib/i18n/calculadora'
+import DocumentRequirements from '../../components/DocumentRequirements'
 
 export default function Home() {
   const searchParams = useSearchParams()
@@ -736,6 +737,11 @@ export default function Home() {
                           <p className="text-xs text-gray-700" dangerouslySetInnerHTML={{ __html: '💡 ' + t('results.alertsCertLegend') }} />
                         </div>
                       </div>
+                    )}
+
+                    {/* ═══ REQUISITOS DOCUMENTALES ═══ */}
+                    {result.documentRequirements && result.documentRequirements.length > 0 && (
+                      <DocumentRequirements requirements={result.documentRequirements} />
                     )}
 
                     {/* ═══ BLOQUE 1: Liquidación aduanera (tributos) ═══ */}
