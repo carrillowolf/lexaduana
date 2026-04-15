@@ -26,6 +26,7 @@ function useNavSections() {
           { href: '/despachos', icon: '📋', label: t('nav.dispatches') },
           { href: '/bulk', icon: '📊', label: t('nav.bulkCalc') },
           { href: '/cambios', icon: '🔄', label: t('nav.changes'), badge: 'New' },
+          { href: '/rrm', icon: '📑', label: t('nav.rrm'), badge: 'New' },
         ],
       },
       {
