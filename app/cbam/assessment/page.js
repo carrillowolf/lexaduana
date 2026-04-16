@@ -1,6 +1,7 @@
 import { getAllCountries } from '@/lib/cbamService'
 import CBAMSelfAssessment from '@/components/cbam/CBAMSelfAssessment'
 import AssessmentHero from '@/components/cbam/AssessmentHero'
+import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -20,6 +21,8 @@ export default async function CBAMAssessmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+      <CbamBreadcrumb />
+
       {/* Hero - client component for i18n */}
       <AssessmentHero />
 

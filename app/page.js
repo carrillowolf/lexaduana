@@ -8,8 +8,8 @@ import { useTranslation, useLocale } from '@/lib/i18n'
 import { landingDict } from '@/lib/i18n/landing'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
-// ── Animated counter ────────────────────────────────────────
-function Counter({ end, suffix = '', duration = 2000 }) {
+// ── Animated counter (contenido, sin protagonismo) ─────────
+function Counter({ end, suffix = '', duration = 900 }) {
   const [count, setCount] = useState(0)
   const started = useRef(false)
   const ref = useRef(null)
@@ -39,17 +39,18 @@ function Counter({ end, suffix = '', duration = 2000 }) {
 }
 
 // ── Tool icon components (stable, not translated) ──────────
+// Orden: CBAM primero (producto protagonista), luego Calculadora, Clasificador, OEA, EUDR
 const TOOL_ICONS = [
+  <svg key="cbam" className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   <svg key="calc" className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   <svg key="class" className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>,
-  <svg key="cbam" className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   <svg key="oea" className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>,
   <svg key="eudr" className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>,
 ]
 
-const TOOL_HREFS = ['/calculadora', '/clasificador', '/cbam', '/oea', '/eudr']
-const TOOL_ACCENTS = ['#3B82F6', '#A855F7', '#10B981', '#EF4444', '#22C55E']
-const TOOL_ACCENT_BGS = ['rgba(59, 130, 246, 0.15)', 'rgba(168, 85, 247, 0.15)', 'rgba(16, 185, 129, 0.15)', 'rgba(239, 68, 68, 0.15)', 'rgba(34, 197, 94, 0.15)']
+const TOOL_HREFS = ['/cbam/assessment', '/calculadora', '/clasificador', '/oea', '/eudr']
+const TOOL_ACCENTS = ['#10B981', '#3B82F6', '#A855F7', '#EF4444', '#22C55E']
+const TOOL_ACCENT_BGS = ['rgba(16, 185, 129, 0.15)', 'rgba(59, 130, 246, 0.15)', 'rgba(168, 85, 247, 0.15)', 'rgba(239, 68, 68, 0.15)', 'rgba(34, 197, 94, 0.15)']
 
 const RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/bulk', '/despachos', '/cambios']
 const RESOURCE_BADGES = [null, null, null, null, null, 'BETA', 'NEW']
@@ -72,7 +73,7 @@ const ROLE_ICONS = [
 const STAT_VALUES = [390735, 49700, 573, 195]
 const STAT_SUFFIXES = ['', '+', '', '']
 
-const FOOTER_TOOL_HREFS = ['/calculadora', '/clasificador', '/cbam', '/comparador', '/bulk', '/despachos']
+const FOOTER_TOOL_HREFS = ['/cbam', '/calculadora', '/clasificador', '/comparador', '/bulk', '/despachos']
 const FOOTER_RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/eudr', '/cambios']
 const FOOTER_LEGAL_HREFS = ['/politica-privacidad', '/terminos-uso', 'mailto:soporte@lexaduana.es']
 
@@ -125,7 +126,6 @@ export default function HomePage() {
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(244,197,66,0.15); } 50% { box-shadow: 0 0 40px rgba(244,197,66,0.3); } }
       `}</style>
 
       {/* ═══ HEADER ═══════════════════════════════════════════ */}
@@ -189,18 +189,34 @@ export default function HomePage() {
             {t('hero.subtitle')}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* CTA primario: registro general */}
             <Link href="/auth/register"
-              className="group px-10 py-4 bg-[#F4C542] hover:bg-[#f0b922] text-[#0A3D5C] font-bold rounded-xl transition-all duration-300 shadow-lg shadow-[#F4C542]/20 hover:shadow-xl hover:shadow-[#F4C542]/30 text-sm tracking-wide"
-              style={{ animation: 'pulse-glow 3s ease-in-out infinite' }}>
+              className="group px-10 py-4 bg-[#F4C542] hover:bg-[#f0b922] text-[#0A3D5C] font-bold rounded-xl transition-all duration-300 shadow-lg shadow-[#F4C542]/20 hover:shadow-xl hover:shadow-[#F4C542]/30 text-sm tracking-wide">
               {t('hero.cta')}
               <svg className="inline-block w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
+
+            {/* CTA secundario: entrada directa CBAM sin registro */}
+            <Link href="/cbam/assessment"
+              className="group px-8 py-4 text-white border border-white/25 hover:border-[#F4C542]/60 hover:bg-white/5 rounded-xl transition-all duration-300 text-sm font-semibold tracking-wide">
+              {t('hero.ctaCbam')}
+              <svg className="inline-block w-4 h-4 ml-2 text-[#F4C542] transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* CTA terciario: link simple al showcase de herramientas */}
+          <div className="mt-6">
             <a href="#herramientas"
-              className="px-10 py-4 text-white/60 hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 text-sm font-medium cursor-pointer hover:bg-white/5">
+              className="inline-flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors duration-200 cursor-pointer">
               {t('hero.ctaSecondary')}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </a>
           </div>
         </div>
@@ -303,26 +319,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ IMPACTO — Big numbers ════════════════════════════ */}
-      <section className="relative py-32 overflow-hidden">
+      {/* ═══ IMPACTO — Big numbers (atenuados) ════════════════ */}
+      <section className="relative py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#060d16] via-[#0A1D2E] to-[#060d16]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F4C542]/5 rounded-full blur-[150px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#F4C542]/[0.03] rounded-full blur-[120px]" />
 
         <div className="relative max-w-6xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <p className="text-[#F4C542] text-xs font-semibold tracking-[4px] uppercase mb-4">{t('stats.sectionLabel')}</p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+          <div className="text-center mb-14">
+            <p className="text-[#F4C542]/80 text-xs font-semibold tracking-[4px] uppercase mb-3">{t('stats.sectionLabel')}</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
               {t('stats.titleLine1')}<br /><span className="text-white/20">{t('stats.titleLine2')}</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.isArray(statItems) && statItems.map((stat, i) => (
-              <div key={i} className="text-center p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/10 transition-all duration-300">
-                <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#F4C542] tracking-tight tabular-nums mb-2">
+              <div key={i} className="text-center p-5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/10 transition-colors duration-300">
+                <p className="text-3xl md:text-4xl font-bold text-[#F4C542]/90 tracking-tight tabular-nums mb-1.5">
                   <Counter end={STAT_VALUES[i]} suffix={STAT_SUFFIXES[i]} />
                 </p>
-                <p className="text-white/60 text-sm font-medium mb-1">{stat.label}</p>
+                <p className="text-white/60 text-sm font-medium mb-0.5">{stat.label}</p>
                 <p className="text-white/25 text-xs">{stat.sublabel}</p>
               </div>
             ))}
@@ -387,15 +403,40 @@ export default function HomePage() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {Array.isArray(roles) && roles.map((role, i) => (
-                <div key={i} className="text-center p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/10 transition-all duration-300 group">
-                  <div className="w-14 h-14 rounded-2xl bg-white/[0.06] group-hover:bg-white/[0.1] flex items-center justify-center mx-auto mb-6 text-white/40 group-hover:text-white/70 transition-all duration-300">
-                    {ROLE_ICONS[i]}
+              {Array.isArray(roles) && roles.map((role, i) => {
+                const isFeatured = Boolean(role.cta && role.href)
+                return (
+                  <div
+                    key={i}
+                    className={`text-center p-8 rounded-2xl transition-all duration-300 group flex flex-col ${
+                      isFeatured
+                        ? 'bg-[#F4C542]/[0.06] border border-[#F4C542]/25 hover:border-[#F4C542]/50'
+                        : 'bg-white/[0.04] border border-white/[0.10] hover:border-white/20'
+                    }`}
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-all duration-300 ${
+                      isFeatured
+                        ? 'bg-[#F4C542]/15 text-[#F4C542]'
+                        : 'bg-white/[0.10] group-hover:bg-white/[0.14] text-white/60 group-hover:text-white/85'
+                    }`}>
+                      {ROLE_ICONS[i]}
+                    </div>
+                    <h3 className="text-lg font-semibold text-white/90 mb-3">{role.title}</h3>
+                    <p className="text-sm text-white/45 leading-relaxed flex-1">{role.desc}</p>
+                    {isFeatured && (
+                      <Link
+                        href={role.href}
+                        className="inline-flex items-center justify-center gap-2 mt-6 px-5 py-2.5 bg-[#F4C542] hover:bg-[#f0b922] text-[#0A3D5C] rounded-lg text-xs font-bold transition-colors"
+                      >
+                        {role.cta}
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </Link>
+                    )}
                   </div>
-                  <h3 className="text-lg font-semibold text-white/90 mb-3">{role.title}</h3>
-                  <p className="text-sm text-white/35 leading-relaxed">{role.desc}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -408,33 +449,59 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* CBAM */}
-              <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-amber-500/30 transition-all duration-300 overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">CBAM</h3>
-                    <p className="text-xs text-amber-400 font-medium">{t('compliance.cbam.subtitle')}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-white/40 leading-relaxed mb-6">{t('compliance.cbam.desc')}</p>
-                <Link href="/cbam/assessment"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors group/link">
-                  {t('compliance.cbam.cta')}
-                  <svg className="w-4 h-4 transition-transform duration-200 group-hover/link:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            {/* CBAM — tarjeta destacada a ancho completo */}
+            <div className="relative p-8 md:p-10 rounded-2xl bg-gradient-to-br from-amber-500/[0.08] via-white/[0.03] to-white/[0.02] border border-amber-500/25 hover:border-amber-500/40 transition-all duration-300 overflow-hidden group mb-6">
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
+
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-amber-500/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                </Link>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-1 flex-wrap">
+                    <h3 className="text-2xl font-bold tracking-tight">CBAM</h3>
+                    <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 text-[10px] font-bold rounded-md border border-amber-500/25 uppercase tracking-wider">
+                      {t('compliance.cbam.featured')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-400 font-medium">{t('compliance.cbam.subtitle')}</p>
+                </div>
               </div>
 
+              <p className="text-base text-white/60 leading-relaxed mb-8 max-w-3xl">{t('compliance.cbam.desc')}</p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-8 max-w-3xl">
+                {Array.isArray(t('compliance.cbam.features')) && t('compliance.cbam.features').map((f, i) => (
+                  <div key={i} className="flex items-start gap-2.5 text-sm text-white/70">
+                    <svg className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/cbam/assessment"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F4C542] hover:bg-[#f0b922] text-[#0A3D5C] rounded-xl text-sm font-bold transition-colors shadow-sm">
+                  {t('compliance.cbam.cta')}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+                <Link href="/cbam"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-amber-500/30 text-amber-300 hover:bg-amber-500/10 rounded-xl text-sm font-semibold transition-colors">
+                  {t('compliance.cbam.ctaSecondary')}
+                </Link>
+              </div>
+            </div>
+
+            {/* EUDR + OEA — presencia reducida pero visible */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* EUDR */}
-              <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-green-500/30 transition-all duration-300 overflow-hidden group">
+              <div className="relative p-7 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-green-500/30 transition-all duration-300 overflow-hidden group">
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
@@ -458,7 +525,7 @@ export default function HomePage() {
               </div>
 
               {/* OEA */}
-              <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-red-500/30 transition-all duration-300 overflow-hidden group md:col-span-2 lg:col-span-1">
+              <div className="relative p-7 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-red-500/30 transition-all duration-300 overflow-hidden group">
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center">

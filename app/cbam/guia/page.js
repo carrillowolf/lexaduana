@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
+import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 
 export default function CBAMGuiaPage() {
   const [activeQuestion, setActiveQuestion] = useState(null)
@@ -40,6 +41,7 @@ export default function CBAMGuiaPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      <CbamBreadcrumb />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         {/* Hero */}

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
+import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 
 export default function AdvisoryLandingPage() {
   const t = useTranslation(cbamDict)
@@ -15,6 +16,7 @@ export default function AdvisoryLandingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <CbamBreadcrumb />
       <main className="max-w-5xl mx-auto px-4 py-12">
         {/* Hero */}
         <div className="text-center mb-16">

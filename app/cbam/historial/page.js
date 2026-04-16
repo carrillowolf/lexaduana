@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { exportCBAMToExcel } from '@/lib/cbamExcelExporter'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
+import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 
 export default function CBAMHistorialPage() {
   const [user, setUser] = useState(null)
@@ -170,6 +171,7 @@ export default function CBAMHistorialPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+      <CbamBreadcrumb />
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

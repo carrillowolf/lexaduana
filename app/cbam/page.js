@@ -33,6 +33,7 @@ import {
   getThreshold,
 } from '@/lib/cbamService'
 import CBAMHubContent from '@/components/cbam/CBAMHubContent'
+import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 
 // Forzar renderizado dinámico (SSR) - los datos vienen de Supabase
 export const dynamic = 'force-dynamic'
@@ -94,6 +95,7 @@ export default async function CBAMPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <JsonLd data={cbamFaqSchema} />
+      <CbamBreadcrumb />
       <CBAMHubContent
         nextDeadline={nextDeadline}
         sectors={sectors}

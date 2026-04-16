@@ -5,6 +5,7 @@ import Link from 'next/link'
 import AdvisoryStatusBadge from '@/components/cbam/advisory/AdvisoryStatusBadge'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
+import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 
 export default function MisSolicitudesPage() {
   const [requests, setRequests] = useState([])
@@ -79,6 +80,7 @@ export default function MisSolicitudesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <CbamBreadcrumb />
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>

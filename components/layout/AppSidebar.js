@@ -38,11 +38,12 @@ function useNavSections() {
             label: t('nav.cbam'),
             expandable: true,
             children: [
-              { href: '/cbam', label: t('nav.cbamHub') },
               { href: '/cbam/assessment', label: t('nav.cbamAssessment') },
-              { href: '/cbam/guia', label: t('nav.cbamGuide') },
+              { href: '/cbam/calculadora', label: t('nav.cbamCalculator') },
               { href: '/cbam/asesoria', label: t('nav.cbamAdvisory') },
+              { href: '/cbam/asesoria/mis-solicitudes', label: t('nav.cbamMyRequests'), authRequired: true },
               { href: '/cbam/historial', label: t('nav.cbamHistory') },
+              { href: '/cbam/guia', label: t('nav.cbamGuide') },
             ],
           },
           { href: '/eudr', icon: '🌳', label: t('nav.eudr') },
@@ -94,7 +95,7 @@ function NavItem({ href, icon, label, badge, isActive, onClick }) {
   )
 }
 
-function ExpandableNavItem({ item, pathname, onNavigate }) {
+function ExpandableNavItem({ item, pathname, onNavigate, user }) {
   const isParentActive = pathname.startsWith(item.href)
   const [expanded, setExpanded] = useState(isParentActive)
 
@@ -103,14 +104,17 @@ function ExpandableNavItem({ item, pathname, onNavigate }) {
     if (isParentActive) setExpanded(true)
   }, [isParentActive])
 
+  // Filtra children que requieren sesión si no hay usuario
+  const visibleChildren = item.children.filter(c => !c.authRequired || user)
+
   return (
     <div>
       <button
         onClick={() => setExpanded(!expanded)}
         className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
           isParentActive
-            ? 'bg-blue-50 text-[#0A3D5C] font-semibold'
-            : 'text-gray-700 hover:bg-gray-100'
+            ? 'bg-blue-50 text-[#0A3D5C] font-semibold border-l-[3px] border-[#0A3D5C] -ml-px'
+            : 'text-gray-700 font-medium hover:bg-gray-100'
         }`}
       >
         <span className="text-base flex-shrink-0 w-5 text-center">{item.icon}</span>
@@ -124,8 +128,10 @@ function ExpandableNavItem({ item, pathname, onNavigate }) {
       </button>
 
       {expanded && (
-        <div className="ml-8 mt-0.5 space-y-0.5 border-l border-gray-200 pl-3">
-          {item.children.map((child) => {
+        <div className={`ml-8 mt-0.5 space-y-0.5 border-l pl-3 rounded-r-md ${
+          isParentActive ? 'border-[#0A3D5C]/30 bg-[#0A3D5C]/[0.03]' : 'border-gray-200'
+        }`}>
+          {visibleChildren.map((child) => {
             const isChildActive = pathname === child.href
             return (
               <Link
@@ -209,6 +215,7 @@ export default function AppSidebar() {
                     item={item}
                     pathname={pathname}
                     onNavigate={handleNavigate}
+                    user={user}
                   />
                 ) : (
                   <NavItem
