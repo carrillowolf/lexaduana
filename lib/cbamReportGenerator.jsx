@@ -4,7 +4,7 @@
  * Genera el PDF profesional del informe CBAM usando @react-pdf/renderer.
  * Replica el diseño del prototipo (generate_cbam_report_REFERENCIA.py).
  *
- * Bilingüe ES + EN forzado.
+ * Idioma: español.
  *
  * Uso:
  *   import { renderReportPdf } from '@/lib/cbamReportGenerator'
@@ -421,14 +421,14 @@ function PageChrome({ reportRef }) {
   return (
     <>
       <View style={styles.pageHeader} fixed>
-        <Text>LexAduana — Informe CBAM / CBAM Report — Ref: {reportRef}</Text>
-        <Text>CONFIDENCIAL / CONFIDENTIAL</Text>
+        <Text>LexAduana — Informe CBAM — Ref: {reportRef}</Text>
+        <Text>CONFIDENCIAL</Text>
       </View>
       <View style={styles.pageFooter} fixed>
         <Text>lexaduana.es</Text>
         <Text
           render={({ pageNumber, totalPages }) =>
-            `Página / Page ${pageNumber} de / of ${totalPages}`
+            `Página ${pageNumber} de ${totalPages}`
           }
         />
         <Text>© LexAduana {new Date().getFullYear()}</Text>
@@ -447,34 +447,28 @@ function CoverPage({ snapshot }) {
     month: 'long',
     year: 'numeric',
   })
-  const dateEnStr = new Date(meta.generatedAt).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 
   return (
     <Page size="A4" style={styles.coverPage}>
       <Text style={styles.coverTitle}>INFORME DE EXPOSICIÓN CBAM</Text>
-      <Text style={styles.coverTitleEn}>CBAM EXPOSURE REPORT</Text>
       <Text style={styles.coverYear}>
-        Año fiscal / Fiscal year: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{meta.reportYear}</Text>
+        Año fiscal: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{meta.reportYear}</Text>
       </Text>
-      <Text style={styles.coverRef}>Referencia / Reference: {meta.reportRef}</Text>
+      <Text style={styles.coverRef}>Referencia: {meta.reportRef}</Text>
 
       <View style={styles.coverDivider} />
 
-      <Text style={styles.coverLabel}>Preparado para / Prepared for:</Text>
+      <Text style={styles.coverLabel}>Preparado para:</Text>
       <Text style={styles.coverClient}>{client.companyName}</Text>
       <Text style={styles.coverClientDetail}>
         CIF: {client.cif || '—'} | EORI: {client.eori || '—'}
       </Text>
       <Text style={styles.coverClientDetail}>
-        Contacto / Contact: {client.contactName} ({client.contactEmail})
+        Contacto: {client.contactName} ({client.contactEmail})
       </Text>
 
-      <Text style={styles.coverDate}>Fecha / Date: {dateStr} / {dateEnStr}</Text>
-      <Text style={styles.coverConfidential}>CONFIDENCIAL / CONFIDENTIAL</Text>
+      <Text style={styles.coverDate}>Fecha: {dateStr}</Text>
+      <Text style={styles.coverConfidential}>CONFIDENCIAL</Text>
     </Page>
   )
 }
@@ -496,17 +490,17 @@ function ContentPage({ snapshot, children }) {
 // ============================================================
 function TableOfContents() {
   const items = [
-    ['1', 'Resumen Ejecutivo / Executive Summary'],
-    ['2', 'Importaciones CBAM / CBAM Imports'],
-    ['3', 'Análisis de Emisiones / Emissions Analysis'],
-    ['4', 'Escenario Dual / Dual Scenario'],
-    ['5', 'Cálculo de Certificados / Certificate Calculation'],
-    ['6', 'Recomendaciones / Recommendations'],
-    ['7', 'Metodología y Marco Legal / Methodology & Legal Framework'],
+    ['1', 'Resumen Ejecutivo'],
+    ['2', 'Importaciones CBAM'],
+    ['3', 'Análisis de Emisiones'],
+    ['4', 'Escenario Dual'],
+    ['5', 'Cálculo de Certificados'],
+    ['6', 'Recomendaciones'],
+    ['7', 'Metodología y Marco Legal'],
   ]
   return (
     <>
-      <Text style={styles.h1}>ÍNDICE / TABLE OF CONTENTS</Text>
+      <Text style={styles.h1}>ÍNDICE</Text>
       <View style={styles.h1Underline} />
       {items.map(([num, title]) => (
         <View key={num} style={styles.tocRow}>
@@ -526,25 +520,25 @@ function ExecutiveSummary({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>1. RESUMEN EJECUTIVO / EXECUTIVE SUMMARY</Text>
+      <Text style={styles.h1}>1. RESUMEN EJECUTIVO</Text>
       <View style={styles.h1Underline} />
 
       <View style={styles.kpiRow}>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalTonnes)}</Text>
-          <Text style={styles.kpiLabel}>Toneladas importadas{'\n'}Tonnes imported</Text>
+          <Text style={styles.kpiLabel}>Toneladas importadas</Text>
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalEmissions, 1)}</Text>
-          <Text style={styles.kpiLabel}>tCO₂e emisiones totales{'\n'}total emissions</Text>
+          <Text style={styles.kpiLabel}>tCO₂e emisiones totales</Text>
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalCertificates, 1)}</Text>
-          <Text style={styles.kpiLabel}>Certificados CBAM{'\n'}CBAM certificates</Text>
+          <Text style={styles.kpiLabel}>Certificados CBAM</Text>
         </View>
         <View style={styles.kpiCardEmerald}>
           <Text style={styles.kpiNumGreen}>{fmtEUR(totals.totalCostReal)}</Text>
-          <Text style={styles.kpiLabel}>Coste CBAM estimado{'\n'}Estimated CBAM cost</Text>
+          <Text style={styles.kpiLabel}>Coste CBAM estimado</Text>
         </View>
       </View>
 
@@ -559,27 +553,20 @@ function ExecutiveSummary({ snapshot }) {
             Esto representa un ahorro del{' '}
             <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtNum(totals.savingsPct, 1)}%</Text>.
           </Text>
-          <Text style={styles.savingsTextEn}>
-            Savings from actual data: By having actual data for {totals.linesWithRealData} of your{' '}
-            {totals.linesCount} lines, the estimated CBAM cost is reduced by{' '}
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtEUR(totals.totalSavings)}</Text>{' '}
-            compared to EU default values ({fmtEUR(totals.totalCostDefault)}). This represents a{' '}
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtNum(totals.savingsPct, 1)}%</Text> saving.
-          </Text>
         </View>
       )}
 
-      <Text style={styles.h2}>Parámetros de cálculo / Calculation parameters</Text>
+      <Text style={styles.h2}>Parámetros de cálculo</Text>
       <Text style={styles.body}>
-        Año fiscal / Fiscal year:{' '}
+        Año fiscal:{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>{snapshot.meta.reportYear}</Text>
         {'   '}|{'   '}
-        Líneas analizadas / Lines analyzed:{' '}
+        Líneas analizadas:{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>{totals.linesCount}</Text>
       </Text>
       {snapshot.meta.regulatoryParams && (
         <Text style={styles.body}>
-          Precio certificado CBAM / CBAM certificate price:{' '}
+          Precio certificado CBAM:{' '}
           <Text style={{ fontFamily: 'Helvetica-Bold' }}>
             {fmtNum(snapshot.meta.regulatoryParams.certificatePrice, 2)} EUR/tCO₂e
           </Text>{' '}
@@ -601,10 +588,6 @@ function ExecutiveSummary({ snapshot }) {
       {totals.exceedsDeMinimis ? (
         <Text style={styles.body}>
           Su volumen total ({fmtNum(totals.totalTonnes)} t) <Text style={{ fontFamily: 'Helvetica-Bold' }}>supera el umbral de de minimis</Text> de 50 toneladas, por lo que está sujeto a obligaciones CBAM.
-          {'\n'}
-          <Text style={styles.bodyEn}>
-            Your total volume ({fmtNum(totals.totalTonnes)} t) exceeds the 50-tonne de minimis threshold and is subject to CBAM obligations.
-          </Text>
         </Text>
       ) : (
         <Text style={styles.body}>
@@ -626,25 +609,21 @@ function ImportsSection({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>2. IMPORTACIONES CBAM / CBAM IMPORTS</Text>
+      <Text style={styles.h1}>2. IMPORTACIONES CBAM</Text>
       <View style={styles.h1Underline} />
       <Text style={styles.body}>
         Tabla detallada de las {products.length} líneas de importación analizadas en este informe,
         ordenadas por código CN y origen.
       </Text>
-      <Text style={styles.bodyEn}>
-        Detailed table of the {products.length} import lines analyzed in this report,
-        sorted by CN code and origin.
-      </Text>
 
       <View style={styles.table}>
         <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>#</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Código CN{'\n'}CN Code</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[2] }]}>Descripción{'\n'}Description</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[3] }]}>Origen{'\n'}Origin</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[4] }]}>Toneladas{'\n'}Tonnes</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[5] }]}>Proveedor{'\n'}Supplier</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Código CN</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[2] }]}>Descripción</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[3] }]}>Origen</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[4] }]}>Toneladas</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[5] }]}>Proveedor</Text>
         </View>
         {products.map((p, i) => (
           <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
@@ -672,7 +651,7 @@ function EmissionsSection({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>3. ANÁLISIS DE EMISIONES / EMISSIONS ANALYSIS</Text>
+      <Text style={styles.h1}>3. ANÁLISIS DE EMISIONES</Text>
       <View style={styles.h1Underline} />
       <Text style={styles.body}>
         Detalle del factor de emisión aplicado a cada línea, con indicación de la fuente
@@ -682,11 +661,11 @@ function EmissionsSection({ snapshot }) {
       <View style={styles.table}>
         <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>#</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Producto{'\n'}Product</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[2] }]}>Fuente{'\n'}Source</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[3] }]}>FE aplicado{'\n'}EF applied</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Producto</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[2] }]}>Fuente</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[3] }]}>FE aplicado</Text>
           <Text style={[styles.tableHeaderCell, { width: widths[4] }]}>Benchmark</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[5] }]}>Sujetas{'\n'}Subject</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[5] }]}>Sujetas</Text>
           <Text style={[styles.tableHeaderCell, { width: widths[6] }]}>Total tCO₂e</Text>
         </View>
         {products.map((p, i) => (
@@ -694,7 +673,7 @@ function EmissionsSection({ snapshot }) {
             <Text style={[styles.tableCell, { width: widths[0] }]}>{p.index}</Text>
             <Text style={[styles.tableCell, { width: widths[1] }]}>{p.productDescription}</Text>
             <Text style={[styles.tableCell, { width: widths[2] }]}>
-              {p.emissionSource === 'real' ? 'Real' : 'Defecto / Default'}
+              {p.emissionSource === 'real' ? 'Real' : 'Defecto'}
             </Text>
             <Text style={[styles.tableCellRight, { width: widths[3] }]}>
               {fmtNum(p.emissionFactorApplied, 3)}
@@ -724,7 +703,7 @@ function DualScenarioSection({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>4. ESCENARIO DUAL / DUAL SCENARIO</Text>
+      <Text style={styles.h1}>4. ESCENARIO DUAL</Text>
       <View style={styles.h1Underline} />
       <Text style={styles.body}>
         Comparativa entre el coste calculado con datos reales (cuando están disponibles) y
@@ -733,22 +712,22 @@ function DualScenarioSection({ snapshot }) {
 
       <View style={styles.table}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>Métrica / Metric</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Datos reales{'\n'}Actual data</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[2] }]}>Valores defecto{'\n'}Default values</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>Métrica</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Datos reales</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[2] }]}>Valores defecto</Text>
         </View>
         <View style={styles.tableRow}>
-          <Text style={[styles.tableCell, { width: widths[0] }]}>Coste CBAM estimado / Estimated CBAM cost</Text>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>Coste CBAM estimado</Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>{fmtEUR(totals.totalCostReal)}</Text>
           <Text style={[styles.tableCellRight, { width: widths[2] }]}>{fmtEUR(totals.totalCostDefault)}</Text>
         </View>
         <View style={styles.tableRowAlt}>
-          <Text style={[styles.tableCell, { width: widths[0] }]}>Emisiones reales / Real emissions (tCO₂e)</Text>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>Emisiones reales (tCO₂e)</Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>{fmtNum(totals.totalEmissionsReal, 1)}</Text>
           <Text style={[styles.tableCellRight, { width: widths[2] }]}>—</Text>
         </View>
         <View style={styles.tableRow}>
-          <Text style={[styles.tableCell, { width: widths[0] }]}>Emisiones por defecto / Default emissions (tCO₂e)</Text>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>Emisiones por defecto (tCO₂e)</Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>—</Text>
           <Text style={[styles.tableCellRight, { width: widths[2] }]}>{fmtNum(totals.totalEmissionsDefault, 1)}</Text>
         </View>
@@ -760,9 +739,6 @@ function DualScenarioSection({ snapshot }) {
             <Text style={{ fontFamily: 'Helvetica-Bold' }}>
               Diferencial de ahorro: {fmtEUR(totals.totalSavings)} ({fmtNum(totals.savingsPct, 1)}%)
             </Text>
-          </Text>
-          <Text style={styles.savingsTextEn}>
-            Savings differential: {fmtEUR(totals.totalSavings)} ({fmtNum(totals.savingsPct, 1)}%)
           </Text>
         </View>
       )}
@@ -783,7 +759,7 @@ function CertificatesSection({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>5. CÁLCULO DE CERTIFICADOS / CERTIFICATE CALCULATION</Text>
+      <Text style={styles.h1}>5. CÁLCULO DE CERTIFICADOS</Text>
       <View style={styles.h1Underline} />
 
       <Text style={styles.body}>
@@ -792,13 +768,8 @@ function CertificatesSection({ snapshot }) {
         intersectorial (FCI) establecidos por el Reglamento (UE) 2023/956 y el Reglamento
         de Ejecución (UE) 2025/2620.
       </Text>
-      <Text style={styles.bodyEn}>
-        Summary of CBAM certificate calculation for fiscal year {meta.reportYear}, applying
-        the gradual obligation factor (F_CBAM) and the cross-sectoral correction factor (FCI)
-        set by Regulation (EU) 2023/956 and Implementing Regulation (EU) 2025/2620.
-      </Text>
 
-      <Text style={styles.h3}>Fórmula aplicada / Applied formula</Text>
+      <Text style={styles.h3}>Fórmula aplicada</Text>
       <View style={styles.legalBox}>
         <Text style={styles.legalText}>
           Certificados = Σ Toneladas × max(0, FE − F_CBAM × FCI × BM)
@@ -808,20 +779,64 @@ function CertificatesSection({ snapshot }) {
         </Text>
         <Text style={styles.legalText}>
           FE = factor de emisión aplicado (real o default + markup) · BM = benchmark EU del
-          sector · F_CBAM = {fmtNum(reg?.cbamFactor ?? 0.975, 3)} ({fmtNum(reg?.cbamFactorPct ?? 2.5, 1)}% obligación en {meta.reportYear}) · FCI = {fmtNum(reg?.fci ?? 1, 3)}
+          código CN · F_CBAM = {fmtNum(reg?.cbamFactor ?? 0.975, 3)} ({fmtNum(reg?.cbamFactorPct ?? 2.5, 1)}% obligación en {meta.reportYear}) · FCI = {fmtNum(reg?.fci ?? 1, 3)}
         </Text>
       </View>
 
-      <Text style={styles.h3}>Desglose / Breakdown</Text>
+      {/* ── Tabla desglose por producto ── */}
+      <Text style={styles.h3}>Desglose por producto</Text>
       <View style={styles.table}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>Concepto / Concept</Text>
-          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Valor / Value</Text>
+          <Text style={[styles.tableHeaderCell, { width: '4%' }]}>#</Text>
+          <Text style={[styles.tableHeaderCell, { width: '18%' }]}>Producto</Text>
+          <Text style={[styles.tableHeaderCell, { width: '8%' }]}>Tn</Text>
+          <Text style={[styles.tableHeaderCell, { width: '10%' }]}>FE</Text>
+          <Text style={[styles.tableHeaderCell, { width: '10%' }]}>BM_eff</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Emis. incorp.</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%' }]}>AGIE</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Certificados</Text>
+          <Text style={[styles.tableHeaderCell, { width: '14%' }]}>Coste</Text>
+        </View>
+        {snapshot.products.map((p, i) => (
+          <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+            <Text style={[styles.tableCell, { width: '4%' }]}>{p.index}</Text>
+            <Text style={[styles.tableCell, { width: '18%', fontSize: 6.5 }]}>
+              {p.productDescription}{p.productionRouteApplied ? ` (${p.productionRouteApplied})` : ''}
+            </Text>
+            <Text style={[styles.tableCellRight, { width: '8%' }]}>{fmtNum(p.annualTonnes)}</Text>
+            <Text style={[styles.tableCellRight, { width: '10%' }]}>
+              {fmtNum(p.emissionFactorApplied, 3)}{p.benchmarkColumnUsed ? `\nCol ${p.benchmarkColumnUsed}` : ''}
+            </Text>
+            <Text style={[styles.tableCellRight, { width: '10%' }]}>{fmtNum(p.effectiveBenchmark, 4)}</Text>
+            <Text style={[styles.tableCellRight, { width: '12%' }]}>{fmtNum(p.incorporatedEmissions, 2)}</Text>
+            <Text style={[styles.tableCellRight, { width: '12%' }]}>{fmtNum(p.freeAllocationImplicit, 2)}</Text>
+            <Text style={[styles.tableCellRight, { width: '12%' }]}>{fmtNum(p.certificatesAfterAdjustment, 2)}</Text>
+            <Text style={[styles.tableCellRight, { width: '14%', fontFamily: 'Helvetica-Bold' }]}>{fmtEUR(p.totalCost)}</Text>
+          </View>
+        ))}
+        {/* Fila de totales */}
+        <View style={[styles.tableRow, { backgroundColor: COLORS.navy }]}>
+          <Text style={[styles.tableHeaderCell, { width: '22%' }]}>TOTAL</Text>
+          <Text style={[styles.tableHeaderCell, { width: '8%', textAlign: 'right' }]}>{fmtNum(totals.totalTonnes)}</Text>
+          <Text style={[styles.tableHeaderCell, { width: '10%' }]} />
+          <Text style={[styles.tableHeaderCell, { width: '10%' }]} />
+          <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalIncorporatedEmissions, 2)}</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalFreeAllocation, 2)}</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalCertificates, 2)}</Text>
+          <Text style={[styles.tableHeaderCell, { width: '14%', textAlign: 'right' }]}>{fmtEUR(totals.totalCostReal)}</Text>
+        </View>
+      </View>
+
+      {/* ── Tabla resumen agregado ── */}
+      <Text style={styles.h3}>Resumen agregado</Text>
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderCell, { width: widths[0] }]}>Concepto</Text>
+          <Text style={[styles.tableHeaderCell, { width: widths[1] }]}>Valor</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            Emisiones incorporadas totales (Tn × FE){'\n'}
-            Total incorporated emissions
+            Emisiones incorporadas totales (Tn × FE)
           </Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>
             {fmtNum(totals.totalIncorporatedEmissions ?? 0, 2)} tCO₂e
@@ -829,8 +844,7 @@ function CertificatesSection({ snapshot }) {
         </View>
         <View style={styles.tableRowAlt}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            (−) Asignación gratuita implícita (AGIE = Tn × F_CBAM × FCI × BM){'\n'}
-            Implicit free allocation
+            (−) Asignación gratuita implícita (AGIE = Tn × F_CBAM × FCI × BM)
           </Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>
             − {fmtNum(totals.totalFreeAllocation ?? 0, 2)} tCO₂e
@@ -838,8 +852,7 @@ function CertificatesSection({ snapshot }) {
         </View>
         <View style={styles.tableRow}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            (=) Certificados CBAM a entregar{'\n'}
-            CBAM certificates to surrender
+            (=) Certificados CBAM a entregar
           </Text>
           <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Helvetica-Bold' }]}>
             {fmtNum(totals.totalCertificates, 2)} tCO₂e
@@ -847,8 +860,7 @@ function CertificatesSection({ snapshot }) {
         </View>
         <View style={styles.tableRowAlt}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            (×) Precio certificado CBAM{priceDate ? ` (${priceDate})` : ''}{'\n'}
-            CBAM certificate price
+            (×) Precio certificado CBAM{priceDate ? ` (${priceDate})` : ''}
           </Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>
             {fmtNum(price, 2)} EUR/tCO₂e
@@ -859,11 +871,11 @@ function CertificatesSection({ snapshot }) {
       <View style={styles.kpiRow}>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalCertificates, 1)}</Text>
-          <Text style={styles.kpiLabel}>Certificados a entregar{'\n'}Certificates to surrender</Text>
+          <Text style={styles.kpiLabel}>Certificados a entregar</Text>
         </View>
         <View style={styles.kpiCardEmerald}>
           <Text style={styles.kpiNumGreen}>{fmtEUR(totals.totalCostReal)}</Text>
-          <Text style={styles.kpiLabel}>Coste total estimado{'\n'}Total estimated cost</Text>
+          <Text style={styles.kpiLabel}>Coste total estimado</Text>
         </View>
       </View>
 
@@ -872,11 +884,6 @@ function CertificatesSection({ snapshot }) {
         como media de los precios de cierre EUA de la semana anterior, conforme al Reglamento
         de Ejecución (UE) 2025/2548. El coste final podrá variar según el precio vigente en
         el trimestre de declaración.
-      </Text>
-      <Text style={styles.bodyEn}>
-        The CBAM certificate price is calculated and published weekly by the European Commission
-        as the average of the previous week&apos;s EUA closing prices, per Implementing Regulation
-        (EU) 2025/2548. The final cost may vary based on the price in force in the declaration quarter.
       </Text>
     </>
   )
@@ -896,7 +903,7 @@ function RecommendationsSection({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>6. RECOMENDACIONES / RECOMMENDATIONS</Text>
+      <Text style={styles.h1}>6. RECOMENDACIONES</Text>
       <View style={styles.h1Underline} />
       <Text style={styles.body}>
         Recomendaciones personalizadas a partir del análisis de su exposición CBAM,
@@ -908,9 +915,7 @@ function RecommendationsSection({ snapshot }) {
           <Text style={styles.recTitle}>
             {idx + 1}. {r.titleEs}
           </Text>
-          <Text style={styles.recTitleEn}>{r.titleEn}</Text>
           <Text style={styles.recBody}>{r.bodyEs}</Text>
-          <Text style={styles.recBodyEn}>{r.bodyEn}</Text>
         </View>
       ))}
     </>
@@ -929,38 +934,33 @@ function LegalSection({ snapshot }) {
 
   return (
     <>
-      <Text style={styles.h1}>7. METODOLOGÍA Y MARCO LEGAL / METHODOLOGY & LEGAL FRAMEWORK</Text>
+      <Text style={styles.h1}>7. METODOLOGÍA Y MARCO LEGAL</Text>
       <View style={styles.h1Underline} />
 
       {reg && (
         <>
-          <Text style={styles.h3}>Parámetros regulatorios aplicados / Applied regulatory parameters</Text>
+          <Text style={styles.h3}>Parámetros regulatorios aplicados</Text>
           <Text style={styles.body}>
             Todos los valores empleados en el cálculo proceden de fuentes oficiales publicadas
             por la Comisión Europea. Cada parámetro se cita con el acto jurídico que lo establece
             para garantizar la trazabilidad del informe.
           </Text>
-          <Text style={styles.bodyEn}>
-            All values used in the calculation come from official sources published by the
-            European Commission. Each parameter is cited with its establishing legal act to
-            guarantee traceability.
-          </Text>
 
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableHeaderCell, { width: methWidths[0] }]}>
-                Parámetro{'\n'}Parameter
+                Parámetro
               </Text>
               <Text style={[styles.tableHeaderCell, { width: methWidths[1] }]}>
-                Valor{'\n'}Value
+                Valor
               </Text>
               <Text style={[styles.tableHeaderCell, { width: methWidths[2] }]}>
-                Fuente / Source
+                Fuente
               </Text>
             </View>
             <View style={styles.tableRow}>
               <Text style={[styles.tableCell, { width: methWidths[0] }]}>
-                F_CBAM (factor de obligación gradual){'\n'}Gradual obligation factor
+                F_CBAM (factor de obligación gradual)
               </Text>
               <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
                 {fmtNum(reg.cbamFactor, 3)}{'\n'}({fmtNum(reg.cbamFactorPct, 1)}% obligación)
@@ -971,7 +971,7 @@ function LegalSection({ snapshot }) {
             </View>
             <View style={styles.tableRowAlt}>
               <Text style={[styles.tableCell, { width: methWidths[0] }]}>
-                FCI (factor corrección intersectorial){'\n'}Cross-sectoral correction factor
+                FCI (factor corrección intersectorial)
               </Text>
               <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
                 {fmtNum(reg.fci, 3)}
@@ -982,7 +982,7 @@ function LegalSection({ snapshot }) {
             </View>
             <View style={styles.tableRow}>
               <Text style={[styles.tableCell, { width: methWidths[0] }]}>
-                Precio certificado CBAM{'\n'}CBAM certificate price
+                Precio certificado CBAM
               </Text>
               <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
                 {fmtNum(reg.certificatePrice, 2)} €/tCO₂e{'\n'}({reg.certificatePriceDate})
@@ -993,10 +993,10 @@ function LegalSection({ snapshot }) {
             </View>
             <View style={styles.tableRowAlt}>
               <Text style={[styles.tableCell, { width: methWidths[0] }]}>
-                Valores por defecto sectoriales{'\n'}Sectoral default values
+                Valores por defecto sectoriales
               </Text>
               <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
-                Anexo II{'\n'}Annex II
+                Anexo I
               </Text>
               <Text style={[styles.tableCell, { width: methWidths[2] }]}>
                 {sources.DEFAULT_VALUES?.title || 'Reg. Ejecución (UE) 2025/2621'}
@@ -1006,13 +1006,18 @@ function LegalSection({ snapshot }) {
 
           {reg.certificatePriceNote && (
             <Text style={[styles.body, { fontSize: 8, color: COLORS.gray600, marginTop: 4 }]}>
-              Nota / Note: {reg.certificatePriceNote}
+              Nota: {reg.certificatePriceNote}
+            </Text>
+          )}
+          {reg.fciNote && (
+            <Text style={[styles.body, { fontSize: 8, color: COLORS.gray600, marginTop: 2 }]}>
+              Nota FCI: {reg.fciNote}
             </Text>
           )}
         </>
       )}
 
-      <Text style={styles.h3}>Marco normativo de referencia / Reference regulatory framework</Text>
+      <Text style={styles.h3}>Marco normativo de referencia</Text>
       {sourceList.length > 0 ? (
         sourceList.map((src) => (
           <Text key={src.id} style={styles.body}>
@@ -1032,7 +1037,7 @@ function LegalSection({ snapshot }) {
         </>
       )}
 
-      <Text style={styles.h3}>Aviso legal / Legal disclaimer</Text>
+      <Text style={styles.h3}>Aviso legal</Text>
       <View style={styles.legalBox}>
         <Text style={styles.legalText}>
           Este informe ha sido elaborado por LexAduana como servicio profesional de asesoría
@@ -1046,17 +1051,6 @@ function LegalSection({ snapshot }) {
           declarante autorizado conforme al Reglamento (UE) 2023/956. LexAduana no asume
           responsabilidad alguna por decisiones tomadas en base a este informe sin
           asesoramiento jurídico individualizado.
-        </Text>
-        <Text style={styles.legalText}>
-          This report has been prepared by LexAduana as a professional advisory service based
-          on data provided by the client and official values published by the European Commission.
-          The figures are estimates based on the best available information at the time of
-          issuance and do NOT constitute an official CBAM declaration.
-        </Text>
-        <Text style={styles.legalText}>
-          The legal obligation to submit CBAM declarations falls exclusively on the authorized
-          declarant under Regulation (EU) 2023/956. LexAduana assumes no responsibility for
-          decisions made based on this report without individualized legal advice.
         </Text>
       </View>
 
