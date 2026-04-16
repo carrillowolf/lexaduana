@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
+import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 
 function useProductionRoutes() {
   const t = useTranslation(cbamDict)
@@ -110,9 +111,20 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
             onChange={(e) => handleChange('cnCode', e.target.value.replace(/\D/g, '').slice(0, 8))}
             placeholder="Ej: 72101200"
             maxLength={8}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+            className={`w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 outline-none ${
+              product.cnCode && !isCnSupportedByAdvisory(product.cnCode).supported
+                ? 'border-red-400 focus:ring-red-200 focus:border-red-500'
+                : 'border-gray-300 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C]'
+            }`}
           />
-          <p className="mt-1 text-xs text-gray-500">{t('productEditor.cnHelp')}</p>
+          {product.cnCode && !isCnSupportedByAdvisory(product.cnCode).supported ? (
+            <p className="mt-1 text-xs text-red-600">
+              El sector de electricidad (CN 2716) no está incluido en esta estimación automática.
+              Contacte con LexAduana para una consultoría especializada.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-gray-500">{t('productEditor.cnHelp')}</p>
+          )}
         </div>
 
         {/* Country */}

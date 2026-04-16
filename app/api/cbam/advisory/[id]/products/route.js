@@ -7,6 +7,10 @@ import {
   addAdvisoryProduct,
   bulkUpdateAdvisoryProducts,
 } from '@/lib/cbamAdvisoryService'
+import { isCnSupportedByAdvisory } from '@/lib/cbamData'
+
+const ELECTRICITY_NOT_SUPPORTED_MSG =
+  'El sector de electricidad (CN 2716) no está incluido en esta estimación automática. Contacte con LexAduana para una consultoría especializada.'
 
 /** Verifica ownership de la solicitud */
 async function verifyOwnership(requestId, userId, client) {
@@ -79,6 +83,11 @@ export async function POST(request, { params }) {
       )
     }
 
+    const cnCheck = isCnSupportedByAdvisory(body.cnCode)
+    if (!cnCheck.supported) {
+      return NextResponse.json({ error: ELECTRICITY_NOT_SUPPORTED_MSG }, { status: 400 })
+    }
+
     const product = await addAdvisoryProduct(id, {
       productDescription: body.productDescription,
       cnCode: body.cnCode || null,
@@ -130,6 +139,11 @@ export async function PUT(request, { params }) {
     const body = await request.json()
     if (!Array.isArray(body.products)) {
       return NextResponse.json({ error: 'Se espera { products: [...] }' }, { status: 400 })
+    }
+
+    const unsupported = body.products.find(p => !isCnSupportedByAdvisory(p.cnCode).supported)
+    if (unsupported) {
+      return NextResponse.json({ error: ELECTRICITY_NOT_SUPPORTED_MSG }, { status: 400 })
     }
 
     const results = await bulkUpdateAdvisoryProducts(id, body.products, supabase)
