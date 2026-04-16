@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import ProductLineEditor from './ProductLineEditor'
 import { useTranslation } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
+import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 
 function ProgressBar({ currentStep, steps }) {
   return (
@@ -396,6 +397,9 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       if (!p.productDescription?.trim()) return `${t('productEditor.productN')} ${i + 1}: ${t('intake.valProductDesc')}`
       if (!p.countryCode) return `${t('productEditor.productN')} ${i + 1}: ${t('intake.valProductCountry')}`
       if (!p.annualTonnes || p.annualTonnes <= 0) return `${t('productEditor.productN')} ${i + 1}: ${t('intake.valProductTonnes')}`
+      if (p.cnCode && !isCnSupportedByAdvisory(p.cnCode).supported) {
+        return `${t('productEditor.productN')} ${i + 1}: El sector de electricidad (CN 2716) no está incluido en esta estimación automática. Contacte con LexAduana para una consultoría especializada.`
+      }
     }
     return null
   }
