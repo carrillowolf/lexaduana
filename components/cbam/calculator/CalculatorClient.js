@@ -8,6 +8,7 @@ import { useTranslation, useLocale } from '@/lib/i18n'
 import { calculadoraCbamDict } from '@/lib/i18n/calculadora-cbam'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 import CalculatorProductLine from './CalculatorProductLine'
+import CbamRestoreBanner from './CbamRestoreBanner'
 
 const MAX_PRODUCTS = 5
 const MAX_SAVES = 10
@@ -228,6 +229,13 @@ export default function CalculatorClient({ countries }) {
 
   return (
     <div>
+      {/* ═══ RESTORE BANNER (post anónimo → login) ═════ */}
+      <CbamRestoreBanner
+        variant="cbam"
+        show={restoredFromStorage && !!user && saveStatus === 'saved'}
+        onReset={handleReset}
+      />
+
       {/* ═══ HERO ══════════════════════════════════════ */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10">
         <div className="flex items-center gap-3 mb-4">
@@ -343,14 +351,6 @@ export default function CalculatorClient({ countries }) {
             </div>
           )}
 
-          {restoredFromStorage && user && saveStatus === 'saved' && (
-            <div className="mt-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800 flex items-center justify-between">
-              <span>{t('save.restoredNotice')}</span>
-              <Link href="/cbam/historial" className="text-emerald-700 hover:underline font-semibold">
-                {t('save.viewHistory')}
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 

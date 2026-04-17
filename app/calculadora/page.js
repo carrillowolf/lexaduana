@@ -12,6 +12,7 @@ import FavoriteButton from '../../components/FavoriteButton'
 import Link from 'next/link'
 import { CBAMAlert } from '../../components/CBAMAlert'
 import ExchangeRateBanner from '../../components/ExchangeRateBanner'
+import CbamRestoreBanner from '@/components/cbam/calculator/CbamRestoreBanner'
 import { trackEvent } from '@/lib/analytics'
 import { useTranslation } from '@/lib/i18n'
 import { calculadoraDict } from '@/lib/i18n/calculadora'
@@ -256,6 +257,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <CbamRestoreBanner variant="taric" />
       <ExchangeRateBanner />
 
       {/* Contenido principal - Calculadora */}
