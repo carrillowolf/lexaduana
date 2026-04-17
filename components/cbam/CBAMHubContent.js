@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
-import CBAMCostSimulator from '@/components/CBAMCostSimulator'
 import CBAMEmailTemplate from '@/components/CBAMEmailTemplate'
 import CBAMVerifier from '@/components/cbam/CBAMVerifier'
+import CalculatorCtaBlock from '@/components/cbam/CalculatorCtaBlock'
 
 export default function CBAMHubContent({
   nextDeadline,
@@ -180,8 +180,9 @@ export default function CBAMHubContent({
         {/* Verificador de Codigo */}
         <CBAMVerifier threshold={threshold} />
 
-        {/* Simulador de Costes */}
-        <CBAMCostSimulator />
+        {/* CTA → Calculadora CBAM (reemplaza al simulador legacy) */}
+        <CalculatorCtaBlock />
+
 
         {/* Precio de Certificados CBAM */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
