@@ -205,31 +205,15 @@ CREATE TABLE IF NOT EXISTS cbam_config (
 ALTER TABLE cbam_config ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "cbam_config_public_read" ON cbam_config FOR SELECT USING (true);
 
--- 12. CÁLCULOS CBAM DE USUARIOS
-CREATE TABLE IF NOT EXISTS cbam_user_calculations (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES auth.users(id),
-  sector_id TEXT REFERENCES cbam_sectors(id),
-  product_key TEXT,
-  cn_code TEXT,
-  country_code TEXT,
-  tonnes NUMERIC(12,2) NOT NULL,
-  emission_factor NUMERIC(10,4) NOT NULL,
-  emission_source TEXT DEFAULT 'default',
-  benchmark_value NUMERIC(10,4),
-  co2_price NUMERIC(10,2) NOT NULL,
-  total_emissions NUMERIC(12,4),
-  total_cost NUMERIC(12,2),
-  markup_applied NUMERIC(5,2) DEFAULT 0,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_cbam_calc_user ON cbam_user_calculations(user_id);
-
-ALTER TABLE cbam_user_calculations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "cbam_user_calculations_own_data" ON cbam_user_calculations
-  FOR ALL USING (auth.uid() = user_id);
+-- 12. CÁLCULOS CBAM DE USUARIOS — ELIMINADA (Día 5, Pieza 4)
+-- Reemplazada por `cbam_calculator_saves` (multi-producto) + /api/cbam/calculator/*.
+-- El bloque CREATE TABLE se deja comentado sólo como histórico. No ejecutar.
+--
+-- CREATE TABLE IF NOT EXISTS cbam_user_calculations (...);
+-- CREATE INDEX IF NOT EXISTS idx_cbam_calc_user ON cbam_user_calculations(user_id);
+-- ALTER TABLE cbam_user_calculations ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "cbam_user_calculations_own_data" ON cbam_user_calculations
+--   FOR ALL USING (auth.uid() = user_id);
 
 -- ============================================================
 -- FUNCIÓN: Trigger para updated_at automático

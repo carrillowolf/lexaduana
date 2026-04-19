@@ -1129,7 +1129,7 @@ cbam_default_value_markup       -- Markup progresivo 2026-2028
 cbam_config                     -- Configuración clave-valor
 cbam_ets_prices                 -- Precios EU ETS
 cbam_countries                  -- 246 países con estado CBAM
-cbam_user_calculations          -- Historial cálculos usuario
+cbam_calculator_saves           -- Historial cálculos calculadora (multi-producto)
 
 -- ══════════════════════════════════════════════
 -- 🆕 CBAM Phase 2: Asesoría Premium (3 tablas)
