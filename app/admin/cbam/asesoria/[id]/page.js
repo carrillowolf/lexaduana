@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import AdvisoryStatusBadge from '@/components/cbam/advisory/AdvisoryStatusBadge'
+import AdminChecklistStepper from '@/components/cbam/admin/AdminChecklistStepper'
 
 const ADMIN_EMAILS = ['ccarrillodelolmo@gmail.com']
 
@@ -162,6 +163,15 @@ export default function AdminAsesoriaDetailPage({ params }) {
             ← Volver
           </Link>
         </div>
+
+        {/* Checklist pre-entrega */}
+        <AdminChecklistStepper
+          kind="advisory"
+          status={advisory.status}
+          checklist={advisory.adminChecklist}
+          endpoint={`/api/admin/cbam/asesoria/${advisory.id}/checklist`}
+          onChange={reload}
+        />
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
