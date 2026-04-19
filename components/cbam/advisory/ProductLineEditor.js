@@ -62,8 +62,9 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
 
   function toggleRealEmissions(checked) {
     setShowEmissions(checked)
-    handleChange('hasRealEmissions', checked)
-    if (!checked) {
+    if (checked) {
+      onChange(index, { ...product, hasRealEmissions: true })
+    } else {
       onChange(index, {
         ...product,
         hasRealEmissions: false,
@@ -136,8 +137,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
             value={product.countryCode || ''}
             onChange={(e) => {
               const selected = countries.find(c => c.code === e.target.value)
-              handleChange('countryCode', e.target.value)
-              if (selected) handleChange('countryName', selected.name)
+              onChange(index, {
+                ...product,
+                countryCode: e.target.value,
+                countryName: selected ? selected.name : '',
+              })
             }}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
           >
