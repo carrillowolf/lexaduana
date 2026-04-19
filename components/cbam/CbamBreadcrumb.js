@@ -57,6 +57,10 @@ function buildCrumbs(pathname, t) {
   const routeMap = [
     { match: /^\/cbam\/assessment(\/|$)/, add: [{ label: t('cbamBreadcrumb.assessment'), href: '/cbam/assessment' }] },
     { match: /^\/cbam\/calculadora(\/|$)/, add: [{ label: t('cbamBreadcrumb.calculator'), href: '/cbam/calculadora' }] },
+    { match: /^\/cbam\/asesoria\/solicitud\/monitorizacion(\/|$)/, add: [
+      { label: t('cbamBreadcrumb.advisory'), href: '/cbam/asesoria' },
+      { label: t('cbamBreadcrumb.monitoringRequest'), href: '/cbam/asesoria/solicitud/monitorizacion' },
+    ]},
     { match: /^\/cbam\/asesoria\/solicitud(\/|$)/, add: [
       { label: t('cbamBreadcrumb.advisory'), href: '/cbam/asesoria' },
       { label: t('cbamBreadcrumb.advisoryRequest'), href: '/cbam/asesoria/solicitud' },

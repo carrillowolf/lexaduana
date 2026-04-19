@@ -48,6 +48,10 @@ export async function POST(request) {
       )
     }
 
+    const installationsCount = Number.isFinite(body.installationsCount) && body.installationsCount >= 1
+      ? Math.min(Math.floor(body.installationsCount), 999)
+      : null
+
     const created = await createAdvisoryRequest(user.id, {
       companyName: body.companyName,
       companyCif: body.companyCif || null,
@@ -60,6 +64,7 @@ export async function POST(request) {
       hasIndirectRepresentative: body.hasIndirectRepresentative || false,
       representativeName: body.representativeName || null,
       clientNotes: body.clientNotes || null,
+      installationsCount,
     }, supabase)
 
     return NextResponse.json({ success: true, data: created }, { status: 201 })

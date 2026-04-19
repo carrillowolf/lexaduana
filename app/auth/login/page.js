@@ -1,20 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { authDict } from '@/lib/i18n/auth'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { safeInternalRedirect } from '@/lib/auth/safeRedirect'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  )
+}
+
+function LoginPageInner() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const t = useTranslation(authDict)
 
@@ -33,7 +43,8 @@ export default function LoginPage() {
       if (error) throw error
 
       setMessage(t('login.success'))
-      router.push('/calculadora')
+      const next = safeInternalRedirect(searchParams.get('next'), '/calculadora')
+      router.push(next)
       router.refresh()
     } catch (error) {
       setError(error.message)

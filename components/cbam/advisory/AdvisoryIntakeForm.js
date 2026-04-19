@@ -1,11 +1,24 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import ProductLineEditor from './ProductLineEditor'
 import { useTranslation } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
+
+export function detectAdvisoryPackage({ installations, productLines, countries }) {
+  const productsCount = productLines
+  const installationsCount = Math.max(1, installations || 1)
+  const countriesCount = countries
+  const requiresComplete = installationsCount > 3 || productsCount > 5 || countriesCount > 1
+  return {
+    detected: requiresComplete ? 'complete' : 'basic',
+    installationsCount,
+    productsCount,
+    countriesCount,
+  }
+}
 
 function ProgressBar({ currentStep, steps }) {
   return (
@@ -137,6 +150,24 @@ function Step1({ data, onChange, t }) {
             placeholder="+34 600 000 000"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('intake.installationsLabel')}
+          </label>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={data.installationsCount ?? 1}
+            onChange={(e) => {
+              const raw = parseInt(e.target.value, 10)
+              handleChange('installationsCount', Number.isFinite(raw) && raw >= 1 ? raw : 1)
+            }}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+          />
+          <p className="mt-1 text-xs text-gray-500">{t('intake.installationsHint')}</p>
         </div>
       </div>
 
@@ -350,11 +381,21 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
 export default function AdvisoryIntakeForm({ countries = [] }) {
   const router = useRouter()
   const t = useTranslation(cbamDict)
+  const searchParams = useSearchParams()
+  const initialIntent = (() => {
+    const v = (searchParams.get('tipo') || '').toLowerCase()
+    if (v === 'basico') return 'basic'
+    if (v === 'completo') return 'complete'
+    return null
+  })()
+  const draftIdParam = searchParams.get('draftId')
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-  const [requestId, setRequestId] = useState(null)
+  const [requestId, setRequestId] = useState(draftIdParam || null)
+  const [loadingDraft, setLoadingDraft] = useState(Boolean(draftIdParam))
+  const [packageModal, setPackageModal] = useState(null)
 
   const STEPS = [
     { number: 1, title: t('intake.step1') },
@@ -370,6 +411,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     contactName: '',
     contactEmail: '',
     contactPhone: '',
+    installationsCount: 1,
     isAuthorizedDeclarant: false,
     hasIndirectRepresentative: false,
     representativeName: '',
@@ -379,6 +421,65 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
   const [files, setFiles] = useState([])
   const [clientNotes, setClientNotes] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+
+  // Load existing draft when ?draftId=... is present.
+  useEffect(() => {
+    if (!draftIdParam) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/cbam/advisory/${draftIdParam}`)
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body?.error || 'No se pudo cargar el borrador')
+        }
+        const { data } = await res.json()
+        if (cancelled || !data) return
+
+        if (data.status && data.status !== 'draft' && data.status !== 'intake_complete') {
+          setError(`Esta solicitud ya no es un borrador (estado: ${data.status}).`)
+          setLoadingDraft(false)
+          return
+        }
+
+        setCompanyData({
+          companyName: data.companyName || '',
+          companyCif: data.companyCif || '',
+          companyEori: data.companyEori || '',
+          contactName: data.contactName || '',
+          contactEmail: data.contactEmail || '',
+          contactPhone: data.contactPhone || '',
+          installationsCount: data.installationsCount || 1,
+          isAuthorizedDeclarant: Boolean(data.isAuthorizedDeclarant),
+          hasIndirectRepresentative: Boolean(data.hasIndirectRepresentative),
+          representativeName: data.representativeName || '',
+        })
+        setClientNotes(data.clientNotes || '')
+        setProducts(
+          (data.products || []).map(p => ({
+            productDescription: p.productDescription || '',
+            cnCode: p.cnCode || '',
+            countryCode: p.countryCode || '',
+            countryName: p.countryName || '',
+            annualTonnes: p.annualTonnes != null ? p.annualTonnes : '',
+            supplierName: p.supplierName || '',
+            supplierContactEmail: p.supplierContactEmail || '',
+            hasRealEmissions: Boolean(p.hasRealEmissions),
+            emissionFactorReal: p.emissionFactorReal != null ? p.emissionFactorReal : null,
+            productionRoute: p.productionRoute || null,
+          })),
+        )
+        setRequestId(data.id)
+      } catch (err) {
+        if (!cancelled) setError(err.message)
+      } finally {
+        if (!cancelled) setLoadingDraft(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [draftIdParam])
 
   // Validations
   function validateStep1() {
@@ -510,13 +611,33 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     setStep(step - 1)
   }
 
-  // Submit request
-  async function handleSubmit() {
+  function computeDetectedPackage() {
+    const productLines = products.length
+    const countriesUsed = new Set(
+      products.map(p => (p.countryCode || '').trim()).filter(c => c.length > 0),
+    ).size
+    return detectAdvisoryPackage({
+      installations: companyData.installationsCount,
+      productLines,
+      countries: countriesUsed,
+    })
+  }
+
+  function handleSubmitClick() {
     if (!confirmed) {
       setError(t('intake.valConfirmRequired'))
       return
     }
+    const info = computeDetectedPackage()
+    setPackageModal({
+      ...info,
+      intent: initialIntent,
+      choice: info.detected,
+    })
+  }
 
+  async function finalizeSubmit(chosenPackage) {
+    setPackageModal(null)
     setSubmitting(true)
     setError(null)
 
@@ -527,7 +648,11 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       await fetch(`/api/cbam/advisory/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientNotes }),
+        body: JSON.stringify({
+          clientNotes,
+          advisoryPackage: chosenPackage,
+          installationsCount: companyData.installationsCount || 1,
+        }),
       })
 
       if (files.length > 0) {
@@ -567,10 +692,18 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
         </div>
       )}
 
+      {/* Loading existing draft */}
+      {loadingDraft && (
+        <div className="py-10 text-center bg-white rounded-xl border border-gray-200" data-testid="advisory-loading-draft">
+          <div className="inline-block w-6 h-6 border-2 border-[#0A3D5C] border-t-transparent rounded-full animate-spin" />
+          <p className="mt-3 text-sm text-gray-500">{t('intake.loadingDraft')}</p>
+        </div>
+      )}
+
       {/* Steps */}
-      {step === 1 && <Step1 data={companyData} onChange={setCompanyData} t={t} />}
-      {step === 2 && <Step2 products={products} countries={countries} onChange={setProducts} t={t} />}
-      {step === 3 && (
+      {!loadingDraft && step === 1 && <Step1 data={companyData} onChange={setCompanyData} t={t} />}
+      {!loadingDraft && step === 2 && <Step2 products={products} countries={countries} onChange={setProducts} t={t} />}
+      {!loadingDraft && step === 3 && (
         <Step3
           files={files}
           onFilesChange={setFiles}
@@ -583,7 +716,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+      {!loadingDraft && <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
         <div>
           {step > 1 && (
             <button
@@ -617,13 +750,77 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
             </button>
           ) : (
             <button
-              onClick={handleSubmit}
+              onClick={handleSubmitClick}
               disabled={submitting || !confirmed}
               className="px-6 py-2.5 text-sm font-medium text-white bg-[#0A3D5C] rounded-lg hover:bg-[#0d5078] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? t('intake.submitting') : t('intake.submit')}
             </button>
           )}
+        </div>
+      </div>}
+
+      {packageModal && (
+        <PackageDialog
+          info={packageModal}
+          submitting={submitting}
+          onConfirm={finalizeSubmit}
+          onReview={() => setPackageModal(null)}
+          t={t}
+        />
+      )}
+    </div>
+  )
+}
+
+function PackageDialog({ info, submitting, onConfirm, onReview, t }) {
+  const { detected, intent, installationsCount, productsCount, countriesCount } = info
+  const packageLabel = detected === 'complete' ? t('intake.packageDialogComplete') : t('intake.packageDialogBasic')
+  const reasonLine = detected === 'complete'
+    ? t('intake.packageDialogReasonComplete')
+    : t('intake.packageDialogReasonBasic')
+  const mismatchLine = intent && intent !== detected
+    ? (intent === 'basic'
+        ? t('intake.packageDialogMismatchBasicToComplete')
+        : t('intake.packageDialogMismatchCompleteToBasic'))
+    : null
+  const summary = t('intake.packageDialogScopeSummary')
+    .replace('{installations}', installationsCount)
+    .replace('{products}', productsCount)
+    .replace('{countries}', countriesCount)
+  const continueLabel = detected === 'complete'
+    ? t('intake.packageDialogContinueComplete')
+    : t('intake.packageDialogContinueBasic')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" role="dialog" aria-modal="true">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-1">{t('intake.packageDialogTitle')}</h3>
+        <p className="text-[#0A3D5C] font-semibold text-base mb-4">{packageLabel}</p>
+        <p className="text-sm text-gray-700 mb-2">{summary}</p>
+        <p className="text-sm text-gray-600 mb-2">{reasonLine}</p>
+        {mismatchLine && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
+            {mismatchLine}
+          </p>
+        )}
+        <div className="mt-5 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onReview}
+            disabled={submitting}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+          >
+            {t('intake.packageDialogReview')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(detected)}
+            disabled={submitting}
+            className="px-5 py-2.5 rounded-lg bg-[#0A3D5C] text-white text-sm font-semibold hover:bg-[#0d5078] disabled:opacity-50"
+          >
+            {submitting ? t('intake.submitting') : continueLabel}
+          </button>
         </div>
       </div>
     </div>
