@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import ProductLineEditor from './ProductLineEditor'
 import { useTranslation } from '@/lib/i18n'
@@ -388,11 +388,13 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     if (v === 'completo') return 'complete'
     return null
   })()
+  const draftIdParam = searchParams.get('draftId')
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-  const [requestId, setRequestId] = useState(null)
+  const [requestId, setRequestId] = useState(draftIdParam || null)
+  const [loadingDraft, setLoadingDraft] = useState(Boolean(draftIdParam))
   const [packageModal, setPackageModal] = useState(null)
 
   const STEPS = [
@@ -419,6 +421,65 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
   const [files, setFiles] = useState([])
   const [clientNotes, setClientNotes] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+
+  // Load existing draft when ?draftId=... is present.
+  useEffect(() => {
+    if (!draftIdParam) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/cbam/advisory/${draftIdParam}`)
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body?.error || 'No se pudo cargar el borrador')
+        }
+        const { data } = await res.json()
+        if (cancelled || !data) return
+
+        if (data.status && data.status !== 'draft' && data.status !== 'intake_complete') {
+          setError(`Esta solicitud ya no es un borrador (estado: ${data.status}).`)
+          setLoadingDraft(false)
+          return
+        }
+
+        setCompanyData({
+          companyName: data.companyName || '',
+          companyCif: data.companyCif || '',
+          companyEori: data.companyEori || '',
+          contactName: data.contactName || '',
+          contactEmail: data.contactEmail || '',
+          contactPhone: data.contactPhone || '',
+          installationsCount: data.installationsCount || 1,
+          isAuthorizedDeclarant: Boolean(data.isAuthorizedDeclarant),
+          hasIndirectRepresentative: Boolean(data.hasIndirectRepresentative),
+          representativeName: data.representativeName || '',
+        })
+        setClientNotes(data.clientNotes || '')
+        setProducts(
+          (data.products || []).map(p => ({
+            productDescription: p.productDescription || '',
+            cnCode: p.cnCode || '',
+            countryCode: p.countryCode || '',
+            countryName: p.countryName || '',
+            annualTonnes: p.annualTonnes != null ? p.annualTonnes : '',
+            supplierName: p.supplierName || '',
+            supplierContactEmail: p.supplierContactEmail || '',
+            hasRealEmissions: Boolean(p.hasRealEmissions),
+            emissionFactorReal: p.emissionFactorReal != null ? p.emissionFactorReal : null,
+            productionRoute: p.productionRoute || null,
+          })),
+        )
+        setRequestId(data.id)
+      } catch (err) {
+        if (!cancelled) setError(err.message)
+      } finally {
+        if (!cancelled) setLoadingDraft(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [draftIdParam])
 
   // Validations
   function validateStep1() {
@@ -631,10 +692,18 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
         </div>
       )}
 
+      {/* Loading existing draft */}
+      {loadingDraft && (
+        <div className="py-10 text-center bg-white rounded-xl border border-gray-200" data-testid="advisory-loading-draft">
+          <div className="inline-block w-6 h-6 border-2 border-[#0A3D5C] border-t-transparent rounded-full animate-spin" />
+          <p className="mt-3 text-sm text-gray-500">{t('intake.loadingDraft')}</p>
+        </div>
+      )}
+
       {/* Steps */}
-      {step === 1 && <Step1 data={companyData} onChange={setCompanyData} t={t} />}
-      {step === 2 && <Step2 products={products} countries={countries} onChange={setProducts} t={t} />}
-      {step === 3 && (
+      {!loadingDraft && step === 1 && <Step1 data={companyData} onChange={setCompanyData} t={t} />}
+      {!loadingDraft && step === 2 && <Step2 products={products} countries={countries} onChange={setProducts} t={t} />}
+      {!loadingDraft && step === 3 && (
         <Step3
           files={files}
           onFilesChange={setFiles}
@@ -647,7 +716,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
       )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+      {!loadingDraft && <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
         <div>
           {step > 1 && (
             <button
@@ -689,7 +758,7 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
             </button>
           )}
         </div>
-      </div>
+      </div>}
 
       {packageModal && (
         <PackageDialog

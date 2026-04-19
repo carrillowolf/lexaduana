@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import AdvisoryStatusBadge from '@/components/cbam/advisory/AdvisoryStatusBadge'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
@@ -40,7 +41,7 @@ function MonitoringStatusBadge({ status, t }) {
   )
 }
 
-function AdvisorySection({ requests, loading, error, onDownload, onDelete, t, numLocale }) {
+function AdvisorySection({ requests, loading, error, onDownload, onDelete, onNewClick, t, numLocale }) {
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-4">
@@ -48,12 +49,14 @@ function AdvisorySection({ requests, loading, error, onDownload, onDelete, t, nu
           <h2 className="text-lg font-bold text-gray-900">{t('myRequests.sectionAdvisoryTitle')}</h2>
           <p className="text-sm text-gray-500">{t('myRequests.sectionAdvisoryDesc')}</p>
         </div>
-        <Link
-          href="/cbam/asesoria/solicitud"
+        <button
+          type="button"
+          onClick={onNewClick}
           className="px-4 py-2 bg-[#0A3D5C] text-white rounded-lg text-sm font-medium hover:bg-[#0d5078] transition-colors"
+          data-testid="advisory-new-request-cta"
         >
           {t('myRequests.newAdvisory')}
-        </Link>
+        </button>
       </div>
 
       {loading && (
@@ -151,8 +154,9 @@ function AdvisorySection({ requests, loading, error, onDownload, onDelete, t, nu
                     {r.status === 'draft' && (
                       <>
                         <Link
-                          href="/cbam/asesoria/solicitud"
+                          href={`/cbam/asesoria/solicitud?draftId=${r.id}`}
                           className="text-sm text-[#0A3D5C] hover:underline font-medium"
+                          data-testid={`advisory-draft-continue-${r.id}`}
                         >
                           {t('myRequests.continue')}
                         </Link>
@@ -264,7 +268,59 @@ function MonitoringSection({ subscriptions, loading, error, t, numLocale }) {
   )
 }
 
+function ExistingDraftModal({ drafts, onContinue, onDiscard, onClose, busy, t }) {
+  const latest = drafts[0]
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      role="dialog"
+      aria-modal="true"
+      data-testid="existing-draft-modal"
+    >
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-2">{t('myRequests.existingDraftTitle')}</h3>
+        <p className="text-sm text-gray-700 mb-2">{t('myRequests.existingDraftBody')}</p>
+        {latest && (
+          <p className="text-xs text-gray-500 mb-4">
+            {latest.companyName || '—'}{' '}
+            <span className="font-mono text-[11px]">#{latest.id.slice(0, 8)}</span>
+          </p>
+        )}
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 mt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+          >
+            {t('myRequests.existingDraftCancel')}
+          </button>
+          <button
+            type="button"
+            onClick={onDiscard}
+            disabled={busy}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+            data-testid="existing-draft-discard"
+          >
+            {t('myRequests.existingDraftDiscard')}
+          </button>
+          <button
+            type="button"
+            onClick={onContinue}
+            disabled={busy}
+            className="px-5 py-2.5 rounded-lg bg-[#0A3D5C] text-white text-sm font-semibold hover:bg-[#0d5078] disabled:opacity-50"
+            data-testid="existing-draft-continue"
+          >
+            {t('myRequests.existingDraftContinue')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MisSolicitudesPage() {
+  const router = useRouter()
   const [advisoryRequests, setAdvisoryRequests] = useState([])
   const [advisoryLoading, setAdvisoryLoading] = useState(true)
   const [advisoryError, setAdvisoryError] = useState(null)
@@ -273,9 +329,14 @@ export default function MisSolicitudesPage() {
   const [monitoringLoading, setMonitoringLoading] = useState(true)
   const [monitoringError, setMonitoringError] = useState(null)
 
+  const [draftModalOpen, setDraftModalOpen] = useState(false)
+  const [draftModalBusy, setDraftModalBusy] = useState(false)
+
   const t = useTranslation(cbamDict)
   const locale = useLocale()
   const numLocale = locale === 'en' ? 'en-GB' : 'es-ES'
+
+  const drafts = advisoryRequests.filter(r => r.status === 'draft')
 
   useEffect(() => {
     async function loadAdvisory() {
@@ -342,6 +403,38 @@ export default function MisSolicitudesPage() {
     }
   }
 
+  function handleNewAdvisoryClick() {
+    if (drafts.length > 0) {
+      setDraftModalOpen(true)
+      return
+    }
+    router.push('/cbam/asesoria/solicitud')
+  }
+
+  function handleContinueDraft() {
+    const latest = drafts[0]
+    if (!latest) return
+    setDraftModalOpen(false)
+    router.push(`/cbam/asesoria/solicitud?draftId=${latest.id}`)
+  }
+
+  async function handleDiscardAllDrafts() {
+    if (drafts.length === 0) return
+    setDraftModalBusy(true)
+    try {
+      await Promise.all(
+        drafts.map(d =>
+          fetch(`/api/cbam/advisory/${d.id}`, { method: 'DELETE' }).catch(() => null),
+        ),
+      )
+      setAdvisoryRequests(prev => prev.filter(r => r.status !== 'draft'))
+      setDraftModalOpen(false)
+      router.push('/cbam/asesoria/solicitud')
+    } finally {
+      setDraftModalBusy(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <CbamBreadcrumb />
@@ -357,6 +450,7 @@ export default function MisSolicitudesPage() {
           error={advisoryError}
           onDownload={handleDownload}
           onDelete={handleDelete}
+          onNewClick={handleNewAdvisoryClick}
           t={t}
           numLocale={numLocale}
         />
@@ -369,6 +463,17 @@ export default function MisSolicitudesPage() {
           numLocale={numLocale}
         />
       </main>
+
+      {draftModalOpen && (
+        <ExistingDraftModal
+          drafts={drafts}
+          busy={draftModalBusy}
+          onContinue={handleContinueDraft}
+          onDiscard={handleDiscardAllDrafts}
+          onClose={() => setDraftModalOpen(false)}
+          t={t}
+        />
+      )}
     </div>
   )
 }
