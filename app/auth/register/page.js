@@ -1,14 +1,23 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { authDict } from '@/lib/i18n/auth'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { safeInternalRedirect } from '@/lib/auth/safeRedirect'
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterPageInner />
+    </Suspense>
+  )
+}
+
+function RegisterPageInner() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -16,8 +25,11 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const t = useTranslation(authDict)
+  const nextParam = safeInternalRedirect(searchParams.get('next'), null)
+  const loginHref = nextParam ? `/auth/login?next=${encodeURIComponent(nextParam)}` : '/auth/login'
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -50,7 +62,7 @@ export default function RegisterPage() {
 
       setMessage(t('register.success'))
       setTimeout(() => {
-        router.push('/auth/login')
+        router.push(loginHref)
       }, 3000)
     } catch (error) {
       setError(error.message)
@@ -153,7 +165,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-white/40">
               {t('register.hasAccount')}{' '}
-              <Link href="/auth/login" className="text-[#F4C542] hover:text-[#F4C542]/80 font-medium transition-colors">
+              <Link href={loginHref} className="text-[#F4C542] hover:text-[#F4C542]/80 font-medium transition-colors">
                 {t('register.signIn')}
               </Link>
             </p>
