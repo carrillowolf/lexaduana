@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import AdvisoryStatusBadge from '@/components/cbam/advisory/AdvisoryStatusBadge'
+import AdminChecklistStepper from '@/components/cbam/admin/AdminChecklistStepper'
 
 const ADMIN_EMAILS = ['ccarrillodelolmo@gmail.com']
 
@@ -162,6 +163,15 @@ export default function AdminAsesoriaDetailPage({ params }) {
             ← Volver
           </Link>
         </div>
+
+        {/* Checklist pre-entrega */}
+        <AdminChecklistStepper
+          kind="advisory"
+          status={advisory.status}
+          checklist={advisory.adminChecklist}
+          endpoint={`/api/admin/cbam/asesoria/${advisory.id}/checklist`}
+          onChange={reload}
+        />
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
@@ -656,6 +666,7 @@ function ReportTab({ advisory, onChange, showToast }) {
   const [updating, setUpdating] = useState(false)
   const [releasing, setReleasing] = useState(false)
   const [invoiceRef, setInvoiceRef] = useState(advisory.invoiceRef || '')
+  const [showPaymentRequest, setShowPaymentRequest] = useState(false)
 
   useEffect(() => {
     loadReport()
@@ -802,6 +813,40 @@ function ReportTab({ advisory, onChange, showToast }) {
           {advisory.paymentDate && ` · Pagado ${formatDate(advisory.paymentDate)}`}
         </p>
 
+        {/* Bloque solicitud de pago profesional (visible en report_ready) */}
+        {advisory.status === 'report_ready' && !advisory.paymentRequestSentAt && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-[#0A3D5C]">Solicitud de pago profesional</div>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Envía al cliente un email bilingüe con los datos para pagar por transferencia.
+                  Al confirmar, el estado pasa a <strong>Pendiente pago</strong>.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPaymentRequest(true)}
+                data-testid="open-payment-request"
+                className="px-4 py-2 bg-[#0A3D5C] text-white rounded-lg text-sm font-medium hover:bg-[#082d44] whitespace-nowrap"
+              >
+                Enviar solicitud de pago
+              </button>
+            </div>
+          </div>
+        )}
+
+        {advisory.paymentRequestSentAt && (
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800">
+            ✓ Solicitud de pago enviada el {formatDate(advisory.paymentRequestSentAt)}
+            {advisory.paymentRequestReference && (
+              <> · Ref. <span className="font-mono">{advisory.paymentRequestReference}</span></>
+            )}
+            {advisory.paymentRequestAmount != null && (
+              <> · €{fmtNum(advisory.paymentRequestAmount, 0)}</>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <div className="md:col-span-2">
             <label className="block text-xs font-medium text-gray-600 mb-1">Referencia factura</label>
@@ -832,6 +877,15 @@ function ReportTab({ advisory, onChange, showToast }) {
         </div>
       </div>
 
+      {showPaymentRequest && (
+        <PaymentRequestModal
+          advisory={advisory}
+          onClose={() => setShowPaymentRequest(false)}
+          onSent={() => { setShowPaymentRequest(false); onChange() }}
+          showToast={showToast}
+        />
+      )}
+
       {/* Entrega */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="font-semibold text-gray-900 mb-1">3. Liberar al cliente</h3>
@@ -860,6 +914,269 @@ function ReportTab({ advisory, onChange, showToast }) {
         {advisory.paymentStatus !== 'paid' && !advisory.deliveredAt && (
           <p className="text-xs text-amber-700 mt-1">⚠ Marca el pago como pagado antes de liberar.</p>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// MODAL: SOLICITUD DE PAGO (Pieza 1 — Día 5)
+// ============================================================
+function PaymentRequestModal({ advisory, onClose, onSent, showToast }) {
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [language, setLanguage] = useState('es')
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [amount, setAmount] = useState('')
+  const [reference, setReference] = useState('')
+  const [bank, setBank] = useState({ iban: '', bic: '', holder: '' })
+  const [bankMissing, setBankMissing] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Carga el preview del backend al abrir
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/admin/cbam/asesoria/${advisory.id}/payment-request`)
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || 'Error al cargar preview')
+        if (cancelled) return
+        const { preview, defaults } = json.data
+        setLanguage(preview.language)
+        setSubject(preview.subject)
+        setBody(preview.body)
+        setAmount(String(preview.amount))
+        setReference(preview.reference)
+        setBank(defaults.bank)
+        setBankMissing(defaults.bankMissing)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advisory.id])
+
+  // Regenerar preview al cambiar idioma (conserva importe, referencia y banco actuales)
+  const regenerate = async (nextLanguage) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin/cbam/asesoria/${advisory.id}/payment-request/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: nextLanguage,
+          amount: Number(amount),
+          reference,
+          bank,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Error al regenerar')
+      setSubject(json.data.preview.subject)
+      setBody(json.data.preview.body)
+      setLanguage(nextLanguage)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSend = async () => {
+    if (!confirm('¿Enviar la solicitud de pago al cliente? El estado pasará a "Pendiente pago".')) return
+    setSending(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin/cbam/asesoria/${advisory.id}/payment-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language,
+          subject,
+          body,
+          amount: Number(amount),
+          reference,
+          bank,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Error al enviar')
+      showToast('Solicitud de pago enviada')
+      onSent()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 className="font-semibold text-gray-900">Solicitud de pago</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Revisa el contenido antes de enviar. Al confirmar, el email se envía y el estado pasa a pendiente de pago.
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {loading ? (
+            <div className="text-center py-12 text-sm text-gray-500">Cargando preview...</div>
+          ) : (
+            <>
+              {bankMissing && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                  ⚠ Faltan variables de entorno bancarias (LEXADUANA_BANK_IBAN / BIC / HOLDER).
+                  Puedes rellenarlas manualmente abajo para este envío.
+                </div>
+              )}
+
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              {/* Idioma + importe + referencia */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label htmlFor="pr-language" className="block text-xs font-medium text-gray-600 mb-1">Idioma</label>
+                  <select
+                    id="pr-language"
+                    value={language}
+                    onChange={(e) => regenerate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                  >
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="pr-amount" className="block text-xs font-medium text-gray-600 mb-1">Importe (€)</label>
+                  <input
+                    id="pr-amount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pr-reference" className="block text-xs font-medium text-gray-600 mb-1">Referencia</label>
+                  <input
+                    id="pr-reference"
+                    type="text"
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Datos bancarios */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label htmlFor="pr-iban" className="block text-xs font-medium text-gray-600 mb-1">IBAN</label>
+                  <input
+                    id="pr-iban"
+                    type="text"
+                    value={bank.iban}
+                    onChange={(e) => setBank({ ...bank, iban: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pr-bic" className="block text-xs font-medium text-gray-600 mb-1">BIC</label>
+                  <input
+                    id="pr-bic"
+                    type="text"
+                    value={bank.bic}
+                    onChange={(e) => setBank({ ...bank, bic: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pr-holder" className="block text-xs font-medium text-gray-600 mb-1">Titular</label>
+                  <input
+                    id="pr-holder"
+                    type="text"
+                    value={bank.holder}
+                    onChange={(e) => setBank({ ...bank, holder: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Asunto */}
+              <div>
+                <label htmlFor="pr-subject" className="block text-xs font-medium text-gray-600 mb-1">Asunto</label>
+                <input
+                  id="pr-subject"
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                />
+              </div>
+
+              {/* Cuerpo */}
+              <div>
+                <label htmlFor="pr-body" className="block text-xs font-medium text-gray-600 mb-1">
+                  Cuerpo del email (puedes editarlo)
+                </label>
+                <textarea
+                  id="pr-body"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  rows={14}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"
+                />
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Destinatario: <strong>{advisory.contactEmail}</strong>
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button
+            onClick={onClose}
+            disabled={sending}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={sending || loading}
+            data-testid="send-payment-request"
+            className="px-5 py-2 bg-[#0A3D5C] text-white rounded-lg text-sm font-medium hover:bg-[#082d44] disabled:opacity-50"
+          >
+            {sending ? 'Enviando...' : 'Enviar solicitud de pago'}
+          </button>
+        </div>
       </div>
     </div>
   )

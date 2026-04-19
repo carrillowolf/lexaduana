@@ -85,10 +85,11 @@ export default function CalculatorProductLine({ product, index, countries, onCha
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Descripción libre (opcional pero útil para el historial) */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`calculadora-product-${index}-desc`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('line.descriptionLabel')} <span className="text-gray-400 text-xs">{t('line.optional')}</span>
           </label>
           <input
+            id={`calculadora-product-${index}-desc`}
             type="text"
             value={product.productDescription || ''}
             onChange={(e) => handleField('productDescription', e.target.value)}
@@ -99,10 +100,11 @@ export default function CalculatorProductLine({ product, index, countries, onCha
 
         {/* CN Code */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`calculadora-product-${index}-cn`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('line.cnLabel')} <span className="text-red-500">*</span>
           </label>
           <input
+            id={`calculadora-product-${index}-cn`}
             type="text"
             value={product.cnCode || ''}
             onChange={(e) => handleField('cnCode', e.target.value.replace(/\D/g, '').slice(0, 8))}
@@ -123,10 +125,11 @@ export default function CalculatorProductLine({ product, index, countries, onCha
 
         {/* Country */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`calculadora-product-${index}-country`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('line.countryLabel')} <span className="text-red-500">*</span>
           </label>
           <select
+            id={`calculadora-product-${index}-country`}
             value={product.countryCode || ''}
             onChange={(e) => {
               const selected = countries.find(c => c.code === e.target.value)
@@ -149,10 +152,11 @@ export default function CalculatorProductLine({ product, index, countries, onCha
 
         {/* Tonnes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`calculadora-product-${index}-tonnes`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('line.tonnesLabel')} <span className="text-red-500">*</span>
           </label>
           <input
+            id={`calculadora-product-${index}-tonnes`}
             type="number"
             value={product.annualTonnes || ''}
             onChange={(e) => handleField('annualTonnes', e.target.value ? parseFloat(e.target.value) : '')}
@@ -197,10 +201,11 @@ export default function CalculatorProductLine({ product, index, countries, onCha
       {showReal && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={`calculadora-product-${index}-ef-real`} className="block text-sm font-medium text-gray-700 mb-1">
               {t('line.emissionFactorLabel')} <span className="text-red-500">*</span>
             </label>
             <input
+              id={`calculadora-product-${index}-ef-real`}
               type="number"
               value={product.emissionFactorReal ?? ''}
               onChange={(e) => handleField('emissionFactorReal', e.target.value ? parseFloat(e.target.value) : null)}
@@ -213,10 +218,11 @@ export default function CalculatorProductLine({ product, index, countries, onCha
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={`calculadora-product-${index}-route`} className="block text-sm font-medium text-gray-700 mb-1">
               {t('line.productionRouteLabel')} <span className="text-gray-400 text-xs">{t('line.optional')}</span>
             </label>
             <select
+              id={`calculadora-product-${index}-route`}
               value={product.productionRoute || ''}
               onChange={(e) => handleField('productionRoute', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"

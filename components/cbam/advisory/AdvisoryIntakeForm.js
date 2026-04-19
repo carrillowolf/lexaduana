@@ -76,10 +76,11 @@ function Step1({ data, onChange, t }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-company-name" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.companyName')} <span className="text-red-500">*</span>
           </label>
           <input
+            id="advisory-company-name"
             type="text"
             value={data.companyName || ''}
             onChange={(e) => handleChange('companyName', e.target.value)}
@@ -89,10 +90,11 @@ function Step1({ data, onChange, t }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-company-cif" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.companyCif')} <span className="text-gray-400 text-xs">{t('intake.companyCifHint')}</span>
           </label>
           <input
+            id="advisory-company-cif"
             type="text"
             value={data.companyCif || ''}
             onChange={(e) => handleChange('companyCif', e.target.value)}
@@ -102,10 +104,11 @@ function Step1({ data, onChange, t }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-company-eori" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.companyEori')} <span className="text-gray-400 text-xs">{t('intake.companyEoriHint')}</span>
           </label>
           <input
+            id="advisory-company-eori"
             type="text"
             value={data.companyEori || ''}
             onChange={(e) => handleChange('companyEori', e.target.value)}
@@ -115,10 +118,11 @@ function Step1({ data, onChange, t }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-contact-name" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.contactName')} <span className="text-red-500">*</span>
           </label>
           <input
+            id="advisory-contact-name"
             type="text"
             value={data.contactName || ''}
             onChange={(e) => handleChange('contactName', e.target.value)}
@@ -127,10 +131,11 @@ function Step1({ data, onChange, t }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-contact-email" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.contactEmail')} <span className="text-red-500">*</span>
           </label>
           <input
+            id="advisory-contact-email"
             type="email"
             value={data.contactEmail || ''}
             onChange={(e) => handleChange('contactEmail', e.target.value)}
@@ -140,10 +145,11 @@ function Step1({ data, onChange, t }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-contact-phone" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.contactPhone')} <span className="text-gray-400 text-xs">{t('intake.contactPhoneHint')}</span>
           </label>
           <input
+            id="advisory-contact-phone"
             type="tel"
             value={data.contactPhone || ''}
             onChange={(e) => handleChange('contactPhone', e.target.value)}
@@ -153,10 +159,11 @@ function Step1({ data, onChange, t }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="advisory-installations-count" className="block text-sm font-medium text-gray-700 mb-1">
             {t('intake.installationsLabel')}
           </label>
           <input
+            id="advisory-installations-count"
             type="number"
             min={1}
             step={1}
@@ -199,10 +206,11 @@ function Step1({ data, onChange, t }) {
 
         {data.hasIndirectRepresentative && (
           <div className="pl-7">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="advisory-representative-name" className="block text-sm font-medium text-gray-700 mb-1">
               {t('intake.representativeName')}
             </label>
             <input
+              id="advisory-representative-name"
               type="text"
               value={data.representativeName || ''}
               onChange={(e) => handleChange('representativeName', e.target.value)}
@@ -344,10 +352,11 @@ function Step3({ files, onFilesChange, clientNotes, onNotesChange, confirmed, on
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="advisory-client-notes" className="block text-sm font-medium text-gray-700 mb-1">
           {t('intake.notesLabel')}
         </label>
         <textarea
+          id="advisory-client-notes"
           value={clientNotes || ''}
           onChange={(e) => onNotesChange(e.target.value)}
           rows={3}

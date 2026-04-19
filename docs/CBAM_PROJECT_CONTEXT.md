@@ -372,17 +372,16 @@ Base legal: COM(2025) 989
 -- 11. cbam_config (key-value genérico)
 -- Campos: key (PK), value (JSONB), description, updated_at, updated_by (FK auth.users)
 
--- 12. cbam_user_calculations (con RLS por usuario)
--- Campos: id (UUID), user_id (FK auth.users), sector_id (FK), product_key,
---         cn_code, country_code, tonnes, emission_factor, emission_source,
---         benchmark_value, co2_price, total_emissions, total_cost,
---         markup_applied, notes, created_at
+-- 12. cbam_calculator_saves (historial multi-producto de la calculadora CBAM, con RLS por usuario)
+-- Reemplaza a la antigua cbam_user_calculations (single-product-per-row),
+-- eliminada en Día 5 (Pieza 4). Estructura multi-producto con líneas
+-- embebidas en JSON; consumida por /api/cbam/calculator/*.
 ```
 
 ### Seguridad (RLS)
 - Todas las tablas tienen **Row Level Security habilitado**
 - Tablas de referencia: **lectura pública** (SELECT para todos)
-- `cbam_user_calculations`: **solo datos propios** (`auth.uid() = user_id`)
+- `cbam_calculator_saves`: **solo datos propios** (`auth.uid() = user_id`)
 
 ---
 
@@ -429,32 +428,16 @@ Aplica el markup progresivo al valor por defecto según el año.
 - `getThreshold()` — Umbral de minimis
 - `getCBAMConfig(key)` — Config genérica
 - `getRegulations()` — Reglamentos
-- `saveCBAMCalculation(userId, calculation)` — Guardar cálculo
-- `getCBAMCalculationHistory(userId, limit, offset)` — Historial usuario
 - `updateETSPrice(price, date, source)` — Actualizar precio (admin)
 
 ---
 
 ## 18. Estructuras de Datos Principales
 
-### Objeto de Cálculo (POST a /api/cbam/calculations)
-```javascript
-{
-  sectorId: string,        // 'cement' | 'ironSteel' | 'aluminium' | ...
-  productKey: string,      // 'clinker' | 'pig_iron' | ...
-  cnCode: string,          // '25231000'
-  countryCode: string,     // 'CN' | 'TR' | ...
-  tonnes: number,          // Toneladas importadas
-  emissionFactor: number,  // tCO2e/t
-  emissionSource: string,  // 'default' | 'real'
-  benchmark: number,       // Benchmark aplicado
-  co2Price: number,        // EUR/tCO2e
-  totalEmissions: number,  // tCO2 totales
-  totalCost: number,       // EUR
-  markupApplied: number,   // % de markup (0, 10, 20, 30)
-  notes: string            // Notas del usuario
-}
-```
+### Historial de cálculos
+Las escrituras desde el frontend de la calculadora CBAM usan
+`/api/cbam/calculator/saves` (multi-producto, formato JSON por línea).
+El endpoint y tabla legacy `cbam_user_calculations` se eliminó en Día 5.
 
 ### Resultado de checkCBAM
 ```javascript
@@ -544,14 +527,10 @@ Genera archivo `CBAM_LexAduana_YYYY-MM-DD.xlsx` con 3 hojas:
 
 ## 20. API Routes
 
-### GET /api/cbam/calculations
-- Requiere autenticación (Supabase auth)
-- Retorna historial del usuario (máx 100 registros, orden DESC)
-
-### POST /api/cbam/calculations
-- Requiere autenticación
-- Valida campos obligatorios: sectorId, tonnes, emissionFactor, co2Price
-- Guarda en `cbam_user_calculations`
+### /api/cbam/calculator/saves
+- Historial de cálculos de la calculadora CBAM (multi-producto).
+- Reemplaza a `/api/cbam/calculations` + `cbam_user_calculations`
+  (eliminados en Día 5, Pieza 4).
 
 ### GET /api/cbam/ets-price
 - Precio actual EU ETS con historial opcional (`?history=true`, 30 registros)

@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.16.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.17.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -68,7 +68,63 @@ lexaduana.es
 
 ---
 
-## 🆕 Novedades v5.16.0 (Abril 2026)
+## 🆕 Novedades v5.17.0 (Abril 2026)
+
+Sesión operativa pre-lanzamiento: cierra los pendientes mínimos para que Carlos procese las primeras solicitudes reales con profesionalidad.
+
+### 💸 Solicitud de pago profesional (Advisory)
+
+Flujo estandarizado para cobrar Advisory Básico (500 €) / Completo (2.500 €) por transferencia mientras Carlos no está de alta como autónomo.
+
+- Botón **"Enviar solicitud de pago"** en `/admin/cbam/asesoria/[id]` visible cuando `status = report_ready`.
+- Modal con preview **editable bilingüe ES/EN**: idioma (auto por email del cliente), importe (prellenado según paquete), referencia única `LA-YY-XXXXXXXX`, IBAN/BIC/titular (desde env o editables), asunto y cuerpo.
+- Al confirmar: envío por Resend + transición automática `report_ready → pending_payment` + trazabilidad completa en `payment_request_*` columns.
+- Aviso legal obligatorio: *"Este documento es una solicitud de pago, no una factura."*
+- Arquitectura preparada para evolucionar a factura oficial (con `invoice_number` secuencial) sin reescribir.
+
+**Variables de entorno necesarias en Vercel:** `LEXADUANA_BANK_IBAN`, `LEXADUANA_BANK_BIC`, `LEXADUANA_BANK_HOLDER`.
+
+### ✅ Checklist pre-entrega (stepper horizontal)
+
+Stepper visual arriba del detalle en Advisory y Monitorización. Reduce riesgo operativo cuando Carlos procesa solicitudes con prisa.
+
+- **Advisory (7 pasos):** 3 manuales + 4 automáticos derivados del status.
+- **Monitorización (5 pasos):** 4 manuales + 1 automático.
+- Paleta sobria: verde `#059669` completado, azul marino `#0A3D5C` actual, gris neutro futuro.
+- Pasos manuales clickeables (persisten en columna JSONB `admin_checklist`); automáticos derivan en vivo del `status`.
+- Tooltip con descripción, timestamp relativo ("hace 2 h", "ayer") y email del admin que marcó.
+
+### 📊 Panel admin de Suscripciones Monitorización (nuevo)
+
+Primer admin page para gestionar altas de Monitorización (199 €/mes):
+
+- **Listado** en `/admin/cbam/suscripciones` con filtros y estado.
+- **Detalle** en `/admin/cbam/suscripciones/[id]` — vista única scrollable (opción C, sin tabs elaboradas): stepper arriba, datos empresa/contacto/perfil de importación, autorización DUAs, timeline operativo, gestión de estado y notas internas.
+- Estados: `submitted → authorized → active → paused → cancelled` con timestamps automáticos por transición.
+- Panel `/admin/cbam` ahora con dos accesos a subpaneles (Asesorías + Suscripciones).
+
+### 🧹 Cleanup legacy
+
+- Eliminada tabla `cbam_user_calculations` (vacía, 0 filas en producción) + endpoint `/api/cbam/calculations` + funciones `saveCBAMCalculation` / `getCBAMCalculationHistory`.
+- Reemplazada por `cbam_calculator_saves` + `/api/cbam/calculator/saves` (multi-producto, ya en uso desde Día 3-4).
+- Docs y schema actualizados.
+
+### ♿ Accesibilidad — `htmlFor` en formularios de producción
+
+37 pares `<label htmlFor> ↔ <input id>` añadidos a wizards Advisory, Monitorización, calculadora CBAM y auth (login/register). Lectores de pantalla ahora asocian cada etiqueta con su campo correspondiente.
+
+- Naming convention: `{contexto}-{campo}` (`advisory-contact-email`, `monitorizacion-company-name`, `calculadora-product-0-cn`, `login-email`…).
+- Refactor colateral: helper Playwright `fieldByLabel()` usa `page.getByLabel()` cuando existe el vínculo y cae al XPath posicional para forms sin migrar.
+- Admin y legacy (despachos, RRM, factura-OCR, etc.) pendientes para sesión futura.
+
+### 🧪 Validación
+
+- **Unit tests:** generador de solicitud de pago (31 PASS), compute checklist (31 PASS), a11y htmlFor (6/6 archivos PASS).
+- **Playwright suite:** 14/14 PASS (Flows C-F del Día 4 sin regresiones + 4 nuevos Pieza 1 y 2).
+
+---
+
+## Novedades v5.16.0 (Abril 2026)
 
 ### 📄 Requisitos Documentales — Motor de interpretación TARIC
 
@@ -1129,7 +1185,7 @@ cbam_default_value_markup       -- Markup progresivo 2026-2028
 cbam_config                     -- Configuración clave-valor
 cbam_ets_prices                 -- Precios EU ETS
 cbam_countries                  -- 246 países con estado CBAM
-cbam_user_calculations          -- Historial cálculos usuario
+cbam_calculator_saves           -- Historial cálculos calculadora (multi-producto)
 
 -- ══════════════════════════════════════════════
 -- 🆕 CBAM Phase 2: Asesoría Premium (3 tablas)

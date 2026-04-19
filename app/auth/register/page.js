@@ -111,10 +111,11 @@ function RegisterPageInner() {
 
           <form onSubmit={handleRegister} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
+              <label htmlFor="register-email" className="block text-sm font-medium text-white/60 mb-2">
                 {t('register.email')}
               </label>
               <input
+                id="register-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -125,10 +126,11 @@ function RegisterPageInner() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
+              <label htmlFor="register-password" className="block text-sm font-medium text-white/60 mb-2">
                 {t('register.password')}
               </label>
               <input
+                id="register-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -140,10 +142,11 @@ function RegisterPageInner() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-white/60 mb-2">
                 {t('register.confirmPassword')}
               </label>
               <input
+                id="register-confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

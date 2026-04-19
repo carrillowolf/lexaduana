@@ -199,10 +199,11 @@ export default function MonitoringSubscriptionForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="monitorizacion-company-name" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('monitoring.companyName')} <span className="text-red-500">*</span>
               </label>
               <input
+                id="monitorizacion-company-name"
                 type="text"
                 value={data.companyName}
                 onChange={(e) => update('companyName', e.target.value)}
@@ -213,11 +214,12 @@ export default function MonitoringSubscriptionForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="monitorizacion-company-legal-name" className="block text-sm font-medium text-gray-700 mb-1">
                   {t('monitoring.companyLegalName')}{' '}
                   <span className="text-gray-400 text-xs">{t('monitoring.companyLegalNameHint')}</span>
                 </label>
                 <input
+                  id="monitorizacion-company-legal-name"
                   type="text"
                   value={data.companyLegalName}
                   onChange={(e) => update('companyLegalName', e.target.value)}
@@ -225,10 +227,11 @@ export default function MonitoringSubscriptionForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="monitorizacion-company-cif" className="block text-sm font-medium text-gray-700 mb-1">
                   {t('monitoring.companyCif')}
                 </label>
                 <input
+                  id="monitorizacion-company-cif"
                   type="text"
                   value={data.companyCif}
                   onChange={(e) => update('companyCif', e.target.value)}
@@ -239,10 +242,11 @@ export default function MonitoringSubscriptionForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="monitorizacion-contact-name" className="block text-sm font-medium text-gray-700 mb-1">
                   {t('monitoring.contactName')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="monitorizacion-contact-name"
                   type="text"
                   value={data.contactName}
                   onChange={(e) => update('contactName', e.target.value)}
@@ -251,10 +255,11 @@ export default function MonitoringSubscriptionForm() {
                 <FieldError message={errors.contactName} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="monitorizacion-contact-email" className="block text-sm font-medium text-gray-700 mb-1">
                   {t('monitoring.contactEmail')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="monitorizacion-contact-email"
                   type="email"
                   value={data.contactEmail}
                   onChange={(e) => update('contactEmail', e.target.value)}
@@ -265,11 +270,12 @@ export default function MonitoringSubscriptionForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="monitorizacion-contact-phone" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('monitoring.contactPhone')}{' '}
                 <span className="text-gray-400 text-xs">{t('monitoring.contactPhoneHint')}</span>
               </label>
               <input
+                id="monitorizacion-contact-phone"
                 type="tel"
                 value={data.contactPhone}
                 onChange={(e) => update('contactPhone', e.target.value)}
@@ -317,10 +323,11 @@ export default function MonitoringSubscriptionForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="monitorizacion-products" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('monitoring.productsLabel')}
               </label>
               <input
+                id="monitorizacion-products"
                 type="text"
                 value={data.mainCbamProductsInput}
                 onChange={(e) => update('mainCbamProductsInput', e.target.value)}
@@ -330,10 +337,11 @@ export default function MonitoringSubscriptionForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="monitorizacion-countries" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('monitoring.countriesLabel')}
               </label>
               <input
+                id="monitorizacion-countries"
                 type="text"
                 value={data.mainOriginCountriesInput}
                 onChange={(e) => update('mainOriginCountriesInput', e.target.value.toUpperCase())}
@@ -377,10 +385,11 @@ export default function MonitoringSubscriptionForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="monitorizacion-notes" className="block text-sm font-medium text-gray-700 mb-1">
                 {t('monitoring.notesLabel')}
               </label>
               <textarea
+                id="monitorizacion-notes"
                 value={data.clientNotes}
                 onChange={(e) => update('clientNotes', e.target.value)}
                 placeholder={t('monitoring.notesPlaceholder')}
