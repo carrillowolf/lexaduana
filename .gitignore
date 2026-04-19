@@ -60,3 +60,11 @@ yarn-error.log*
 # DATOS TARIC (Excel mensuales de CIRCABC)
 # ============================================
 /data/
+
+# ============================================
+# PLAYWRIGHT E2E
+# ============================================
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/scripts/e2e/screenshots/
