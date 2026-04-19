@@ -89,10 +89,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Description */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`advisory-product-${index}-desc`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('productEditor.descLabel')} <span className="text-red-500">*</span>
           </label>
           <input
+            id={`advisory-product-${index}-desc`}
             type="text"
             value={product.productDescription || ''}
             onChange={(e) => handleChange('productDescription', e.target.value)}
@@ -103,10 +104,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
 
         {/* CN Code */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`advisory-product-${index}-cn`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('productEditor.cnLabel')} <span className="text-gray-400 text-xs">{t('productEditor.cnHint')}</span>
           </label>
           <input
+            id={`advisory-product-${index}-cn`}
             type="text"
             value={product.cnCode || ''}
             onChange={(e) => handleChange('cnCode', e.target.value.replace(/\D/g, '').slice(0, 8))}
@@ -130,10 +132,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
 
         {/* Country */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`advisory-product-${index}-country`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('productEditor.countryLabel')} <span className="text-red-500">*</span>
           </label>
           <select
+            id={`advisory-product-${index}-country`}
             value={product.countryCode || ''}
             onChange={(e) => {
               const selected = countries.find(c => c.code === e.target.value)
@@ -154,10 +157,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
 
         {/* Tonnes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`advisory-product-${index}-tonnes`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('productEditor.tonnesLabel')} <span className="text-red-500">*</span>
           </label>
           <input
+            id={`advisory-product-${index}-tonnes`}
             type="number"
             value={product.annualTonnes || ''}
             onChange={(e) => handleChange('annualTonnes', e.target.value ? parseFloat(e.target.value) : '')}
@@ -170,10 +174,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
 
         {/* Supplier */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`advisory-product-${index}-supplier`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('productEditor.supplierLabel')} <span className="text-gray-400 text-xs">{t('productEditor.supplierHint')}</span>
           </label>
           <input
+            id={`advisory-product-${index}-supplier`}
             type="text"
             value={product.supplierName || ''}
             onChange={(e) => handleChange('supplierName', e.target.value)}
@@ -184,10 +189,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
 
         {/* Supplier email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`advisory-product-${index}-supplier-email`} className="block text-sm font-medium text-gray-700 mb-1">
             {t('productEditor.supplierEmailLabel')} <span className="text-gray-400 text-xs">{t('productEditor.supplierEmailHint')}</span>
           </label>
           <input
+            id={`advisory-product-${index}-supplier-email`}
             type="email"
             value={product.supplierContactEmail || ''}
             onChange={(e) => handleChange('supplierContactEmail', e.target.value)}
@@ -215,10 +221,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
         {showEmissions && (
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor={`advisory-product-${index}-ef-real`} className="block text-sm font-medium text-gray-700 mb-1">
                 {t('productEditor.emissionFactorLabel')}
               </label>
               <input
+                id={`advisory-product-${index}-ef-real`}
                 type="number"
                 value={product.emissionFactorReal || ''}
                 onChange={(e) => handleChange('emissionFactorReal', e.target.value ? parseFloat(e.target.value) : null)}
@@ -229,10 +236,11 @@ function ProductForm({ product, index, countries, onChange, onRemove, t, product
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor={`advisory-product-${index}-route`} className="block text-sm font-medium text-gray-700 mb-1">
                 {t('productEditor.productionRouteLabel')}
               </label>
               <select
+                id={`advisory-product-${index}-route`}
                 value={product.productionRoute || ''}
                 onChange={(e) => handleChange('productionRoute', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0A3D5C]/20 focus:border-[#0A3D5C] outline-none"

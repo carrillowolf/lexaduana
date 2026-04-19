@@ -93,10 +93,11 @@ function LoginPageInner() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
+              <label htmlFor="login-email" className="block text-sm font-medium text-white/60 mb-2">
                 {t('login.email')}
               </label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -108,7 +109,7 @@ function LoginPageInner() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-white/60">
+                <label htmlFor="login-password" className="block text-sm font-medium text-white/60">
                   {t('login.password')}
                 </label>
                 <Link
@@ -119,6 +120,7 @@ function LoginPageInner() {
                 </Link>
               </div>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

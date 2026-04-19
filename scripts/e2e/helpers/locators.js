@@ -1,17 +1,37 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
- * Devuelve un locator para el input/textarea inmediato que sigue a un label
- * cuyo texto matchea la regex dada. Necesario porque los labels de las
- * wizards actuales no usan htmlFor/id, por lo que `page.getByLabel` no
- * resuelve.
+ * Devuelve un locator para un input/textarea/select asociado a un label cuyo
+ * texto coincide con la regex dada.
+ *
+ * Tras Día 5 / Pieza 3, los wizards de producción ya vinculan cada label con
+ * su input mediante `htmlFor`. Preferimos `page.getByLabel()` (accesible y
+ * resiliente a cambios de layout) y sólo caemos al XPath posicional si no
+ * encuentra match — útil para formularios admin/legacy donde los labels aún
+ * no tienen `htmlFor` (pendiente para sesión futura).
  */
 function fieldByLabel(page, labelRegex) {
-  return page
-    .locator('label')
-    .filter({ hasText: labelRegex })
-    .first()
-    .locator('xpath=following-sibling::*[self::input or self::textarea or self::select][1]')
+  const accessible = page.getByLabel(labelRegex).first()
+  return {
+    async fill(value) {
+      if ((await accessible.count()) > 0) return accessible.fill(value)
+      return page
+        .locator('label')
+        .filter({ hasText: labelRegex })
+        .first()
+        .locator('xpath=following-sibling::*[self::input or self::textarea or self::select][1]')
+        .fill(value)
+    },
+    async selectOption(value) {
+      if ((await accessible.count()) > 0) return accessible.selectOption(value)
+      return page
+        .locator('label')
+        .filter({ hasText: labelRegex })
+        .first()
+        .locator('xpath=following-sibling::select[1]')
+        .selectOption(value)
+    },
+  }
 }
 
 /**
