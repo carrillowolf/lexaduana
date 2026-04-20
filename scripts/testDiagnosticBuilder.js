@@ -13,6 +13,7 @@
  */
 
 import {
+  buildCtaUrl,
   buildDiagnostic,
   recommendPackage,
   resolveTrafficLight,
@@ -295,6 +296,29 @@ section('buildDiagnostic · potentialSaving cualitativo', () => {
     regParams: { year: 2026 },
   })
   expect('mix real+default → moderate', mixed.potentialSaving === 'moderate')
+})
+
+// ──────────────────────────────────────────────────────────────────────
+// 11. buildCtaUrl: enruta al wizard correcto según paquete recomendado.
+// ──────────────────────────────────────────────────────────────────────
+section('buildCtaUrl · enrutado por paquete recomendado', () => {
+  expect(
+    'basico → wizard Advisory con tipo=basico',
+    buildCtaUrl('basico') === '/cbam/asesoria/solicitud?tipo=basico&from=diagnostic',
+  )
+  expect(
+    'completo → wizard Advisory con tipo=completo',
+    buildCtaUrl('completo') === '/cbam/asesoria/solicitud?tipo=completo&from=diagnostic',
+  )
+  expect(
+    'monitorizacion → wizard Monitorización dedicado',
+    buildCtaUrl('monitorizacion') === '/cbam/asesoria/solicitud/monitorizacion?from=diagnostic',
+  )
+  // Robustez ante paquete desconocido: default básico.
+  expect(
+    'paquete desconocido → fallback Básico',
+    buildCtaUrl('enterprise') === '/cbam/asesoria/solicitud?tipo=basico&from=diagnostic',
+  )
 })
 
 // ──────────────────────────────────────────────────────────────────────

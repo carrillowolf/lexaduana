@@ -91,6 +91,10 @@ Feedback de un importador real del perfil "Grupo 2" (los que rozan el umbral CBA
 - **Bloque de "campos premium bloqueados"**: eliminado; los tres bloques nuevos lo reemplazan conceptualmente.
 - **Historial.** La lista muestra badge semáforo + tonelaje en vez del importe €. El detalle expandido aplica `buildDiagnostic` on-the-fly sobre el `result_snapshot` guardado. El snapshot RAW (con cifras) se **conserva en BD** para poder revertir el cambio sin recalcular nada.
 
+### 🛠️ Fixes incluidos
+
+- **CTA al wizard correcto según paquete recomendado (Básico, Completo o Monitorización).** Paquetes correctamente diferenciados en la redirección del diagnóstico. Monitorización lleva a `/cbam/asesoria/solicitud/monitorizacion`; Básico y Completo al wizard Advisory con `?tipo=...`. Además, el stash de pre-relleno se omite cuando el paquete recomendado es Monitorización (su wizard no consume productos CN) — así evitamos dejar datos huérfanos en `localStorage` si el usuario abre el CTA en pestaña nueva y luego navega manualmente al wizard Advisory.
+
 ### 🏗️ Arquitectura
 
 - **`lib/cbamDiagnosticRanges.js`** — Tabla fija de rangos por sector (IDs reales: `ironSteel`, `aluminium`, `cement`, `fertilizers`, `hydrogen`) + resolución de sector predominante con umbral del 60%. Fallback a `ironSteel` como rangos neutros para mezclas.

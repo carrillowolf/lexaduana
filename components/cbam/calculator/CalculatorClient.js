@@ -245,11 +245,17 @@ export default function CalculatorClient({ countries }) {
 
   function handleAdvisoryCta() {
     if (!diagnostic) return
-    stashAdvisoryPrefill({
-      year,
-      products,
-      recommendedPackage: diagnostic.recommendedPackage,
-    })
+    // El wizard de Monitorización no consume el stash (sus campos — empresa,
+    // bandas de volumen, autorización DUAs — no se solapan con los productos
+    // CN del diagnóstico). Además evitamos que un CTRL+click al CTA deje un
+    // prefill huérfano que el wizard Advisory leería luego por error.
+    if (diagnostic.recommendedPackage !== 'monitorizacion') {
+      stashAdvisoryPrefill({
+        year,
+        products,
+        recommendedPackage: diagnostic.recommendedPackage,
+      })
+    }
     const target = diagnostic.ctaUrl || '/cbam/asesoria/solicitud?from=diagnostic'
     router.push(target)
   }
