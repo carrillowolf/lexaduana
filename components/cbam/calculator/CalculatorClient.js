@@ -13,6 +13,22 @@ import CbamRestoreBanner from './CbamRestoreBanner'
 const MAX_PRODUCTS = 5
 const MAX_SAVES = 10
 const STORAGE_KEY = 'cbam_calculator_pending'
+// Pre-relleno del wizard Advisory desde el diagnóstico. TTL 2h — se descarta
+// silenciosamente si el usuario tarda más en abrir el wizard (datos frescos
+// vs ruido localStorage).
+const ADVISORY_PREFILL_KEY = 'cbam_advisory_prefill_from_diagnostic'
+const ADVISORY_PREFILL_TTL_MS = 2 * 60 * 60 * 1000
+
+function stashAdvisoryPrefill({ year, products, recommendedPackage }) {
+  try {
+    localStorage.setItem(ADVISORY_PREFILL_KEY, JSON.stringify({
+      year,
+      products,
+      recommendedPackage,
+      expiresAt: Date.now() + ADVISORY_PREFILL_TTL_MS,
+    }))
+  } catch { /* noop */ }
+}
 
 function emptyProduct() {
   return {
@@ -221,11 +237,22 @@ export default function CalculatorClient({ countries }) {
   }
 
   // ── Computed ──────────────────────────────────────
-  const totalProducts = products.length
   const canCalculate = products.every(p => p.cnCode && p.countryCode && p.annualTonnes) && !calculating
-  const price = result?.regParams?.certificatePrice ?? 0
   const totals = result?.totals
   const lines = result?.lines ?? []
+  const diagnostic = result?.diagnostic
+  const showCost = Boolean(result?.showCost)
+
+  function handleAdvisoryCta() {
+    if (!diagnostic) return
+    stashAdvisoryPrefill({
+      year,
+      products,
+      recommendedPackage: diagnostic.recommendedPackage,
+    })
+    const target = diagnostic.ctaUrl || '/cbam/asesoria/solicitud?from=diagnostic'
+    router.push(target)
+  }
 
   return (
     <div>
@@ -354,66 +381,39 @@ export default function CalculatorClient({ countries }) {
         </div>
       </section>
 
-      {/* ═══ RESULTADO ═════════════════════════════════ */}
-      {result && totals && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-8">
+      {/* ═══ RESULTADO — DIAGNÓSTICO CBAM ══════════════ */}
+      {result && diagnostic && (
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-8" data-testid="cbam-diagnostic-result">
           {/* Year badge */}
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0A3D5C]">{t('result.title')}</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0A3D5C]">{t('diagnostic.title')}</h2>
             <span className="inline-flex items-center px-2.5 py-0.5 bg-[#0A3D5C]/10 text-[#0A3D5C] rounded-full text-xs font-semibold">
               {formatTemplate(t('result.yearBadge'), { year })}
             </span>
           </div>
 
-          {/* Bloque A — KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-[#0A3D5C] to-[#0d5078] rounded-2xl p-6 text-white">
-              <p className="text-xs uppercase tracking-wide text-white/60 font-semibold mb-2">
-                {t('result.kpiCostLabel')}
-              </p>
-              <p className="text-3xl md:text-4xl font-bold tabular-nums">
-                {new Intl.NumberFormat(numLocale, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totals.totalCost)}
-              </p>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-              <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">
-                {t('result.kpiCertificatesLabel')}
-              </p>
-              <p className="text-3xl md:text-4xl font-bold text-[#0A3D5C] tabular-nums">
-                {totals.totalCertificates.toLocaleString(numLocale, { maximumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-              <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">
-                {t('result.kpiEmissionsLabel')}
-              </p>
-              <p className="text-3xl md:text-4xl font-bold text-[#0A3D5C] tabular-nums">
-                {totals.totalEmissions.toLocaleString(numLocale, { maximumFractionDigits: 2 })}
-                <span className="text-base ml-2 text-gray-500">{t('result.kpiEmissionsUnit')}</span>
-              </p>
-            </div>
-          </div>
+          {/* ──  Bloque 1 — Semáforo principal + 4 métricas neutras ── */}
+          <DiagnosticTrafficLightBlock
+            diagnostic={diagnostic}
+            t={t}
+            numLocale={numLocale}
+          />
 
-          {/* Context paragraph */}
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {formatTemplate(t('result.contextTemplate'), {
-              tonnes: totals.totalTonnes.toLocaleString(numLocale),
-              products: totalProducts,
-              year,
-              price: price.toLocaleString(numLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-            })}
-            {totals.missingDataCount > 0 && (
-              <> <span className="text-amber-700 font-medium">
-                {formatTemplate(t('result.missingDataNote'), { count: totals.missingDataCount })}
-              </span></>
-            )}
-            {!totals.exceedsDeMinisMis && (
-              <> <span className="text-amber-700 font-medium">{t('result.deMinimisNote')}</span></>
-            )}
-          </p>
+          {/* Bloque 2 — Rango de exposición */}
+          <DiagnosticExposureCard
+            diagnostic={diagnostic}
+            t={t}
+          />
 
-          {/* Bloque B — tabla desglose */}
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+          {/* Bloque 3 — Recomendación + CTA Advisory */}
+          <DiagnosticRecommendationCard
+            diagnostic={diagnostic}
+            t={t}
+            onCta={handleAdvisoryCta}
+          />
+
+          {/* Bloque 4 — tabla desglose (sin cert/coste €) */}
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden" data-testid="cbam-diagnostic-table">
             <div className="px-5 py-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">{t('table.title')}</h3>
             </div>
@@ -427,9 +427,7 @@ export default function CalculatorClient({ countries }) {
                     <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">{t('table.colTonnes')}</th>
                     <th className="px-4 py-3 text-center text-xs font-bold uppercase text-gray-500">{t('table.colSource')}</th>
                     <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">{t('table.colEmissions')}</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">{t('table.colAgie')}</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">{t('table.colCertificates')}</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-500">{t('table.colCost')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold uppercase text-gray-500">{t('diagnostic.lineColumn')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -457,21 +455,14 @@ export default function CalculatorClient({ countries }) {
                           )}
                         </td>
                         {l.hasError ? (
-                          <td colSpan={4} className="px-4 py-3 text-xs text-amber-700 italic">
+                          <td colSpan={2} className="px-4 py-3 text-xs text-amber-700 italic">
                             {t('table.lineError')} — {t('table.errorHint')}
                           </td>
                         ) : noData ? (
-                          // Línea CBAM válida pero sin DV oficial publicado para CN×país.
-                          // Emisiones pueden ser 0 (FE=0 porque no hay dato) o valor si hay FE real.
-                          // Certs y Coste se sustituyen por badge "Sin datos oficiales".
                           <>
                             <td className="px-4 py-3 text-right tabular-nums text-gray-400">—</td>
-                            <td className="px-4 py-3 text-right tabular-nums text-gray-400">—</td>
-                            <td colSpan={2} className="px-4 py-3 text-right">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-800 rounded-md text-xs font-semibold">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                </svg>
+                            <td className="px-4 py-3 text-center">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-100 text-amber-800 rounded-md text-[10px] font-semibold">
                                 {t('table.noOfficialData')}
                               </span>
                             </td>
@@ -479,10 +470,8 @@ export default function CalculatorClient({ countries }) {
                         ) : (
                           <>
                             <td className="px-4 py-3 text-right tabular-nums text-gray-700">{l.totalEmissions.toLocaleString(numLocale, { maximumFractionDigits: 2 })}</td>
-                            <td className="px-4 py-3 text-right tabular-nums text-gray-700">{l.agie.toLocaleString(numLocale, { maximumFractionDigits: 2 })}</td>
-                            <td className="px-4 py-3 text-right tabular-nums text-gray-700">{l.certificates.toLocaleString(numLocale, { maximumFractionDigits: 2 })}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-[#0A3D5C] tabular-nums">
-                              {new Intl.NumberFormat(numLocale, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(l.totalCost)}
+                            <td className="px-4 py-3 text-center">
+                              <LineTrafficLightBadge light={l.lineTrafficLight} t={t} />
                             </td>
                           </>
                         )}
@@ -492,70 +481,23 @@ export default function CalculatorClient({ countries }) {
                 </tbody>
               </table>
             </div>
-            {totals.missingDataCount > 0 && (
+            {totals?.missingDataCount > 0 && (
               <div className="px-5 py-3 border-t border-gray-100 bg-amber-50/40">
                 <p className="text-xs text-gray-600 leading-relaxed">
                   {t('table.noOfficialDataFooter')}{' '}
-                  <Link href="/cbam/asesoria" className="text-[#0A3D5C] font-semibold hover:underline">
+                  <button
+                    type="button"
+                    onClick={handleAdvisoryCta}
+                    className="text-[#0A3D5C] font-semibold hover:underline"
+                  >
                     {t('table.noOfficialDataFooterCta')}
-                  </Link>
+                  </button>
                 </p>
               </div>
             )}
           </div>
 
-          {/* Bloque C — campos premium bloqueados */}
-          <div className="bg-gradient-to-br from-amber-50/50 to-white border border-amber-200/60 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <h3 className="font-semibold text-gray-900">{t('blocked.title')}</h3>
-            </div>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-y-2.5 gap-x-6">
-              {Array.isArray(t('blocked.items')) && t('blocked.items').map((item, i) => (
-                <li key={i} className="flex items-center justify-between gap-4 text-sm">
-                  <div className="flex items-center gap-2 text-gray-700 min-w-0">
-                    <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <span className="truncate">{item}</span>
-                  </div>
-                  <span className="text-gray-300 font-mono text-xs tracking-widest flex-shrink-0">●●●●●</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Bloque D — upsell triple */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Banner */}
-            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6">
-              <h3 className="font-semibold text-gray-900 mb-2">{t('upsell.bannerTitle')}</h3>
-              <p className="text-sm text-gray-600 mb-4 leading-relaxed">{t('upsell.bannerDesc')}</p>
-              <Link href="/cbam/asesoria" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0A3D5C] hover:underline">
-                {t('upsell.bannerCta')}
-              </Link>
-            </div>
-
-            {/* Botón PDF bloqueado */}
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-              <button
-                type="button"
-                disabled
-                title={t('upsell.pdfButtonTooltip')}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-gray-200 text-gray-500 rounded-xl font-semibold text-sm cursor-not-allowed opacity-60"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                {t('upsell.pdfButtonLabel')}
-              </button>
-              <p className="mt-2 text-xs text-gray-500">{t('upsell.pdfButtonTooltip')}</p>
-            </div>
-          </div>
-
-          {/* Comparativa */}
+          {/* Comparativa Calculadora vs Advisory (valor didáctico) */}
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">{t('upsell.compareTitle')}</h3>
@@ -582,7 +524,15 @@ export default function CalculatorClient({ countries }) {
             </div>
           </div>
 
-          {/* Bloque E — acciones de guardado */}
+          {/* Disclaimer al pie */}
+          <p className="text-xs text-gray-500 leading-relaxed pt-2" data-testid="cbam-diagnostic-disclaimer">
+            {t('diagnostic.disclaimerNote')}
+            {showCost && (
+              <> · <span className="text-amber-700 font-medium">{t('diagnostic.costShownNote')}</span></>
+            )}
+          </p>
+
+          {/* Bloque save (intacto) */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6">
             {!userLoaded ? (
               <p className="text-sm text-gray-500">…</p>
@@ -636,5 +586,218 @@ export default function CalculatorClient({ countries }) {
         </section>
       )}
     </div>
+  )
+}
+
+// ============================================================
+// Subcomponentes del diagnóstico
+// ============================================================
+
+const TRAFFIC_LIGHT_STYLES = {
+  green: {
+    ring: 'ring-emerald-200',
+    bg: 'bg-emerald-500',
+    text: 'text-emerald-700',
+    badgeBg: 'bg-emerald-100',
+  },
+  yellow: {
+    ring: 'ring-amber-200',
+    bg: 'bg-amber-500',
+    text: 'text-amber-700',
+    badgeBg: 'bg-amber-100',
+  },
+  red: {
+    ring: 'ring-red-200',
+    bg: 'bg-red-500',
+    text: 'text-red-700',
+    badgeBg: 'bg-red-100',
+  },
+}
+
+function DiagnosticTrafficLightBlock({ diagnostic, t, numLocale }) {
+  const style = TRAFFIC_LIGHT_STYLES[diagnostic.trafficLight] || TRAFFIC_LIGHT_STYLES.green
+  const trafficLight = diagnostic.trafficLight
+  return (
+    <div
+      className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8"
+      data-testid="cbam-diagnostic-traffic-light"
+      data-traffic-light={trafficLight}
+    >
+      <div className="flex flex-col sm:flex-row items-start gap-5">
+        <div
+          className={`w-16 h-16 rounded-full flex items-center justify-center ${style.bg} ring-8 ${style.ring} flex-shrink-0`}
+          aria-hidden="true"
+        >
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d={trafficLight === 'green'
+                ? 'M5 13l4 4L19 7'
+                : trafficLight === 'yellow'
+                  ? 'M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07'
+                  : 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}
+            />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`text-lg sm:text-xl font-bold mb-1 ${style.text}`}>
+            {t(`diagnostic.trafficLight.${trafficLight}.title`)}
+          </h3>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {t(`diagnostic.trafficLight.${trafficLight}.message`)}
+          </p>
+        </div>
+      </div>
+
+      {/* 4 métricas neutras */}
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-5 border-t border-gray-100">
+        <MetricTile
+          label={t('diagnostic.metrics.totalTonnage')}
+          value={`${Number(diagnostic.totalTonnage || 0).toLocaleString(numLocale, { maximumFractionDigits: 2 })} ${t('diagnostic.metrics.totalTonnageUnit')}`}
+        />
+        <MetricTile
+          label={t('diagnostic.metrics.productsCount')}
+          value={diagnostic.productCount}
+        />
+        <MetricTile
+          label={t('diagnostic.metrics.installations')}
+          value={diagnostic.installationsEstimate}
+        />
+        <MetricTile
+          label={t('diagnostic.metrics.year')}
+          value={diagnostic.year}
+        />
+      </div>
+    </div>
+  )
+}
+
+function MetricTile({ label, value }) {
+  return (
+    <div className="bg-gray-50 rounded-lg px-3 py-3">
+      <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
+      <p className="text-lg font-bold text-[#0A3D5C] tabular-nums">{value ?? '—'}</p>
+    </div>
+  )
+}
+
+const EXPOSURE_LABEL_KEY = {
+  low: 'low',
+  moderate: 'moderate',
+  high: 'high',
+  very_high: 'very_high',
+}
+const EXPOSURE_STYLE = {
+  low: 'bg-emerald-100 text-emerald-700',
+  moderate: 'bg-amber-100 text-amber-700',
+  high: 'bg-orange-100 text-orange-700',
+  very_high: 'bg-red-100 text-red-700',
+}
+const SAVING_LABEL_KEY = {
+  negligible: 'negligible',
+  moderate: 'moderateSaving',
+  significant: 'significant',
+}
+
+function DiagnosticExposureCard({ diagnostic, t }) {
+  const exposureKey = EXPOSURE_LABEL_KEY[diagnostic.economicExposure] || 'low'
+  const exposureStyle = EXPOSURE_STYLE[diagnostic.economicExposure] || EXPOSURE_STYLE.low
+  const savingKey = SAVING_LABEL_KEY[diagnostic.potentialSaving] || 'negligible'
+  return (
+    <div
+      className="bg-white border border-gray-200 rounded-2xl p-6"
+      data-testid="cbam-diagnostic-exposure"
+    >
+      <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">
+        {t('diagnostic.exposure.cardTitle')}
+      </h3>
+      <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <dt className="text-xs text-gray-500 mb-1">{t('diagnostic.exposure.certificatesLabel')}</dt>
+          <dd
+            className="text-base font-semibold text-[#0A3D5C]"
+            data-testid="cbam-diagnostic-certificates-range"
+          >
+            {t('diagnostic.exposure.certificatesPrefix')}{' '}
+            <span className="font-mono">{diagnostic.certificatesRange?.label || '—'}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-gray-500 mb-1">{t('diagnostic.exposure.exposureLabel')}</dt>
+          <dd>
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${exposureStyle}`}
+              data-testid="cbam-diagnostic-exposure-badge"
+            >
+              {t(`diagnostic.exposure.${exposureKey}`)}
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-gray-500 mb-1">{t('diagnostic.exposure.savingsLabel')}</dt>
+          <dd className="text-base font-semibold text-gray-900">
+            {t(`diagnostic.exposure.${savingKey}`)}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  )
+}
+
+function DiagnosticRecommendationCard({ diagnostic, t, onCta }) {
+  const pkg = diagnostic.recommendedPackage || 'basico'
+  const titleKey = pkg === 'basico'
+    ? 'diagnostic.recommendation.title_basico'
+    : pkg === 'completo'
+      ? 'diagnostic.recommendation.title_completo'
+      : 'diagnostic.recommendation.title_monit'
+  const reasonKey = `diagnostic.recommendation.reason_${pkg === 'monitorizacion' ? 'monitorizacion' : pkg}`
+  const ctaKey = `diagnostic.recommendation.cta_${pkg === 'monitorizacion' ? 'monitorizacion' : pkg}`
+
+  return (
+    <div
+      className="bg-gradient-to-br from-[#0A3D5C] to-[#0d5078] rounded-2xl p-6 sm:p-8 text-white"
+      data-testid="cbam-diagnostic-recommendation"
+      data-recommended-package={pkg}
+    >
+      <p className="text-xs uppercase tracking-wide text-white/60 font-semibold mb-2">
+        {t('diagnostic.recommendation.cardEyebrow')}
+      </p>
+      <h3 className="text-2xl sm:text-3xl font-bold mb-3">
+        {t(titleKey)}
+      </h3>
+      <p className="text-sm text-white/85 leading-relaxed mb-5 max-w-2xl">
+        {t(reasonKey)}
+      </p>
+      <button
+        type="button"
+        onClick={onCta}
+        className="inline-flex items-center gap-2 px-6 py-3 bg-[#F4C542] text-[#0A3D5C] rounded-xl font-bold text-sm hover:bg-[#f0b922] transition-colors"
+        data-testid="cbam-diagnostic-cta"
+      >
+        {t(ctaKey)}
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+function LineTrafficLightBadge({ light, t }) {
+  const key = light || 'green'
+  const styles = {
+    green: 'bg-emerald-100 text-emerald-700',
+    yellow: 'bg-amber-100 text-amber-700',
+    red: 'bg-red-100 text-red-700',
+  }
+  return (
+    <span
+      className={`inline-flex items-center justify-center w-4 h-4 rounded-full ${styles[key] || styles.green}`}
+      data-testid="cbam-diagnostic-line-light"
+      data-line-light={key}
+      title={t(`diagnostic.trafficLight.${key}.title`)}
+    >
+      <span className="sr-only">{t(`diagnostic.trafficLight.${key}.title`)}</span>
+    </span>
   )
 }

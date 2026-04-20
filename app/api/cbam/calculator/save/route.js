@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { calculateProducts } from '@/lib/cbamAdvisoryCalculator'
-import { toFreeTierPayload } from '@/lib/cbamCalculatorPayload'
+import { toFreeTierPayload, toDiagnosticPayload } from '@/lib/cbamCalculatorPayload'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 
 const MAX_SAVES_PER_USER = 10
@@ -54,7 +54,14 @@ export async function POST(request) {
     // (el cliente podría haber enviado resultados manipulados; aquí no nos
     // fiamos y volvemos a calcular con el motor puro).
     const engineResult = await calculateProducts({ products, year })
+
+    // Snapshot persistido: payload *completo* con cifras exactas. Aunque el
+    // flag del Día 6 esté OFF, queremos conservar la cifra en BD para poder
+    // revertir el comportamiento sin recalcular. El filtrado se aplica al
+    // leer.
     const freeTierPayload = toFreeTierPayload(engineResult, products)
+    // Payload devuelto al cliente: diagnóstico cualitativo (respeta flag).
+    const diagnosticPayload = toDiagnosticPayload(engineResult, products)
 
     const totalCost = freeTierPayload.totals.totalCost
     const totalCertificates = freeTierPayload.totals.totalCertificates
@@ -100,7 +107,7 @@ export async function POST(request) {
         createdAt: inserted.created_at,
         totalCount: Math.min(allSaves?.length || 1, MAX_SAVES_PER_USER),
         maxCount: MAX_SAVES_PER_USER,
-        payload: freeTierPayload,
+        payload: diagnosticPayload,
       },
     })
   } catch (err) {

@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export const metadata = {
-  title: 'Calculadora CBAM | LexAduana',
-  description: 'Estima tu exposición CBAM con datos oficiales de la Comisión Europea. Hasta 5 productos, escenario dual (reales/defaults), historial guardado. Reg. 2025/2620 y 2025/2621.',
+  title: 'Diagnóstico CBAM | LexAduana',
+  description: 'Diagnóstico cualitativo de tu exposición CBAM con datos oficiales de la Comisión Europea: semáforo por tonelaje, rango de certificados y recomendación de paquete Advisory. Reg. 2025/2620 y 2025/2621.',
 }
 
 export default async function CbamCalculadoraPage() {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { calculateProducts } from '@/lib/cbamAdvisoryCalculator'
-import { toFreeTierPayload } from '@/lib/cbamCalculatorPayload'
+import { toDiagnosticPayload } from '@/lib/cbamCalculatorPayload'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 
 /**
@@ -11,23 +11,21 @@ import { isCnSupportedByAdvisory } from '@/lib/cbamData'
  *
  * Body: {
  *   year: 2026 | 2027 | 2028,
- *   products: [
- *     {
- *       productDescription?: string,
- *       cnCode: string,
- *       countryCode: string,
- *       annualTonnes: number,
- *       hasRealEmissions: boolean,
- *       emissionFactorReal?: number,
- *       productionRoute?: string,
- *     }, ...
- *   ]
+ *   products: [...]
  * }
  *
- * Response (free-tier):
- *   { success, data: { lines: [...], totals: {...}, regParams: {...} } }
- *   Los campos premium (FE aplicado, Column A/B, markup, ruta aplicada,
- *   benchmark) están filtrados por cbamCalculatorPayload.js y NO se exponen.
+ * Response (Nivel 2 post-Día 6):
+ *   { success, data: {
+ *       diagnostic: { trafficLight, certificatesRange, economicExposure, ... },
+ *       lines:      [...]  (sin certificates/totalCost salvo flag),
+ *       totals:     { totalTonnes, missingDataCount, ... },
+ *       regParams:  { year, ... },
+ *       showCost:   boolean,
+ *   } }
+ *
+ * Los campos premium (FE aplicado, Column A/B, markup, ruta aplicada,
+ * benchmark) están filtrados y NO se exponen. La cifra exacta en € sólo se
+ * expone si `NIVEL_2_SHOW_COST=true` (flag reversible del Día 6).
  */
 export async function POST(request) {
   try {
@@ -74,8 +72,9 @@ export async function POST(request) {
     // Motor puro — NO toca BD
     const engineResult = await calculateProducts({ products, year })
 
-    // Filtrado a payload free-tier (sin FE, Column A/B, markup, ruta aplicada)
-    const payload = toFreeTierPayload(engineResult, products)
+    // Payload de diagnóstico Nivel 2 (oculta cifra exacta por defecto).
+    // El flag `NIVEL_2_SHOW_COST=true` invierte el filtrado sin redeploy.
+    const payload = toDiagnosticPayload(engineResult, products)
 
     return NextResponse.json({ success: true, data: payload })
   } catch (err) {
