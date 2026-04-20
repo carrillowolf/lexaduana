@@ -76,7 +76,12 @@ test.describe('Flow G — CBAM Nivel 2 diagnóstico', () => {
 
     await page.goto('/cbam/calculadora')
 
-    await expect(page.locator('h1')).toContainText(/Diagnóstico CBAM|CBAM Diagnostic/, { timeout: 20_000 })
+    // Topbar y hero ambos muestran un h1 con "Diagnóstico CBAM" (por diseño —
+    // el topbar replica el título de la página activa). Restringimos al <main>
+    // para apuntar sólo al hero y evitar strict-mode violation.
+    await expect(
+      page.getByRole('main').getByRole('heading', { name: /Diagnóstico CBAM|CBAM Diagnostic/ })
+    ).toBeVisible({ timeout: 20_000 })
 
     // Rellenamos para desbloquear el botón "Obtener diagnóstico". El valor
     // del select no importa para el mock — sólo necesitamos que haya algo.
