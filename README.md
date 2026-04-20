@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.17.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.18.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -27,7 +27,7 @@ lexaduana.es
 ├── 📋 Gestor de Despachos      (disponible)
 ├── 🌍 Módulo CBAM              (disponible)
 │   ├── Verificador de códigos
-│   ├── Simulador de costes
+│   ├── 🆕 Diagnóstico CBAM (Nivel 2 cualitativo)
 │   ├── Self-Assessment (573 CN)
 │   ├── Alertas en calculadora
 │   └── 🆕 Asesoría Premium (Phase 2)
@@ -65,6 +65,75 @@ lexaduana.es
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.18.0 (Abril 2026)
+
+Reforma del Nivel 2 CBAM: la antigua "Calculadora" pasa a ser **Diagnóstico CBAM**, una herramienta cualitativa. Sigue ejecutando el mismo motor oficial, pero ya no entrega la cifra exacta en € — entrega un semáforo por tonelaje, un rango de certificados por sector, una recomendación de paquete y un CTA al Advisory pre-rellenado.
+
+### 🎯 Movimiento estratégico
+
+Feedback de un importador real del perfil "Grupo 2" (los que rozan el umbral CBAM y dudan si están afectados) sugirió que la cifra gratuita estaba canibalizando ventas del Advisory Básico (500 €): el usuario obtenía la estimación, resolvía su curiosidad y no contrataba. El Día 6 transforma esa herramienta en un **diagnóstico de triaje**: confirma si hay obligación, ofrece magnitud cualitativa y empuja al Advisory para el cálculo oficial defendible en inspección. La cifra exacta vuelve a ser un diferencial cerrado del servicio de pago.
+
+### 👤 Qué cambia para el usuario
+
+- **Nombre y mensaje.** El sidebar, el topbar y el hero dicen ahora **"Diagnóstico CBAM"** / **"CBAM Diagnostic"**. La URL se mantiene (`/cbam/calculadora`) para no romper enlaces.
+- **Bloque principal — semáforo.** Círculo verde/amarillo/rojo según tonelaje CBAM declarado:
+  - Verde `< 50 t`: sin obligación en el alcance declarado (verifica exención Reg. UE 2025/2083).
+  - Amarillo `50-200 t`: exposición moderada; aconsejable informe oficial.
+  - Rojo `> 200 t`: exposición alta; informe oficial muy recomendable.
+  Debajo, 4 métricas neutras: toneladas totales, productos distintos, instalaciones estimadas y año.
+- **Rango de exposición.** Tarjeta con el rango de certificados por sector predominante (`<25 / 25-100 / 100-500 / >500` para acero; rangos propios para aluminio, cemento, fertilizantes, hidrógeno) + exposición económica cualitativa (`Baja / Moderada / Alta / Muy alta`) + ahorro potencial con datos reales (`Significativo / Moderado / Despreciable`).
+- **Recomendación automática.** Tarjeta destacada tipo *"Tu caso encaja mejor con: **Advisory Básico**"*. Reglas: `> 500 t` → Monitorización · scope que cabe en 3 instalaciones / 5 productos / 1 país → Básico · resto → Completo.
+- **CTA al Advisory pre-rellenado.** Al pulsar el botón del diagnóstico, los productos declarados se pasan al wizard vía stash en `localStorage` con TTL de 2 horas (clave `cbam_advisory_prefill_from_diagnostic`). El wizard consume el stash una sola vez y muestra un banner verde avisando del pre-relleno. Campos que la calculadora no recoge (empresa, proveedor, documentación) quedan vacíos para que el usuario los complete.
+- **Tabla de desglose.** Mantiene estructura — se quitan las columnas **Certificados** y **Coste €** y se añade una nueva columna **Exposición de la línea** con semáforo por línea.
+- **Bloque de "campos premium bloqueados"**: eliminado; los tres bloques nuevos lo reemplazan conceptualmente.
+- **Historial.** La lista muestra badge semáforo + tonelaje en vez del importe €. El detalle expandido aplica `buildDiagnostic` on-the-fly sobre el `result_snapshot` guardado. El snapshot RAW (con cifras) se **conserva en BD** para poder revertir el cambio sin recalcular nada.
+
+### 🛠️ Fixes incluidos
+
+- **CTA al wizard correcto según paquete recomendado (Básico, Completo o Monitorización).** Paquetes correctamente diferenciados en la redirección del diagnóstico. Monitorización lleva a `/cbam/asesoria/solicitud/monitorizacion`; Básico y Completo al wizard Advisory con `?tipo=...`. Además, el stash de pre-relleno se omite cuando el paquete recomendado es Monitorización (su wizard no consume productos CN) — así evitamos dejar datos huérfanos en `localStorage` si el usuario abre el CTA en pestaña nueva y luego navega manualmente al wizard Advisory.
+
+### 🏗️ Arquitectura
+
+- **`lib/cbamDiagnosticRanges.js`** — Tabla fija de rangos por sector (IDs reales: `ironSteel`, `aluminium`, `cement`, `fertilizers`, `hydrogen`) + resolución de sector predominante con umbral del 60%. Fallback a `ironSteel` como rangos neutros para mezclas.
+- **`lib/cbamDiagnosticBuilder.js`** — Motor puro:
+  - `resolveTrafficLight(totalTonnage)` → verde/amarillo/rojo.
+  - `recommendPackage({ totalTonnage, installations, productsCount, countriesCount, hasRecurringImports })` → básico/completo/monitorización.
+  - `buildDiagnostic(engineResult, { showCost, inputProducts, scope })` → payload cualitativo.
+  - `shouldShowCost()` → lee la env `NIVEL_2_SHOW_COST`.
+- **`lib/cbamCalculatorPayload.js`** — Ampliado con `toDiagnosticPayload` (endpoint `calculate`) y `toDiagnosticFromSnapshot` (endpoint del histórico). El filtro free-tier original sigue vivo para persistencia completa.
+- **Endpoints:**
+  - `POST /api/cbam/calculator/calculate` → devuelve diagnóstico (no la cifra).
+  - `POST /api/cbam/calculator/save` → persiste snapshot RAW en BD y devuelve el diagnóstico al cliente.
+  - `GET /api/cbam/calculator/saves` → añade `trafficLight` y `totalTonnes` por item; oculta `total_cost` salvo flag.
+  - `GET /api/cbam/calculator/saves/[id]` → aplica `buildDiagnostic` sobre el snapshot persistido.
+- **UI** — `CalculatorClient.js` recibe tres sub-componentes nuevos: `DiagnosticTrafficLightBlock`, `DiagnosticExposureCard`, `DiagnosticRecommendationCard`, más `LineTrafficLightBadge` para la tabla. El historial recibe `HistoryDetail` con el mismo lenguaje visual.
+- **i18n** — Nuevas claves `diagnostic.*` en ES y EN (`trafficLight`, `metrics`, `exposure`, `recommendation`, `lineColumn`, `disclaimerNote`). El copy de la comparativa Calculadora vs Advisory se ajusta para reflejar que la cifra exacta ya es diferencial del Advisory.
+
+### 🔄 Flag reversible `NIVEL_2_SHOW_COST`
+
+Documentado en `.env.example`. Defaultea a `false` (diagnóstico cualitativo). Si el feedback de los primeros clientes con diagnóstico activo sugiere revertir, basta con poner `NIVEL_2_SHOW_COST=true` en Vercel y redesplegar — el filtrado vive en backend, por lo que la cifra vuelve a aparecer sin ningún cambio de código y sin invalidar los snapshots guardados:
+
+```
+# Nivel 2 CBAM — flag para mostrar/ocultar cifra exacta de coste.
+# Default: false (modo diagnóstico cualitativo post-Día 6).
+# Activar solo si el feedback de clientes reales lo justifica.
+NIVEL_2_SHOW_COST=false
+```
+
+### ✅ Validación
+
+- **Unit tests** en `scripts/testDiagnosticBuilder.js`: 54/54 PASS. Cobertura: semáforo, rangos por sector (acero / aluminio / cemento / fertilizantes / hidrógeno), predominancia del 60%, mezclas, flag `showCost` on/off, recomendador en todos los bordes (incluido `500 t` exactos) y `potentialSaving` cualitativo.
+- **Playwright** en `scripts/e2e/test-cbam-diagnostic.spec.js` (Flow G): mock del endpoint `calculate` para independizarlo del estado de Supabase; verifica semáforo visible, badge cualitativo, CTA presente, **ninguna cifra en €** (regex `/\d[\d.,]*\s*€/`) en el contenedor del diagnóstico, navegación a `/cbam/asesoria/solicitud?tipo=...&from=diagnostic` y aparición del banner de pre-relleno en el wizard (prueba extremo a extremo del stash).
+- **Suite acumulada**: 15/15 PASS — sin regresiones.
+
+### 🧭 Tech debt / próximos pasos
+
+- **`installations` y `hasRecurringImports`** no están en el motor del Nivel 2; se asumen `1` y `false` para el diagnóstico público. El detector definitivo del wizard Advisory sí los usa con datos completos del usuario. Si el recomendador empieza a fallar en la franja alta, conviene cablear esas señales desde el cuestionario de la calculadora.
+- **Excel export del historial** mencionado en el brief original del Día 6: no existe código que lo implemente hoy, así que no se tocó. Si se añade en el futuro, debe respetar el mismo filtrado de `NIVEL_2_SHOW_COST`.
+- **Medición de conversión**: falta instrumentación para confirmar la tesis de negocio (¿aumenta la tasa de clics del CTA Advisory tras el cambio?). Siguiente iteración: evento de analytics en el CTA del diagnóstico y en el `advisory-prefill-banner` del wizard.
 
 ---
 

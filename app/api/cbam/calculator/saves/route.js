@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { resolveTrafficLight, shouldShowCost } from '@/lib/cbamDiagnosticBuilder'
 
 /**
  * GET /api/cbam/calculator/saves
  *
  * Devuelve el listado de cálculos guardados del usuario (últimos 10, DESC).
  * Para la vista /cbam/historial.
+ *
+ * Desde el Día 6 devolvemos `trafficLight` (semáforo verde/amarillo/rojo)
+ * derivado del tonelaje total y ocultamos `totalCost` salvo que el flag
+ * `NIVEL_2_SHOW_COST=true` esté activo (reversibilidad).
  */
 export async function GET() {
   try {
@@ -30,21 +35,32 @@ export async function GET() {
       return NextResponse.json({ error: 'Error cargando historial' }, { status: 500 })
     }
 
+    const showCost = shouldShowCost()
+
     // Resumen compacto para el listado (no devolvemos result_snapshot completo)
-    const items = (data || []).map(row => ({
-      id: row.id,
-      createdAt: row.created_at,
-      year: row.calculation_year,
-      productCount: Array.isArray(row.products) ? row.products.length : 0,
-      // Primeros 3 CNs como preview
-      cnCodesPreview: Array.isArray(row.products)
-        ? row.products.slice(0, 3).map(p => p.cnCode).filter(Boolean)
-        : [],
-      totalCost: Number(row.total_cost || 0),
-      totalCertificates: Number(row.total_certificates || 0),
-      totalEmissions: Number(row.total_emissions || 0),
-      notes: row.notes || null,
-    }))
+    const items = (data || []).map(row => {
+      const products = Array.isArray(row.products) ? row.products : []
+      const totalTonnes = products.reduce(
+        (acc, p) => acc + (Number(p.annualTonnes) || 0),
+        0,
+      )
+      const item = {
+        id: row.id,
+        createdAt: row.created_at,
+        year: row.calculation_year,
+        productCount: products.length,
+        cnCodesPreview: products.slice(0, 3).map(p => p.cnCode).filter(Boolean),
+        totalTonnes: Math.round(totalTonnes * 100) / 100,
+        trafficLight: resolveTrafficLight(totalTonnes),
+        totalEmissions: Number(row.total_emissions || 0),
+        notes: row.notes || null,
+      }
+      if (showCost) {
+        item.totalCost = Number(row.total_cost || 0)
+        item.totalCertificates = Number(row.total_certificates || 0)
+      }
+      return item
+    })
 
     return NextResponse.json({ success: true, data: items })
   } catch (err) {

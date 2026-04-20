@@ -7,6 +7,31 @@ import { useTranslation } from '@/lib/i18n'
 import { cbamDict } from '@/lib/i18n/cbam'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 
+// Pre-relleno del wizard desde el Diagnóstico CBAM (Nivel 2).
+// La clave y el TTL se mantienen sincronizados con CalculatorClient.
+const DIAGNOSTIC_PREFILL_KEY = 'cbam_advisory_prefill_from_diagnostic'
+
+function consumeDiagnosticPrefill() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(DIAGNOSTIC_PREFILL_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    // Siempre consumimos: se use o no, evitamos fugas de datos stale entre sesiones.
+    window.localStorage.removeItem(DIAGNOSTIC_PREFILL_KEY)
+    if (!parsed || !Array.isArray(parsed.products) || parsed.products.length === 0) {
+      return null
+    }
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+      return null
+    }
+    return parsed
+  } catch {
+    try { window.localStorage.removeItem(DIAGNOSTIC_PREFILL_KEY) } catch { /* noop */ }
+    return null
+  }
+}
+
 export function detectAdvisoryPackage({ installations, productLines, countries }) {
   const productsCount = productLines
   const installationsCount = Math.max(1, installations || 1)
@@ -398,8 +423,10 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
     return null
   })()
   const draftIdParam = searchParams.get('draftId')
+  const fromDiagnostic = (searchParams.get('from') || '').toLowerCase() === 'diagnostic'
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
+  const [prefilledFromDiagnostic, setPrefilledFromDiagnostic] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [requestId, setRequestId] = useState(draftIdParam || null)
@@ -430,6 +457,29 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
   const [files, setFiles] = useState([])
   const [clientNotes, setClientNotes] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+
+  // Pre-relleno desde Diagnóstico CBAM (?from=diagnostic) — solo si no hay
+  // draftId activo (el draft tiene prioridad, es información persistida del
+  // usuario). El stash se consume exactamente una vez para evitar ruido stale.
+  useEffect(() => {
+    if (draftIdParam) return
+    if (!fromDiagnostic) return
+    const prefill = consumeDiagnosticPrefill()
+    if (!prefill) return
+    setProducts(prefill.products.map(p => ({
+      productDescription: p.productDescription || '',
+      cnCode: p.cnCode || '',
+      countryCode: p.countryCode || '',
+      countryName: p.countryName || '',
+      annualTonnes: p.annualTonnes != null ? p.annualTonnes : '',
+      supplierName: '',
+      supplierContactEmail: '',
+      hasRealEmissions: Boolean(p.hasRealEmissions),
+      emissionFactorReal: p.emissionFactorReal != null ? p.emissionFactorReal : null,
+      productionRoute: p.productionRoute || null,
+    })))
+    setPrefilledFromDiagnostic(true)
+  }, [draftIdParam, fromDiagnostic])
 
   // Load existing draft when ?draftId=... is present.
   useEffect(() => {
@@ -690,6 +740,14 @@ export default function AdvisoryIntakeForm({ countries = [] }) {
         <p className="text-sm text-gray-600 mt-1">
           {t('intake.pageDesc')}
         </p>
+        {prefilledFromDiagnostic && (
+          <div
+            className="mt-3 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800"
+            data-testid="advisory-prefill-banner"
+          >
+            {t('intake.prefillFromDiagnostic') || 'Hemos pre-rellenado tus productos desde el diagnóstico. Revisa los datos y completa la información de empresa y proveedor.'}
+          </div>
+        )}
       </div>
 
       <ProgressBar currentStep={step} steps={STEPS} />

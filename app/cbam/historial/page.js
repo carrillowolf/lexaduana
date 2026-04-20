@@ -100,6 +100,34 @@ export default function CbamHistorialPage() {
     return new Intl.NumberFormat(numLocale, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v || 0)
   }
 
+  function trafficLightLabel(light) {
+    return t(`diagnostic.trafficLight.${light || 'green'}.title`)
+  }
+
+  function trafficLightBadgeStyles(light) {
+    return {
+      green: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+      yellow: 'bg-amber-100 text-amber-700 ring-amber-200',
+      red: 'bg-red-100 text-red-700 ring-red-200',
+    }[light || 'green']
+  }
+
+  function packageLabel(pkg) {
+    if (pkg === 'completo') return t('diagnostic.recommendation.title_completo')
+    if (pkg === 'monitorizacion') return t('diagnostic.recommendation.title_monit')
+    return t('diagnostic.recommendation.title_basico')
+  }
+
+  function exposureLabel(key) {
+    if (!key) return '—'
+    return t(`diagnostic.exposure.${key}`)
+  }
+
+  function savingLabel(key) {
+    const labelKey = key === 'moderate' ? 'moderateSaving' : key || 'negligible'
+    return t(`diagnostic.exposure.${labelKey}`)
+  }
+
   // ── Not logged in ──────────────────────────────────
   if (userLoaded && !user) {
     return (
@@ -163,7 +191,7 @@ export default function CbamHistorialPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3" data-testid="cbam-history-list">
             {items.map(item => (
               <div key={item.id} className={`bg-white border rounded-xl transition-colors ${viewingId === item.id ? 'border-[#0A3D5C] shadow-sm' : 'border-gray-200'}`}>
                 <div className="p-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
@@ -178,6 +206,17 @@ export default function CbamHistorialPage() {
                       <span className="text-xs text-gray-500">
                         {item.productCount} {t('history.colProducts').toLowerCase()}
                       </span>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ring-1 ${trafficLightBadgeStyles(item.trafficLight)}`}
+                        data-traffic-light={item.trafficLight}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${
+                          item.trafficLight === 'green' ? 'bg-emerald-500'
+                            : item.trafficLight === 'yellow' ? 'bg-amber-500'
+                              : 'bg-red-500'
+                        }`} />
+                        {trafficLightLabel(item.trafficLight)}
+                      </span>
                     </div>
                     {item.cnCodesPreview.length > 0 && (
                       <p className="text-xs text-gray-500 font-mono">
@@ -187,9 +226,14 @@ export default function CbamHistorialPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-lg font-bold text-[#0A3D5C]">
-                      {formatCurrency(item.totalCost)}
+                    <span className="text-sm font-semibold text-gray-700 tabular-nums">
+                      {Number(item.totalTonnes || 0).toLocaleString(numLocale, { maximumFractionDigits: 2 })} t
                     </span>
+                    {typeof item.totalCost === 'number' && (
+                      <span className="text-sm text-gray-500 tabular-nums">
+                        {formatCurrency(item.totalCost)}
+                      </span>
+                    )}
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -217,68 +261,167 @@ export default function CbamHistorialPage() {
                   </div>
                 </div>
 
-                {/* Detail expanded */}
+                {/* Detail expanded — Diagnóstico completo */}
                 {viewingId === item.id && viewingDetail && (
-                  <div className="border-t border-gray-100 p-5 bg-gray-50/50">
-                    <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide mb-3">
-                      {t('history.detailTitle')}
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                      <div className="bg-white rounded-lg px-4 py-3 border border-gray-100">
-                        <p className="text-[10px] uppercase font-semibold text-gray-500">{t('result.kpiCostLabel')}</p>
-                        <p className="text-xl font-bold text-[#0A3D5C]">{formatCurrency(viewingDetail.totals.totalCost)}</p>
-                      </div>
-                      <div className="bg-white rounded-lg px-4 py-3 border border-gray-100">
-                        <p className="text-[10px] uppercase font-semibold text-gray-500">{t('result.kpiCertificatesLabel')}</p>
-                        <p className="text-xl font-bold text-gray-800 tabular-nums">{viewingDetail.totals.totalCertificates.toLocaleString(numLocale, { maximumFractionDigits: 2 })}</p>
-                      </div>
-                      <div className="bg-white rounded-lg px-4 py-3 border border-gray-100">
-                        <p className="text-[10px] uppercase font-semibold text-gray-500">{t('result.kpiEmissionsLabel')}</p>
-                        <p className="text-xl font-bold text-gray-800 tabular-nums">
-                          {viewingDetail.totals.totalEmissions.toLocaleString(numLocale, { maximumFractionDigits: 2 })} tCO₂e
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg border border-gray-100 overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                          <tr>
-                            <th className="px-3 py-2 text-left font-semibold text-gray-500">{t('table.colProduct')}</th>
-                            <th className="px-3 py-2 text-left font-semibold text-gray-500">{t('table.colCountry')}</th>
-                            <th className="px-3 py-2 text-right font-semibold text-gray-500">{t('table.colTonnes')}</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-500">{t('table.colSource')}</th>
-                            <th className="px-3 py-2 text-right font-semibold text-gray-500">{t('table.colCertificates')}</th>
-                            <th className="px-3 py-2 text-right font-semibold text-gray-500">{t('table.colCost')}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                          {(viewingDetail.resultSnapshot?.lines || []).map((l, i) => (
-                            <tr key={i}>
-                              <td className="px-3 py-2">
-                                <div className="font-medium text-gray-800 truncate max-w-[180px]">{l.productDescription || '—'}</div>
-                                <div className="text-[10px] text-gray-500 font-mono">{l.cnCode}</div>
-                              </td>
-                              <td className="px-3 py-2 text-gray-700">{l.countryCode}</td>
-                              <td className="px-3 py-2 text-right tabular-nums">{l.annualTonnes.toLocaleString(numLocale)}</td>
-                              <td className="px-3 py-2 text-center text-gray-600">
-                                {l.emissionSource === 'real' ? t('table.sourceReal') : t('table.sourceDefault')}
-                              </td>
-                              <td className="px-3 py-2 text-right tabular-nums">{(l.certificates || 0).toLocaleString(numLocale, { maximumFractionDigits: 2 })}</td>
-                              <td className="px-3 py-2 text-right font-semibold text-[#0A3D5C]">{formatCurrency(l.totalCost)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                  <HistoryDetail
+                    detail={viewingDetail}
+                    t={t}
+                    numLocale={numLocale}
+                    trafficLightBadgeStyles={trafficLightBadgeStyles}
+                    trafficLightLabel={trafficLightLabel}
+                    packageLabel={packageLabel}
+                    exposureLabel={exposureLabel}
+                    savingLabel={savingLabel}
+                    formatCurrency={formatCurrency}
+                  />
                 )}
               </div>
             ))}
           </div>
         )}
       </main>
+    </div>
+  )
+}
+
+function HistoryDetail({
+  detail,
+  t,
+  numLocale,
+  trafficLightBadgeStyles,
+  trafficLightLabel,
+  packageLabel,
+  exposureLabel,
+  savingLabel,
+  formatCurrency,
+}) {
+  const diag = detail.diagnostic || {}
+  const lines = Array.isArray(detail.lines) ? detail.lines : []
+  const totals = detail.totals || {}
+  const showCost = Boolean(detail.showCost)
+
+  return (
+    <div className="border-t border-gray-100 p-5 bg-gray-50/50" data-testid="cbam-history-detail">
+      <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide mb-3">
+        {t('history.detailTitle')}
+      </p>
+
+      {/* Semáforo + métricas */}
+      <div className="bg-white rounded-xl p-4 border border-gray-100 mb-4">
+        <div className="flex items-start gap-3 mb-4">
+          <span
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ring-1 ${trafficLightBadgeStyles(diag.trafficLight)}`}
+          >
+            <span className={`w-2 h-2 rounded-full ${
+              diag.trafficLight === 'green' ? 'bg-emerald-500'
+                : diag.trafficLight === 'yellow' ? 'bg-amber-500' : 'bg-red-500'
+            }`} />
+            {trafficLightLabel(diag.trafficLight)}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricSmall label={t('diagnostic.metrics.totalTonnage')} value={`${Number(diag.totalTonnage || 0).toLocaleString(numLocale, { maximumFractionDigits: 2 })} t`} />
+          <MetricSmall label={t('diagnostic.metrics.productsCount')} value={diag.productCount} />
+          <MetricSmall label={t('diagnostic.metrics.installations')} value={diag.installationsEstimate} />
+          <MetricSmall label={t('diagnostic.metrics.year')} value={diag.year} />
+        </div>
+      </div>
+
+      {/* Exposición cualitativa */}
+      <div className="bg-white rounded-xl p-4 border border-gray-100 mb-4">
+        <p className="text-[10px] uppercase font-semibold text-gray-500 mb-2">
+          {t('diagnostic.exposure.cardTitle')}
+        </p>
+        <dl className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <div>
+            <dt className="text-xs text-gray-500">{t('diagnostic.exposure.certificatesLabel')}</dt>
+            <dd className="font-semibold text-[#0A3D5C]">
+              {t('diagnostic.exposure.certificatesPrefix')}{' '}
+              <span className="font-mono">{diag.certificatesRange?.label || '—'}</span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-gray-500">{t('diagnostic.exposure.exposureLabel')}</dt>
+            <dd className="font-semibold text-gray-900">{exposureLabel(diag.economicExposure)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-gray-500">{t('diagnostic.exposure.savingsLabel')}</dt>
+            <dd className="font-semibold text-gray-900">{savingLabel(diag.potentialSaving)}</dd>
+          </div>
+        </dl>
+      </div>
+
+      {/* Paquete recomendado */}
+      <div className="bg-[#0A3D5C] rounded-xl p-4 text-white mb-4">
+        <p className="text-[10px] uppercase font-semibold text-white/60 tracking-wide">
+          {t('diagnostic.recommendation.cardEyebrow')}
+        </p>
+        <p className="text-lg font-bold mt-1">{packageLabel(diag.recommendedPackage)}</p>
+      </div>
+
+      {/* Desglose por línea (sin cert/coste, con exposición línea) */}
+      <div className="bg-white rounded-lg border border-gray-100 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th className="px-3 py-2 text-left font-semibold text-gray-500">{t('table.colProduct')}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-500">{t('table.colCountry')}</th>
+              <th className="px-3 py-2 text-right font-semibold text-gray-500">{t('table.colTonnes')}</th>
+              <th className="px-3 py-2 text-center font-semibold text-gray-500">{t('table.colSource')}</th>
+              <th className="px-3 py-2 text-center font-semibold text-gray-500">{t('diagnostic.lineColumn')}</th>
+              {showCost && (
+                <th className="px-3 py-2 text-right font-semibold text-gray-500">{t('table.colCost')}</th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {lines.map((l, i) => (
+              <tr key={i}>
+                <td className="px-3 py-2">
+                  <div className="font-medium text-gray-800 truncate max-w-[180px]">{l.productDescription || '—'}</div>
+                  <div className="text-[10px] text-gray-500 font-mono">{l.cnCode}</div>
+                </td>
+                <td className="px-3 py-2 text-gray-700">{l.countryCode}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{Number(l.annualTonnes || 0).toLocaleString(numLocale)}</td>
+                <td className="px-3 py-2 text-center text-gray-600">
+                  {l.emissionSource === 'real' ? t('table.sourceReal') : t('table.sourceDefault')}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span
+                    className={`inline-block w-3 h-3 rounded-full ${
+                      l.lineTrafficLight === 'green' ? 'bg-emerald-500'
+                        : l.lineTrafficLight === 'yellow' ? 'bg-amber-500'
+                          : 'bg-red-500'
+                    }`}
+                    title={trafficLightLabel(l.lineTrafficLight)}
+                    data-line-light={l.lineTrafficLight}
+                  />
+                </td>
+                {showCost && (
+                  <td className="px-3 py-2 text-right font-semibold text-[#0A3D5C]">
+                    {formatCurrency(l.totalCost)}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totals.missingDataCount > 0 && (
+        <p className="mt-3 text-[11px] text-amber-700">
+          {t('table.noOfficialDataFooter')}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function MetricSmall({ label, value }) {
+  return (
+    <div className="bg-gray-50 rounded-md px-2.5 py-2">
+      <p className="text-[9px] uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
+      <p className="text-sm font-bold text-[#0A3D5C] tabular-nums">{value ?? '—'}</p>
     </div>
   )
 }
