@@ -44,3 +44,13 @@ Los cambios detectados se muestran en `/cambios` automáticamente.
 
 Los Excel se descargan de:
 https://circabc.europa.eu/ui/group/0e5f18c2-4b2f-42e9-aed4-dfe50ae1263b/library/566dd333-1deb-4235-982a-4fdeaf3657c1
+
+---
+
+## Pull Requests — auto-suscripción
+
+Tras crear un PR con `mcp__github__create_pull_request`, suscríbete siempre
+inmediatamente con `mcp__github__subscribe_pr_activity` al mismo PR — sin
+preguntar. Así se reciben eventos de CI y review comments durante toda la
+sesión y puedo reaccionar (fix pequeño, pregunta si es ambiguo, skip si no
+aplica) sin tener que pedirme que active el watcher cada vez.
