@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
-import Link from 'next/link'
 import { CBAMAlert } from '@/components/CBAMAlert'
 import { trackEvent } from '@/lib/analytics'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { clasificadorDict } from '@/lib/i18n/clasificador'
 
 export default function ClasificadorPage() {
-  const [user, setUser] = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
+  const [authed, setAuthed] = useState(false)
   const [description, setDescription] = useState('')
   const [countryCode, setCountryCode] = useState('CN')
   const [cifValue, setCifValue] = useState('')
@@ -24,18 +24,13 @@ export default function ClasificadorPage() {
   const t = useTranslation(clasificadorDict)
   const { locale } = useLocale()
 
-  // Verificar usuario
+  // Verificar sesión
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/auth/login')
-      } else {
-        setUser(user)
-      }
-    }
-    checkUser()
-  }, [router, supabase])
+    supabase.auth.getUser().then(({ data }) => {
+      setAuthed(!!data?.user)
+      setAuthChecked(true)
+    })
+  }, [supabase])
 
   // Cargar países
   useEffect(() => {
@@ -68,8 +63,8 @@ export default function ClasificadorPage() {
         body: JSON.stringify({
           description,
           countryCode: countryCode || undefined,
-          cifValue: cifValue ? parseFloat(cifValue) : undefined
-        })
+          cifValue: cifValue ? parseFloat(cifValue) : undefined,
+        }),
       })
 
       const data = await response.json()
@@ -91,15 +86,15 @@ export default function ClasificadorPage() {
     const params = new URLSearchParams({
       hsCode,
       countryCode,
-      cifValue: cifValue || '1000'
+      cifValue: cifValue || '1000',
     })
     router.push(`/calculadora?${params.toString()}`)
   }
 
   const getConfidenceColor = (confidence) => {
-    if (confidence >= 80) return 'text-emerald-600 bg-emerald-50'
-    if (confidence >= 60) return 'text-amber-600 bg-amber-50'
-    return 'text-red-600 bg-red-50'
+    if (confidence >= 80) return 'text-emerald-700 bg-emerald-50 border-emerald-200'
+    if (confidence >= 60) return 'text-amber-700 bg-amber-50 border-amber-200'
+    return 'text-red-700 bg-red-50 border-red-200'
   }
 
   const getConfidenceLabel = (confidence) => {
@@ -108,98 +103,131 @@ export default function ClasificadorPage() {
     return t('confidence.low')
   }
 
+  // ============================================
+  // ESTADOS DE RENDER
+  // ============================================
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-slate-500 text-sm">{t('loading') || 'Cargando…'}</div>
+      </div>
+    )
+  }
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <section className="bg-[#0A3D5C] py-16">
+          <div className="max-w-3xl mx-auto px-4 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              {t('auth.title') || 'Clasificador'}{' '}
+              <span className="text-[#F4C542]">{t('auth.titleHighlight') || 'con IA'}</span>
+            </h1>
+            <p className="text-white/70 mb-8">
+              {t('auth.subtitle') || 'Obtén el código TARIC de tu producto en segundos.'}
+            </p>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
+              <p className="text-white/80 mb-4">
+                {t('auth.loginRequired') || 'Inicia sesión para usar el clasificador.'}
+              </p>
+              <button
+                onClick={() => router.push('/auth/login?redirect=/clasificador')}
+                className="px-7 py-3 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-xl hover:bg-[#F4C542]/90 transition"
+              >
+                {t('auth.login') || 'Iniciar sesión'}
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-slate-50">
+      {/* HERO */}
+      <section className="relative overflow-hidden bg-[#0A3D5C] py-12 md:py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <span className="inline-block px-4 py-1.5 bg-white/10 border border-white/10 text-white/70 rounded-full text-sm font-medium mb-5">
+            {t('hero.badge')} · {t('hero.powered')}
+          </span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            {t('hero.title')}
+          </h1>
+          <p className="text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
+            {t('hero.subtitle')}
+          </p>
+          <p className="text-sm text-white/50 max-w-2xl mx-auto mt-3">
+            {t('hero.desc')}
+          </p>
+        </div>
+      </section>
 
-        {/* Hero */}
-        <div className="mb-8 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
-                <span className="text-xs font-bold">{t('hero.badge')}</span>
-                <span className="text-xs">•</span>
-                <span className="text-xs">{t('hero.powered')}</span>
-              </div>
-              <h2 className="text-3xl font-bold mb-3">{t('hero.title')}</h2>
-              <p className="text-purple-100 text-lg mb-2">
-                {t('hero.subtitle')}
-              </p>
-              <p className="text-purple-200 text-sm">
-                {t('hero.desc')}
-              </p>
-            </div>
-            <div className="hidden md:block">
-              <svg className="w-24 h-24 text-white/20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
+      {/* DISCLAIMER LEGAL */}
+      <div className="max-w-4xl mx-auto px-4 pt-8">
+        <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div className="text-sm text-slate-700 leading-relaxed">
+              <p className="font-semibold text-slate-900 mb-1">{t('disclaimer.title')}</p>
+              <p className="text-slate-600" dangerouslySetInnerHTML={{ __html: t('disclaimer.text') }} />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Disclaimer Legal */}
-        <div className="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-6">
-          <div className="flex items-start space-x-3">
-            <svg className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <h4 className="font-bold text-amber-900 mb-2">{t('disclaimer.title')}</h4>
-              <p className="text-sm text-amber-800" dangerouslySetInnerHTML={{ __html: t('disclaimer.text') }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900">{t('form.title')}</h3>
-            <p className="text-sm text-gray-600 mt-1">{t('form.subtitle')}</p>
+      {/* CONTENIDO */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        {/* FORMULARIO */}
+        <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-slate-900">{t('form.title')}</h2>
+            <p className="text-sm text-slate-500 mt-1">{t('form.subtitle')}</p>
           </div>
 
-          <form onSubmit={handleClassify} className="p-8 space-y-6">
+          <form onSubmit={handleClassify} className="space-y-5">
             {/* Descripción */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 {t('form.descriptionLabel')}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('form.descriptionPlaceholder')}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all resize-none"
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-[#0A3D5C] focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none transition resize-none text-slate-900"
                 rows={5}
                 disabled={loading}
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-slate-500 mt-1.5">
                 {description.length} {t('form.charCount')}
               </p>
             </div>
 
-            {/* País y Valor (Opcional) */}
-            <div className="grid md:grid-cols-2 gap-6">
+            {/* País y Valor */}
+            <div className="grid md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   {t('form.countryLabel')}
                 </label>
                 <select
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-[#0A3D5C] focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none transition bg-white text-slate-900"
                   disabled={loading}
                 >
                   <option value="">{t('form.countryPlaceholder')}</option>
-                  {countries.map(c => (
-                    <option key={c.country_code} value={c.country_code}>{c.country_name}</option>
+                  {countries.map((c) => (
+                    <option key={c.country_code} value={c.country_code}>
+                      {c.country_name}
+                    </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('form.countryHelp')}
-                </p>
+                <p className="text-xs text-slate-500 mt-1.5">{t('form.countryHelp')}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   {t('form.cifLabel')}
                 </label>
                 <input
@@ -207,36 +235,36 @@ export default function ClasificadorPage() {
                   value={cifValue}
                   onChange={(e) => setCifValue(e.target.value)}
                   placeholder="10000"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-[#0A3D5C] focus:ring-2 focus:ring-[#0A3D5C]/20 outline-none transition text-slate-900"
                   disabled={loading}
                   min="0"
                   step="0.01"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('form.cifHelp')}
-                </p>
+                <p className="text-xs text-slate-500 mt-1.5">{t('form.cifHelp')}</p>
               </div>
             </div>
 
-            {/* Botón */}
+            {/* Botón principal */}
             <button
               type="submit"
               disabled={loading || description.length < 10}
-              className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
+              className="w-full px-6 py-3 bg-[#0A3D5C] text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0A3D5C]/90 transition flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   <span>{t('form.classifying')}</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
+                  <span>🤖</span>
                   <span>{t('form.classify')}</span>
                 </>
               )}
@@ -245,221 +273,224 @@ export default function ClasificadorPage() {
 
           {/* Error */}
           {error && (
-            <div className="px-8 pb-8">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-sm text-red-700 flex items-start">
-                  <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {error}
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+        </section>
+
+        {/* RESULTADOS */}
+        {result && (
+          <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+            {/* Cabecera resultado */}
+            <div className="flex items-center justify-between flex-wrap gap-3 pb-5 border-b border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0A3D5C]/10 text-[#0A3D5C] flex items-center justify-center font-bold">
+                  ✓
+                </div>
+                <h2 className="text-xl font-bold text-slate-900">{t('results.title')}</h2>
+              </div>
+              <span
+                className={`px-3 py-1 border rounded-full text-xs font-semibold ${getConfidenceColor(
+                  result.classification.confidence,
+                )}`}
+              >
+                {result.classification.confidence}% · {getConfidenceLabel(result.classification.confidence)}
+              </span>
+            </div>
+
+            {/* Código HS principal */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">
+                {t('results.codeLabel')}
+              </p>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <p className="text-4xl font-bold text-[#0A3D5C] font-mono tabular-nums tracking-wider">
+                  {result.classification.primaryCode}
+                </p>
+                {result.classification.primaryCodeExists ? (
+                  <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-semibold">
+                    ✓ {t('results.verified')}
+                  </span>
+                ) : (
+                  <span className="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-semibold">
+                    ⚠ {t('results.verifyManually')}
+                  </span>
+                )}
+              </div>
+              {result.classification.primaryCodeDutyRate !== undefined && (
+                <p className="text-sm text-slate-600 mt-3">
+                  {t('results.dutyRate')}{' '}
+                  <strong className="text-slate-900">
+                    {result.classification.primaryCodeDutyRate}%
+                  </strong>
+                </p>
+              )}
+
+              {/* Alerta CBAM si aplica */}
+              <div className="mt-3">
+                <CBAMAlert hsCode={result.classification.primaryCode} />
+              </div>
+            </div>
+
+            {/* Razonamiento */}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                <span>🧠</span>
+                {t('results.reasoning')}
+              </h3>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">
+                  {result.classification.reasoning}
                 </p>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Resultados */}
-        {result && (
-          <div className="space-y-6">
-            {/* Código Principal */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold text-white">{t('results.title')}</h3>
-                  </div>
-                  <span className={`px-4 py-2 rounded-full text-sm font-bold ${getConfidenceColor(result.classification.confidence)}`}>
-                    {result.classification.confidence}% - {getConfidenceLabel(result.classification.confidence)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-8 space-y-6">
-                {/* Código HS */}
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-200">
-                  <p className="text-sm text-gray-600 mb-2">{t('results.codeLabel')}</p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-4xl font-bold text-gray-900 font-mono tracking-wider">
-                      {result.classification.primaryCode}
-                    </p>
-                    {result.classification.primaryCodeExists ? (
-                      <span className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-bold flex items-center space-x-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>{t('results.verified')}</span>
-                      </span>
-                    ) : (
-                      <span className="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-bold flex items-center space-x-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span>{t('results.verifyManually')}</span>
-                      </span>
-                    )}
-                  </div>
-                  {result.classification.primaryCodeDutyRate !== undefined && (
-                    <p className="text-sm text-gray-600 mt-3">
-                      {t('results.dutyRate')} <strong>{result.classification.primaryCodeDutyRate}%</strong>
-                    </p>
-                  )}
-
-                {/* Alerta CBAM si aplica */}
-                <CBAMAlert hsCode={result.classification.primaryCode} />
-                </div>
-
-                {/* Razonamiento */}
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    {t('results.reasoning')}
-                  </h4>
-                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                    <p className="text-sm text-gray-700 whitespace-pre-line">
-                      {result.classification.reasoning}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Factores Clave */}
-                {result.classification.keyFactors && result.classification.keyFactors.length > 0 && (
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-3">{t('results.keyFactors')}</h4>
-                    <div className="grid md:grid-cols-2 gap-3">
-                      {result.classification.keyFactors.map((factor, idx) => (
-                        <div key={idx} className="flex items-start space-x-2 bg-blue-50 rounded-lg p-3">
-                          <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-sm text-gray-700">{factor}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Advertencias */}
-                {result.classification.warnings && result.classification.warnings.length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <h4 className="font-bold text-amber-900 mb-2 flex items-center">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      {t('results.warnings')}
-                    </h4>
-                    <ul className="space-y-1">
-                      {result.classification.warnings.map((warning, idx) => (
-                        <li key={idx} className="text-sm text-amber-800">• {warning}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Países Recomendados */}
-                {result.classification.recommendedOrigins && result.classification.recommendedOrigins.length > 0 && (
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
-                    <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {t('results.recommendedOrigins')}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {result.classification.recommendedOrigins.map((cc, idx) => {
-                        const country = countries.find(c => c.code === cc)
-                        return (
-                          <span key={idx} className="px-4 py-2 bg-white border border-blue-200 rounded-lg text-sm font-medium text-gray-700 hover:border-blue-400 transition">
-                            🌍 {country?.name_es || cc}
-                          </span>
-                        )
-                      })}
-                    </div>
-                    <p className="text-xs text-gray-600 mt-3">
-                      {t('results.recommendedOriginsHelp')}
-                    </p>
-                  </div>
-                )}
-
-                {/* Información Adicional */}
-                {result.classification.additionalInfo && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                    <h4 className="font-bold text-gray-900 mb-2 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {t('results.additionalInfo')}
-                    </h4>
-                    <p className="text-sm text-gray-700">{result.classification.additionalInfo}</p>
-                  </div>
-                )}
-
-                {/* Botón Calcular */}
-                <button
-                  onClick={() => handleCalculate(result.classification.primaryCode)}
-                  className="w-full px-8 py-4 bg-gradient-to-r from-[#0A3D5C] to-[#0d5078] hover:from-[#083049] hover:to-[#0A3D5C] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center space-x-3"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <span>{t('results.calculate')}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Códigos Alternativos */}
-            {result.classification.alternativeCodes && result.classification.alternativeCodes.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-6 border-b border-gray-200">
-                  <h3 className="text-xl font-bold text-gray-900">{t('alternatives.title')}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{t('alternatives.subtitle')}</p>
-                </div>
-
-                <div className="p-8 space-y-4">
-                  {result.classification.alternativeCodes.map((alt, idx) => (
-                    <div key={idx} className="bg-gray-50 rounded-xl p-6 border border-gray-200 hover:border-indigo-300 transition">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="text-2xl font-bold text-gray-900 font-mono">{alt.code}</p>
-                          {alt.dutyRate !== undefined && (
-                            <p className="text-sm text-gray-600 mt-1">{t('alternatives.dutyRate')} {alt.dutyRate}%</p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${getConfidenceColor(alt.confidence)}`}>
-                            {alt.confidence}%
-                          </span>
-                          {alt.validated && (
-                            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">
-                              {t('alternatives.inTaric')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-700">{alt.reason}</p>
-                      <button
-                        onClick={() => handleCalculate(alt.code)}
-                        className="mt-4 px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium rounded-lg transition text-sm"
-                      >
-                        {t('alternatives.calculateWith')}
-                      </button>
+            {/* Factores clave */}
+            {result.classification.keyFactors && result.classification.keyFactors.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 mb-2">
+                  {t('results.keyFactors')}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-2">
+                  {result.classification.keyFactors.map((factor, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-emerald-600 mt-0.5">✓</span>
+                      <span className="text-sm text-slate-700">{factor}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Metadata */}
-            <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 text-center">
-              {t('metadata.classifiedBy')} {result.metadata.model} • {new Date(result.metadata.timestamp).toLocaleString(locale === 'en' ? 'en-GB' : 'es-ES')} •
-              {' '}{t('metadata.dataSource')}
-            </div>
+            {/* Advertencias */}
+            {result.classification.warnings && result.classification.warnings.length > 0 && (
+              <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+                <h3 className="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                  <span>⚠️</span>
+                  {t('results.warnings')}
+                </h3>
+                <ul className="space-y-1">
+                  {result.classification.warnings.map((warning, idx) => (
+                    <li key={idx} className="text-sm text-amber-800">
+                      · {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Países recomendados */}
+            {result.classification.recommendedOrigins &&
+              result.classification.recommendedOrigins.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+                  <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <span>🌍</span>
+                    {t('results.recommendedOrigins')}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {result.classification.recommendedOrigins.map((cc, idx) => {
+                      const country = countries.find((c) => c.country_code === cc)
+                      return (
+                        <span
+                          key={idx}
+                          className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700"
+                        >
+                          {country?.country_name || cc}
+                        </span>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-3">
+                    {t('results.recommendedOriginsHelp')}
+                  </p>
+                </div>
+              )}
+
+            {/* Información adicional */}
+            {result.classification.additionalInfo && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                  <span>ℹ️</span>
+                  {t('results.additionalInfo')}
+                </h3>
+                <p className="text-sm text-slate-700">{result.classification.additionalInfo}</p>
+              </div>
+            )}
+
+            {/* Botón calcular */}
+            <button
+              onClick={() => handleCalculate(result.classification.primaryCode)}
+              className="w-full px-6 py-3 bg-[#F4C542] text-[#0A3D5C] font-bold rounded-xl hover:bg-[#F4C542]/90 transition flex items-center justify-center gap-2"
+            >
+              <span>💰</span>
+              <span>{t('results.calculate')}</span>
+            </button>
+          </section>
+        )}
+
+        {/* CÓDIGOS ALTERNATIVOS */}
+        {result?.classification?.alternativeCodes &&
+          result.classification.alternativeCodes.length > 0 && (
+            <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-slate-900">{t('alternatives.title')}</h2>
+                <p className="text-sm text-slate-500 mt-1">{t('alternatives.subtitle')}</p>
+              </div>
+
+              <div className="space-y-3">
+                {result.classification.alternativeCodes.map((alt, idx) => (
+                  <div
+                    key={idx}
+                    className="border border-slate-200 rounded-xl p-5 hover:border-[#0A3D5C]/30 transition"
+                  >
+                    <div className="flex items-start justify-between flex-wrap gap-3 mb-2">
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+                          {alt.code}
+                        </p>
+                        {alt.dutyRate !== undefined && (
+                          <p className="text-sm text-slate-600 mt-1">
+                            {t('alternatives.dutyRate')}{' '}
+                            <strong>{alt.dutyRate}%</strong>
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getConfidenceColor(alt.confidence)}`}
+                        >
+                          {alt.confidence}%
+                        </span>
+                        {alt.validated && (
+                          <span className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-semibold">
+                            ✓ {t('alternatives.inTaric')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-600">{alt.reason}</p>
+                    <button
+                      onClick={() => handleCalculate(alt.code)}
+                      className="mt-3 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition text-sm"
+                    >
+                      {t('alternatives.calculateWith')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+        {/* METADATA */}
+        {result && (
+          <div className="text-xs text-slate-500 text-center pb-4">
+            {t('metadata.classifiedBy')} {result.metadata.model} ·{' '}
+            {new Date(result.metadata.timestamp).toLocaleString(locale === 'en' ? 'en-GB' : 'es-ES')} ·{' '}
+            {t('metadata.dataSource')}
           </div>
         )}
       </div>
