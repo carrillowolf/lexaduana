@@ -194,6 +194,11 @@
 
 ## user_alert_subscriptions
 
+> ⚠️ **DEPRECATED 2026-04-23**. Renombrada a `_deprecated_user_alert_subscriptions` por la migración
+> [`20260423100100_deprecate_user_alert_subscriptions.sql`](../../supabase/migrations/20260423100100_deprecate_user_alert_subscriptions.sql).
+> Revisión programada: **2026-07-21** (90 días). Si la feature no se ha retomado para entonces,
+> se elimina definitivamente. La ficha siguiente describe el estado previo a la deprecación.
+
 **Filas**: 0
 
 **Propósito inferido del código**: Sistema de suscripciones a alertas de cambios en medidas TARIC por combinación HS + país. **No se encontró ningún uso en el código de la app** (`app/`, `components/`, `lib/`) — tabla huérfana a fecha de hoy. Relacionada por nombre con `alert_notifications` y `measure_alerts` (otro dominio, no inventariadas en esta tanda), pero el flujo end-to-end desde UI no está implementado.
@@ -239,13 +244,21 @@
 **Retención sugerida**: Vida de cuenta. Si la feature queda definitivamente descartada, valorar DROP antes de entrar en producción (la tabla nunca se ha escrito: 0 filas).
 
 **Observaciones**:
-- **Tabla sin código cliente** — ni endpoints ni componentes la tocan. Candidata a eliminar o a documentar como "reservada para futura feature de alertas por suscripción". Decisión pendiente (ver Hallazgos).
+- **Decisión tomada (2026-04-23)**: renombrada a `_deprecated_user_alert_subscriptions`. Se conserva 90 días por si se retoma la feature; en **2026-07-21** valorar DROP definitivo. Ver `BACKLOG_PRIVACIDAD.md`.
+- **Tabla sin código cliente** — ni endpoints ni componentes la tocan. Era candidata a eliminar o a documentar como "reservada para futura feature de alertas por suscripción".
 - Usa `int4` + `sequence` como pkey, a diferencia del resto del dominio que usa `uuid`. Inconsistencia de estilo.
 - `subscription_type` es `varchar` libre sin CHECK constraint ni enum — sin código cliente no sabemos qué valores se esperan.
 
 ---
 
 ## user_consents
+
+> ℹ️ **Migración pendiente de aplicar (2026-04-23)**:
+> [`20260423100000_user_consents_pseudonymization.sql`](../../supabase/migrations/20260423100000_user_consents_pseudonymization.sql)
+> cambia la FK a `ON DELETE SET NULL`, añade `user_id_hash TEXT` para pseudonimización
+> y hace inmutables los registros anonimizados. La ficha siguiente describe el **estado
+> actual en Supabase antes de aplicar la migración**. Los cambios aplicados están
+> resumidos en el bloque "Estado tras aplicar la migración" al final de esta ficha.
 
 **Filas**: 0
 
@@ -296,10 +309,22 @@
 **Retención sugerida**: **Vida de cuenta + 3 años tras baja** (coincide con el comentario que Carlos apuntó en `cbam_monitoring_subscriptions` y es el plazo habitual para demostrar el consentimiento ante una reclamación AEPD). El `ON DELETE CASCADE` borraría la evidencia al eliminar el usuario → considerar cambiar a `ON DELETE SET NULL` o promover el borrado a anonimización (ver Hallazgos).
 
 **Observaciones**:
-- **`ON DELETE CASCADE` vs. necesidad de evidencia**: si se borra el `auth.users`, se borran los consentimientos, lo cual contradice la retención de 3 años post-baja. Considerar migrar a `ON DELETE SET NULL` + anonimización del `user_id` conservando la fila.
+- **`ON DELETE CASCADE` vs. necesidad de evidencia**: si se borra el `auth.users`, se borran los consentimientos, lo cual contradice la retención de 3 años post-baja. **Decisión tomada (2026-04-23)**: la migración `20260423100000_user_consents_pseudonymization.sql` cambia la FK a `ON DELETE SET NULL` y añade `user_id_hash` para conservar la trazabilidad pseudonimizada tras la baja.
 - **Sin integración en código** — la tabla está lista pero nadie escribe en ella todavía. Fase 1.1 creó el esquema; falta Fase 1.2 (endpoint + modal de aceptación).
 - Índice `unique_active_consent` con `NULLS NOT DISTINCT` es Postgres 15+. Correcto y necesario para que el UNIQUE funcione con `revoked_at = NULL`.
 - `consent_type` es `text` libre. Recomendable añadir CHECK constraint o enum (`'privacy_policy'`, `'cookies_analytics'`, `'marketing'`, etc.) cuando se implemente la Fase 1.2.
+
+### Estado tras aplicar la migración `20260423100000_user_consents_pseudonymization.sql`
+
+Una vez Carlos aplique la migración desde el SQL Editor, los siguientes campos de esta ficha cambian:
+
+- **Columna nueva**: `user_id_hash` (`text`, nullable, sin default). Se rellena vía aplicación antes del borrado de cuenta con un hash de `email + salt`, permitiendo validar el consentimiento ante una reclamación sin conservar el UUID identificable.
+- **Columna modificada**: `user_id` pasa de `NOT NULL` a **nullable** (`SÍ`). Las filas con `user_id IS NULL` representan consentimientos anonimizados post-baja.
+- **Foreign key**: `user_id → auth.users(id)` pasa de `ON DELETE CASCADE` a **`ON DELETE SET NULL`**. Ya no se pierde la evidencia al cerrar cuenta.
+- **Índice nuevo**: `idx_user_consents_user_id_hash` — btree parcial `(user_id_hash) WHERE user_id_hash IS NOT NULL`.
+- **Política RLS modificada**: `Users can update their own consents (for revocation)` añade la condición `user_id IS NOT NULL` al `USING`, de modo que los registros ya anonimizados son inmutables (no pueden ser editados ni revocados por nadie).
+- **Retención**: la retención pasa a gestionarse en dos fases: (a) vida de cuenta con `user_id` no nulo; (b) 3 años adicionales con `user_id` nulo + `user_id_hash` para defensa. Un cron en Fase 8 limpia los registros tras 3 años.
+- **Comentarios**: se añaden `COMMENT ON TABLE` y `COMMENT ON COLUMN user_id_hash` documentando la política.
 
 ---
 
@@ -311,9 +336,9 @@ Ninguno. Las 5 tablas tienen RLS habilitada y las políticas filtran correctamen
 
 ### ⚠️ Alto — revisar pronto
 
-1. **`user_consents` con `ON DELETE CASCADE` contradice la retención RGPD de 3 años post-baja**. Al borrar el usuario desde `auth.users` se pierde la evidencia del consentimiento. Opciones: (a) cambiar FK a `ON DELETE SET NULL` y anonimizar; (b) no borrar nunca `auth.users`, solo desactivar. **Decisión tuya.**
-2. **`user_profiles.id` FK sin `ON DELETE` explícito** — es `NO ACTION` por defecto, lo que impide borrar `auth.users` si hay perfil. Inconsistente con las otras 4 tablas (todas CASCADE). O bien ponemos CASCADE para mantener coherencia, o aceptamos que el perfil es la pieza que bloquea el borrado y hay que limpiarla a mano.
-3. **`user_consents` y `user_alert_subscriptions` no tienen código cliente**. `user_consents` es esperable (Fase 1.2 pendiente). `user_alert_subscriptions` tiene 0 filas y nadie la toca → decidir si se deja reservada o se elimina.
+1. ~~**`user_consents` con `ON DELETE CASCADE` contradice la retención RGPD de 3 años post-baja**.~~ **Resuelto 2026-04-23** por la migración `20260423100000_user_consents_pseudonymization.sql`: FK pasa a `ON DELETE SET NULL`, se añade `user_id_hash` y se bloquean updates sobre registros anonimizados. Pendiente de aplicar por Carlos en SQL Editor.
+2. **`user_profiles.id` FK sin `ON DELETE` explícito** — es `NO ACTION` por defecto, lo que impide borrar `auth.users` si hay perfil. Inconsistente con las otras 4 tablas (todas CASCADE). O bien ponemos CASCADE para mantener coherencia, o aceptamos que el perfil es la pieza que bloquea el borrado y hay que limpiarla a mano. **Movido a `BACKLOG_PRIVACIDAD.md`**.
+3. ~~**`user_consents` y `user_alert_subscriptions` no tienen código cliente**.~~ **Parcialmente resuelto 2026-04-23**: `user_alert_subscriptions` renombrada a `_deprecated_user_alert_subscriptions` por la migración `20260423100100_deprecate_user_alert_subscriptions.sql` (revisión 2026-07-21). `user_consents` sigue pendiente de integración (Fase 1.2).
 
 ### 🟡 Medio
 
