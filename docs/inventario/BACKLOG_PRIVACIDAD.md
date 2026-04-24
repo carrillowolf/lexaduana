@@ -148,3 +148,62 @@ La tabla está creada y la migración de pseudonimización pendiente, pero falta
 3. Rellene `user_id_hash` en el flujo de borrado de cuenta antes de lanzar el delete en `auth.users`.
 
 Sin este endpoint, la infraestructura queda inerte.
+
+## De Tanda 2 (dispatch)
+
+### dispatch_timeline.created_by — decidir NOT NULL vs CHECK condicional
+
+Investigar en código qué eventos escriben `created_by NULL`. Si hay eventos "system",
+usar `CHECK (event_type='system' OR created_by IS NOT NULL)`. Si no, `SET NOT NULL` directo.
+
+```sql
+-- Verificación previa:
+SELECT event_type, count(*) AS n_null
+FROM public.dispatch_timeline
+WHERE created_by IS NULL
+GROUP BY event_type
+ORDER BY n_null DESC;
+```
+
+### FKs dispatch_* a auth.users
+
+Las FKs hacia `auth.users` en `dispatches.created_by`, `dispatches.assigned_to`,
+`dispatch_checklist.checked_by`, `dispatch_timeline.created_by`, `dispatch_comments.user_id`
+y `_deprecated_dispatch_documents.uploaded_by` están todas como `NO ACTION` (default).
+Esto bloquea el borrado de un usuario mientras exista cualquier registro suyo en el
+dominio dispatch, lo que choca con el flujo RGPD de baja de cuenta.
+
+Revisar en **Fase 7 (baja de cuenta)**. Decidir para cada una: `CASCADE` (elimina el
+rastro del usuario, pero incumple la obligación CAU de 4 años sobre el despacho),
+`SET NULL` (anonimiza el autor conservando el despacho — preferible, requiere hacer
+la columna nullable en `dispatches.created_by` que hoy es NOT NULL), o mantener NO
+ACTION (baja de cuenta siempre reasigna manualmente).
+
+### dispatches.organization_id huérfano
+
+No existe tabla `organizations` ni FK. Columna vestigial de un diseño multi-tenant
+no implementado. Ninguna política RLS la usa. Decidir en una próxima iteración:
+eliminar columna (`ALTER TABLE ... DROP COLUMN organization_id`) o implementar la
+tabla `organizations` y migrar los despachos existentes.
+
+### Redundancia paraaduaneros en dispatches
+
+Cuatro columnas sobre el mismo concepto: `paraaduaneros` (jsonb), `has_paraaduaneros`
+(bool), `paraaduaneros_types` (text) y `stage_paraaduaneros` (varchar). Probable
+evolución de diseño. Consolidar en una iteración de refactor — sin impacto de
+seguridad, sí de mantenibilidad.
+
+### _deprecated_dispatch_documents (revisión 2026-07-23)
+
+Eliminar tabla si la feature de adjuntos no se ha retomado. Migración de drop
+sugerida:
+
+```sql
+DROP TABLE IF EXISTS public._deprecated_dispatch_documents;
+```
+
+Si se retoma la feature: crear bucket `dispatch-documents` en Supabase Storage
+con RLS paralela a la tabla (acceso por `auth.uid() = created_by OR assigned_to`
+del despacho padre), renombrar la tabla de vuelta a `dispatch_documents` y cambiar
+`dispatch_id` a `NOT NULL`.
+

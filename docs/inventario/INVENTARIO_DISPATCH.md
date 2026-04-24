@@ -12,6 +12,13 @@
 
 ## dispatches
 
+> ℹ️ **Sub-tanda 2C (2026-04-23)** — la migración
+> [`20260423120000_dispatch_corrections.sql`](../../supabase/migrations/20260423120000_dispatch_corrections.sql)
+> elimina el índice redundante `idx_dispatches_expediente` (Bloque 3).
+> El resto de esta ficha refleja el estado previo. Las decisiones sobre
+> `created_by`/`assigned_to` FK (NO ACTION → SET NULL) y `organization_id`
+> quedan en `BACKLOG_PRIVACIDAD.md`.
+
 **Filas**: 7
 
 **Propósito inferido del código**: Tabla principal del módulo despachos aduaneros. Almacena el expediente completo: cliente, operación (import/export), partida arancelaria, transporte, fechas ETA/ETD, estado de cada etapa (docs, sumaria, despacho, paraaduaneros, DUA, levante, cierre, gastos), DUA emitido, inspección, etc. Endpoints: `app/despachos/page.js` (listado), `app/despachos/[id]/page.js` (detalle), `app/despachos/nuevo/page.js` (creación). Sin API REST custom — todo vía cliente Supabase.
@@ -106,6 +113,12 @@
 
 ## dispatch_documents
 
+> ⚠️ **DEPRECATED 2026-04-23** — la migración
+> [`20260423120000_dispatch_corrections.sql`](../../supabase/migrations/20260423120000_dispatch_corrections.sql)
+> (Bloque 4) renombra la tabla a `_deprecated_dispatch_documents`.
+> Revisión programada: **2026-07-23**. Si la feature no se ha retomado
+> para entonces se elimina. La ficha siguiente describe el estado previo.
+
 **Filas**: 0
 
 **Propósito inferido del código**: Metadatos de archivos asociados a un despacho (nombre, URL, tamaño, MIME, tipo de documento, subido por). Diseñado para guardar DUAs, facturas, certificados, etc. **No se encontró ningún uso en código** (`app/`, `components/`, `lib/`): ni SELECT, ni INSERT, ni UI de upload. **No existe bucket de Storage para despachos** (`storage.buckets` solo contiene `cbam-advisory-docs` y `cbam-advisory-reports`). Tabla actualmente inerte.
@@ -166,6 +179,11 @@
 
 ## dispatch_checklist
 
+> ℹ️ **Sub-tanda 2C (2026-04-23)** — la migración
+> [`20260423120000_dispatch_corrections.sql`](../../supabase/migrations/20260423120000_dispatch_corrections.sql)
+> (Bloque 2) cambia `dispatch_id` a `NOT NULL` tras verificar ausencia de
+> huérfanos. La columna `Null` de esta ficha refleja el estado previo.
+
 **Filas**: 155
 
 **Propósito inferido del código**: Instancia de checklist por despacho. Se poblada automáticamente vía el trigger `trigger_copy_checklist` al crear un despacho (ver `checklist_templates`). El usuario marca ítems como `is_checked`, añade `notes` y puede añadir ítems personalizados (`is_custom = true`). Código: `components/DispatchChecklist.js` (líneas 28 SELECT, 46 INSERT, 77 UPDATE, 108 DELETE).
@@ -222,6 +240,14 @@
 ---
 
 ## checklist_templates
+
+> ✅ **Sub-tanda 2C (2026-04-23)** — la migración
+> [`20260423120000_dispatch_corrections.sql`](../../supabase/migrations/20260423120000_dispatch_corrections.sql)
+> (Bloque 1) elimina la política `Anyone authenticated can modify templates`
+> y garantiza una política SELECT explícita para el rol `authenticated`.
+> Tras aplicarla, la mutación queda reservada a `service_role`; la lectura
+> sigue disponible para cualquier usuario autenticado. La ficha siguiente
+> refleja el estado previo.
 
 **Filas**: 113
 
@@ -292,6 +318,13 @@
 ---
 
 ## dispatch_timeline
+
+> ℹ️ **Sub-tanda 2C (2026-04-23)** — la migración
+> [`20260423120000_dispatch_corrections.sql`](../../supabase/migrations/20260423120000_dispatch_corrections.sql)
+> (Bloque 2) cambia `dispatch_id` a `NOT NULL` tras verificar huérfanos.
+> `created_by` **sigue nullable** — pendiente de decidir entre `SET NOT NULL`
+> directo o `CHECK (event_type='system' OR created_by IS NOT NULL)` según
+> lo que arroje la query de verificación (ver `BACKLOG_PRIVACIDAD.md`).
 
 **Filas**: 1
 
