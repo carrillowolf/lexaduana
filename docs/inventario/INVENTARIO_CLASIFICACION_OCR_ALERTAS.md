@@ -263,4 +263,241 @@
 
 ---
 
-<!-- TANDA 3 INCOMPLETA: faltan monitored_codes, alert_notifications y sección "Hallazgos de la Tanda 3" -->
+<!-- Sub-tanda 3B completada -->
+
+## monitored_codes
+
+**Filas**: 0 (en el momento del inventario)
+
+**Propósito inferido del código**: Códigos TARIC que el usuario desea monitorizar para recibir alertas cuando cambien. Usada en `app/monitor/dashboard/page.js` (líneas 58 SELECT, 81 INSERT, 118 DELETE — no hay UPDATE). Límite por plan enforced por trigger `enforce_monitor_limit`.
+
+**Columnas**:
+| Columna | Tipo | Null | Default |
+|---|---|---|---|
+| id | int4 | NO | `nextval('...')` |
+| user_id | uuid | SÍ | — |
+| goods_code | varchar | NO | — |
+| product_description | text | SÍ | — |
+| last_known_duty | numeric | SÍ | — |
+| last_checked | date | SÍ | — |
+| notification_enabled | bool | SÍ | `true` |
+| created_at | timestamp | SÍ | `now()` |
+
+**Datos personales (PII)**: No directamente.
+
+**Datos comerciales del usuario**: Sí — `goods_code` + `product_description` revela productos de interés del usuario.
+
+**RLS habilitada**: Sí
+
+**Políticas RLS**:
+| Nombre | Comando | USING | WITH CHECK |
+|---|---|---|---|
+| Users can manage own monitors | ALL | `auth.uid() = user_id` | — |
+| Users can view own monitors | ALL | `auth.uid() = user_id` | — |
+
+> ⚠️ Dos políticas `ALL` idénticas — duplicación. Ninguna incluye `WITH CHECK` explícito (Postgres lo deriva del USING para INSERT/UPDATE, funcionalmente OK).
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| user_id | **`user_profiles(id)`** | **CASCADE** |
+
+> Única tabla del inventario con FK a `user_profiles` en vez de a `auth.users`. Dado que `user_profiles.id = auth.users.id` es 1:1, el efecto de RLS (`auth.uid() = user_id`) es equivalente. La diferencia real: borrar un `auth.users` deja el `user_profiles` intacto (su FK es `NO ACTION` — ver Tanda 1), y por ende los `monitored_codes` no se borran hasta que se borre manualmente `user_profiles`. Inconsistencia de patrón.
+
+**Índices**:
+- `idx_monitored_user` — btree `(user_id)`
+- `idx_monitored_code` — btree `(goods_code)`
+- `monitored_codes_user_id_goods_code_key` — UNIQUE `(user_id, goods_code)` (evita duplicar monitor)
+
+**Triggers**:
+- `enforce_monitor_limit` — BEFORE INSERT → `check_monitor_limit()` (SECURITY INVOKER, plpgsql). Cuenta filas actuales del usuario, lee `max_monitors` de `user_profiles` y `RAISE EXCEPTION 'Monitor limit reached for this plan'` si se excede. Útil para cuota por plan (`free` = 5, planes pagos superiores).
+
+**Versionada en repo**: **No**.
+
+**Retención sugerida**: Vida de cuenta. `CASCADE` desde `user_profiles` limpia al cerrar cuenta — en la práctica, al borrar el perfil tras cerrar auth.users.
+
+**Observaciones**:
+- **`user_id` nullable** con FK `CASCADE` — permite huérfanos. Cambiar a `NOT NULL`.
+- **Políticas ALL duplicadas** — eliminar una (cualquier nombre, idénticas).
+- La FK a `user_profiles` en vez de `auth.users` es el único caso del inventario. Si se adopta el patrón general (FK a `auth.users`), cambiarla; si no, documentar por qué este dominio difiere.
+- `check_monitor_limit()` es `SECURITY INVOKER` — la función lee `user_profiles` del usuario actual (permitido por la policy SELECT own), sin riesgo de escalada. OK.
+- `product_description` es texto libre del usuario — misma consideración que `classification_logs.description` aunque con mucho menos volumen (0 filas actuales, 5 máximo por plan free).
+
+---
+
+## alert_notifications
+
+**Filas**: 0
+
+**Propósito inferido del código**: Registro de notificaciones enviadas a un usuario cuando se detecta un cambio TARIC en un código que tiene monitorizado. **No se encontró ningún uso en código** (`app/`, `components/`, `lib/`) — tabla huérfana a fecha de hoy. La feature end-to-end (cron que compare `monitored_codes` contra `tariff_changes`, inserte aquí y envíe email) **no está implementada**.
+
+**Columnas**:
+| Columna | Tipo | Null | Default |
+|---|---|---|---|
+| id | int4 | NO | `nextval('...')` |
+| user_id | uuid | SÍ | — |
+| change_id | int4 | SÍ | — |
+| sent_at | timestamp | SÍ | `now()` |
+| email_sent | bool | SÍ | `false` |
+
+**Datos personales (PII)**: No directamente. Si en el futuro se añade el contenido del email o la dirección destinataria, sí sería PII.
+
+**Datos comerciales del usuario**: Indirecto — la combinación `user_id + change_id` revela qué códigos TARIC le interesan.
+
+**RLS habilitada**: Sí
+
+**Políticas RLS**:
+| Nombre | Comando | USING | WITH CHECK |
+|---|---|---|---|
+| Users see own notifications | SELECT | `auth.uid() = user_id` | — |
+
+> Una única política SELECT. Sin INSERT/UPDATE/DELETE — la inserción tendría que venir de un worker con `service_role` (cuando se implemente).
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| user_id | `auth.users(id)` | **CASCADE** |
+| change_id | `tariff_changes(id)` | **NO ACTION** (default) |
+
+**Índices**:
+- `idx_alert_notif_user` — btree `(user_id)`
+- `alert_notifications_user_id_change_id_key` — UNIQUE `(user_id, change_id)` (evita notificar dos veces el mismo cambio al mismo usuario)
+
+**Triggers**: Ninguno.
+
+**Versionada en repo**: **No**.
+
+**Retención sugerida**: **12 meses** tras `sent_at`. Sin contenido del email, el registro solo demuestra "usuario fue notificado de este cambio TARIC el día X". 12 meses es suficiente para histórico de soporte. Purga con cron.
+
+**Observaciones**:
+- **Tabla sin código cliente ni worker** — candidata similar a `user_alert_subscriptions` (ya deprecada). Decidir: deprecar (RENAME a `_deprecated_alert_notifications` con revisión en 90 días) o conservar reservada para la implementación de la feature.
+- `user_id` y `change_id` nullable — ambas deberían ser `NOT NULL` en el diseño final (no tiene sentido una notificación sin destinatario ni sin cambio).
+- `change_id` FK sin `ON DELETE` — si se borra un `tariff_changes`, queda bloqueado hasta limpiar estas filas. Al ser histórico, probablemente mejor `SET NULL` o `CASCADE`.
+- Sin columna de "tipo de alerta" — hoy solo existe el concepto "cambio TARIC", pero si se añaden más tipos (CBAM, ETS, etc.) habrá que añadir campo discriminador.
+- No hay columna para el contenido del email enviado (bien — minimización). Pero sin ella, no se puede reenviar ante un bug del MTA. Compromiso aceptable.
+
+---
+
+## Relaciones del dominio
+
+```
+auth.users
+    ├── classification_logs      (user_id CASCADE)
+    ├── invoice_extractions      (user_id CASCADE)
+    ├── rrm_requests             (user_id CASCADE)
+    └── alert_notifications      (user_id CASCADE)
+
+user_profiles  (= auth.users vía id 1:1)
+    └── monitored_codes          (user_id CASCADE) ← patrón distinto
+
+classification_examples           (global, sin FK)
+
+tariff_changes (fuera de esta tanda)
+    └── alert_notifications.change_id NO ACTION
+
+Anthropic API (externo, EEUU)
+    ← classification_logs.description (sale)
+    ← invoice_extractions (el PDF sale, solo se guarda el parseado)
+```
+
+---
+
+## Hallazgos de la Tanda 3
+
+### 🚨 Críticos
+
+1. **`classification_examples` — UI de admin cliente sin policies de escritura**. `app/admin/clasificaciones/page.js` usa `createClientComponentClient()` para intentar INSERT/UPDATE/DELETE, pero la tabla solo tiene policy `SELECT true`. Las mutaciones desde cliente **fallan** contra RLS. La única fila existente se insertó vía SQL Editor con `service_role`. **Opciones**: (a) mover la gestión a route handler con `service_role`; (b) añadir policies restringidas a admin mediante función `is_admin(auth.uid())`; (c) eliminar la UI si no se va a mantener.
+
+2. **Transferencia a Anthropic (EEUU) sin consentimiento integrado**. Las dos APIs `classify-product` y `extract-invoice` envían contenido a Anthropic (descripción de producto libre, PDF completo de factura) **sin** registro previo en `user_consents` (consent_types `ai_processing_classifier` y `ai_processing_ocr_invoice` ya previstos en el CHECK del baseline retroactivo de Fase 1.1, pero falta endpoint Fase 1.2). Antes de ir a producción pública, añadir:
+   - Modal de aceptación en el primer uso.
+   - Bloqueo del endpoint si no hay consentimiento válido (`accepted = true AND revoked_at IS NULL`).
+
+### ⚠️ Altos — cron de purga
+
+3. **Sin cron de purga para retenciones prometidas**. Todas las tablas del dominio prometen retenciones cortas:
+   - `classification_logs` — 12 meses (732 filas, crece).
+   - `invoice_extractions` — 90 días (la propia cabecera del schema lo marca como "recomendado").
+   - `alert_notifications` — 12 meses propuestos.
+   - `rrm_requests` — 4 años.
+   Ninguno está automatizado. Implementar en **Fase 8** un job `pg_cron` o edge function que los limpie. Hasta que exista, **el cumplimiento es aspiracional**, no efectivo.
+
+### ⚠️ Altos — decisiones pendientes
+
+4. **`alert_notifications` huérfana**: 0 filas, 0 código cliente, feature no implementada. Decidir: deprecar (RENAME a `_deprecated_alert_notifications` con revisión 2026-07-23, análogo a `user_alert_subscriptions` y `dispatch_documents`) o conservar reservada. Si se deprecia, cae de la retención automática pendiente.
+
+### 🟡 Medios — consolidar en Sub-tanda 3C
+
+5. **`user_id` nullable con FK CASCADE** en `classification_logs`, `rrm_requests`, `monitored_codes`, `alert_notifications`. Cambiar a `NOT NULL` (previa verificación de ausencia de huérfanos).
+6. **Políticas RLS redundantes en `monitored_codes`** — dos `ALL` idénticas. Eliminar una.
+7. **`monitored_codes.user_id` FK a `user_profiles` en vez de `auth.users`** — caso único en el inventario. Decidir si se unifica al patrón general (`auth.users` CASCADE) o se documenta el porqué del desvío.
+8. **`alert_notifications.change_id` FK sin `ON DELETE` explícito** — NO ACTION bloquea borrado de `tariff_changes`. Cambiar a `CASCADE` (la notificación depende del cambio) o `SET NULL`.
+9. **`classification_logs.description`, `invoice_extractions.file_name/file_mime`** sin CHECK de longitud en DB (se truncan en el código). Añadir CHECK coherente.
+10. **`rrm_requests.status`** texto libre con default `'draft'`. Añadir enum o CHECK.
+11. **`model_used` hardcoded** (`'claude-sonnet-4-5'`) en `classify-product/route.js:367`. Al migrar a nuevo modelo, recordar actualizar.
+
+### 🟢 Bajos / cosméticos
+
+12. **Sólo `invoice_extractions` está versionada** en el repo (`scripts/invoice-extractions-schema.sql`). Las otras 5 no. Alimentar baseline retroactivo cuando toque.
+13. Inconsistencia de generadores UUID: `classification_logs` usa `uuid_generate_v4()` (uuid-ossp); `invoice_extractions` y `rrm_requests` usan `gen_random_uuid()`; `classification_examples`, `monitored_codes`, `alert_notifications` usan `int4 + sequence`. Variado estilo sin patrón.
+14. `classification_examples.created_by` es `text 'admin'` sin FK a `auth.users`. Si se implementa la vía service_role, guardar `auth.uid()` del admin real.
+
+### Correcciones propuestas para Sub-tanda 3C
+
+Agrupables en una única migración `supabase/migrations/YYYYMMDDHHMMSS_classif_ocr_alertas_fixes.sql`:
+
+```sql
+-- 1. classification_examples: mover mutación a service_role
+--    (solo documentación — no hay policy que DROP; hoy no hay INSERT/UPDATE/DELETE
+--    porque NO existe ninguna. Si se quiere soportar admins sin service_role,
+--    implementar función is_admin(uid) + policies. Decisión pendiente.)
+
+-- 2. user_id NOT NULL tras verificación de huérfanos
+DO $$
+DECLARE n_cl int; n_rr int; n_mc int; n_an int;
+BEGIN
+  SELECT COUNT(*) INTO n_cl FROM public.classification_logs WHERE user_id IS NULL;
+  SELECT COUNT(*) INTO n_rr FROM public.rrm_requests       WHERE user_id IS NULL;
+  SELECT COUNT(*) INTO n_mc FROM public.monitored_codes    WHERE user_id IS NULL;
+  SELECT COUNT(*) INTO n_an FROM public.alert_notifications WHERE user_id IS NULL;
+  IF n_cl+n_rr+n_mc+n_an > 0 THEN
+    RAISE EXCEPTION 'Huérfanos: classification_logs=%, rrm_requests=%, monitored_codes=%, alert_notifications=%', n_cl,n_rr,n_mc,n_an;
+  END IF;
+END $$;
+
+ALTER TABLE public.classification_logs ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.rrm_requests        ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.monitored_codes     ALTER COLUMN user_id SET NOT NULL;
+-- alert_notifications: si se deprecia, no tocar; si se conserva, SET NOT NULL también.
+
+-- 3. monitored_codes: eliminar política duplicada
+DROP POLICY IF EXISTS "Users can view own monitors" ON public.monitored_codes;
+-- (conservar "Users can manage own monitors" ALL)
+
+-- 4. alert_notifications: renombrar para deprecar (si Carlos lo confirma)
+ALTER TABLE public.alert_notifications
+  RENAME TO _deprecated_alert_notifications;
+COMMENT ON TABLE public._deprecated_alert_notifications IS
+  'DEPRECATED 2026-04-23. Sin código cliente ni worker. Revisar 2026-07-23.';
+
+-- 5. change_id ON DELETE (solo si NO se deprecia la tabla)
+-- ALTER TABLE public._deprecated_alert_notifications
+--   DROP CONSTRAINT alert_notifications_change_id_fkey,
+--   ADD CONSTRAINT alert_notifications_change_id_fkey
+--     FOREIGN KEY (change_id) REFERENCES tariff_changes(id) ON DELETE CASCADE;
+
+-- 6. Cron de purga (Fase 8) — fuera de esta migración:
+--    DELETE FROM classification_logs WHERE created_at < now() - interval '12 months';
+--    DELETE FROM invoice_extractions WHERE created_at < now() - interval '90 days'
+--                                       OR (deleted_at IS NOT NULL AND deleted_at < now() - interval '7 days');
+--    DELETE FROM _deprecated_alert_notifications WHERE sent_at < now() - interval '12 months';
+--    DELETE FROM rrm_requests WHERE created_at < now() - interval '4 years';
+```
+
+Checks previos recomendados:
+
+```sql
+SELECT 'classification_logs' tbl, count(*) n_null FROM classification_logs WHERE user_id IS NULL
+UNION ALL SELECT 'rrm_requests',    count(*) FROM rrm_requests       WHERE user_id IS NULL
+UNION ALL SELECT 'monitored_codes', count(*) FROM monitored_codes    WHERE user_id IS NULL
+UNION ALL SELECT 'alert_notifications', count(*) FROM alert_notifications WHERE user_id IS NULL;
+```
