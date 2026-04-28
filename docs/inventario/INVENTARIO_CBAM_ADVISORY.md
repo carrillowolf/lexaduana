@@ -209,4 +209,363 @@
 
 ---
 
-<!-- TANDA 4 INCOMPLETA: faltan cbam_advisory_reports, cbam_advisory_report_downloads, cbam_calculator_saves, cbam_monitoring_subscriptions y la sección "Hallazgos de la Tanda 4" -->
+<!-- Sub-tanda 4B completada -->
+
+## cbam_advisory_reports
+
+**Filas**: 0
+
+**Propósito inferido del código**: Reports PDF generados por el admin como entregable al cliente. Cada fila apunta a un PDF en el bucket `cbam-advisory-reports` con su `pdf_path`, captura el snapshot de cálculo en JSONB para auditoría inmutable, y se versiona (`version`, `is_current`). Generación: `app/api/admin/cbam/asesoria/[id]/generate-report/route.js` (con `service_role`, sube vía `lib/cbamAdvisoryAdminService.js:425 uploadReportPdf()`). Liberación al cliente: cambia `cbam_advisory_requests.status` a `'paid'`/`'delivered'`.
+
+**Columnas**:
+| Columna | Tipo | Null | Default |
+|---|---|---|---|
+| id | uuid | NO | `gen_random_uuid()` |
+| request_id | uuid | **NO** | — |
+| pdf_path | text | NO | — |
+| pdf_filename | text | NO | — |
+| pdf_size_bytes | int4 | SÍ | — |
+| report_ref | text | NO | — |
+| report_year | int4 | NO | — |
+| calculation_snapshot | jsonb | **NO** | — |
+| version | int4 | NO | `1` |
+| is_current | bool | NO | `true` |
+| generated_at | timestamptz | NO | `now()` |
+| generated_by | text | SÍ | — |
+| created_at | timestamptz | SÍ | `now()` |
+
+**Datos personales (PII)**: Indirecto vía `calculation_snapshot` (puede contener datos del cliente y proveedores). El PDF en Storage sí contiene PII (datos del cliente, EORI, contacto).
+
+**Datos comerciales del usuario**: **Sí, alto** — el PDF es el entregable final con el cálculo CBAM completo.
+
+**RLS habilitada**: Sí
+
+**Políticas RLS**:
+| Nombre | Comando | USING | WITH CHECK |
+|---|---|---|---|
+| Client reads own released reports | SELECT | `request_id IN (SELECT id FROM cbam_advisory_requests WHERE user_id = auth.uid() AND status IN ('paid','delivered'))` | — |
+
+> **Sin INSERT/UPDATE/DELETE para clientes** — solo `service_role` (admin) genera/modifica reports. Cliente solo ve el report **tras pagar**. Diseño correcto.
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| request_id | `cbam_advisory_requests(id)` | **CASCADE** |
+
+**Índices**:
+- `idx_advisory_reports_request` — btree `(request_id)`
+- `idx_advisory_reports_unique_current` — UNIQUE `(request_id) WHERE is_current = true` — garantiza máximo 1 report "vigente" por solicitud, permitiendo histórico de versiones con `is_current=false`.
+
+**Triggers**: Ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-advisory-phase3-schema.sql:71`.
+
+**Retención sugerida**: 4 años post-`generated_at` (mismo plazo CAU). `CASCADE` desde request padre limpia la fila; **el PDF en Storage NO se borra automáticamente**.
+
+### Bucket asociado: `cbam-advisory-reports`
+
+| Atributo | Valor |
+|---|---|
+| Public | **`false`** (privado) ✓ |
+| Tamaño máximo | 20 MB |
+| MIME types permitidos | PDF únicamente |
+
+**Políticas de `storage.objects` para este bucket**: **NINGUNA**.
+
+> ✓ Esto **es correcto** y deliberado: el bucket solo se accede desde rutas backend usando `service_role` (`supabaseAdmin`). Con RLS activa por defecto en `storage.objects`, ausencia de policies = denegado para `authenticated`/`anon` desde cliente. La descarga al cliente pasa por `app/api/cbam/advisory/[id]/download/route.js`, que valida ownership en BD y devuelve un signed URL con `createSignedUrl` (`lib/cbamAdvisoryAdminService.js:450`). Patrón sólido.
+
+**Observaciones**:
+- **`request_id` NOT NULL** ✓.
+- **`generated_by` libre `text`** sin FK — debería guardar el `auth.uid()` del admin pero solo guarda email/etiqueta.
+- **PDFs en Storage huérfanos al cascade**: cuando se borra el `cbam_advisory_requests`, las filas se cascadean pero los blobs permanecen. Backlog Fase 8.
+
+---
+
+## cbam_advisory_report_downloads
+
+**Filas**: 0
+
+**Propósito inferido del código**: Audit log de descargas del PDF por parte del cliente. Cada vez que el cliente descarga el report (vía signed URL), se registra IP, user-agent y timestamp para trazabilidad.
+
+**Columnas**:
+| Columna | Tipo | Null | Default |
+|---|---|---|---|
+| id | uuid | NO | `gen_random_uuid()` |
+| report_id | uuid | NO | — |
+| request_id | uuid | NO | — |
+| user_id | uuid | SÍ | — |
+| downloaded_at | timestamptz | NO | `now()` |
+| ip_address | text | SÍ | — |
+| user_agent | text | SÍ | — |
+
+**Datos personales (PII)**: **Sí** — `ip_address` (PII según RGPD), `user_agent` (cuasi-identificador). Mismo patrón que `user_consents`.
+
+**Datos comerciales del usuario**: No directamente.
+
+**RLS habilitada**: Sí
+
+**Políticas RLS**:
+| Nombre | Comando | USING | WITH CHECK |
+|---|---|---|---|
+| Client reads own download history | SELECT | `request_id IN (SELECT id FROM cbam_advisory_requests WHERE user_id = auth.uid())` | — |
+| Client logs own downloads | INSERT | — | `request_id IN (SELECT id FROM cbam_advisory_requests WHERE user_id = auth.uid() AND status IN ('paid','delivered'))` |
+
+> Sin UPDATE ni DELETE — log inmutable. Audit trail correcto.
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| report_id | `cbam_advisory_reports(id)` | **CASCADE** |
+| request_id | `cbam_advisory_requests(id)` | **CASCADE** |
+| user_id | `auth.users(id)` | **SET NULL** ✓ |
+
+> ✓ **Único caso del inventario con `ON DELETE SET NULL` correctamente aplicado** sobre `auth.users`. Preserva el audit trail aunque el usuario cierre cuenta. Patrón a replicar en otras tablas con obligación de retención (ver Hallazgos).
+
+**Índices**:
+- `idx_advisory_downloads_report` — btree `(report_id)`
+- `idx_advisory_downloads_request` — btree `(request_id)`
+
+**Triggers**: Ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-advisory-phase3-schema.sql:110`.
+
+**Retención sugerida**: 4 años post-`downloaded_at`. Sirve como evidencia de que el cliente recibió el entregable.
+
+**Observaciones**:
+- **3 FKs NOT NULL** (`report_id`, `request_id`) + 1 nullable (`user_id`, intencionalmente). Diseño limpio.
+- `ip_address` es `text` libre — usar `inet` (como en `user_consents`) sería mejor para validación. No bloqueante.
+- **Patrón modelo**: esta tabla aplica correctamente el "preserve audit con `SET NULL`" que el resto del schema debería seguir para retenciones legales.
+
+---
+
+## cbam_calculator_saves
+
+**Filas**: 1
+
+**Propósito inferido del código**: Historial de cálculos guardados de la Calculadora CBAM (free tool, **Nivel 2 freemium** según comentario de la tabla). Diferente del flujo Advisory — esto es el cálculo público sin asesoría humana. Endpoints: `app/api/cbam/calculator/save/route.js` (INSERT), `app/api/cbam/calculator/saves/route.js` (listar), `app/api/cbam/calculator/saves/[id]/route.js` (DELETE).
+
+**Columnas**:
+| Columna | Tipo | Null | Default |
+|---|---|---|---|
+| id | uuid | NO | `gen_random_uuid()` |
+| user_id | uuid | **NO** | — |
+| created_at | timestamptz | NO | `now()` |
+| calculation_year | int4 | NO | — |
+| products | jsonb | NO | — |
+| total_cost | numeric | SÍ | — |
+| total_certificates | numeric | SÍ | — |
+| total_emissions | numeric | SÍ | — |
+| result_snapshot | jsonb | SÍ | — |
+| source_regulation_version | text | NO | `'v20260204'` |
+| notes | text | SÍ | — |
+
+**Datos personales (PII)**: No (solo `user_id`).
+
+**Datos comerciales del usuario**: **Sí** — `products` (jsonb) contiene CN codes, países, toneladas y emisiones que el usuario probó.
+
+**RLS habilitada**: Sí
+
+**Políticas RLS**:
+| Nombre | Comando | USING | WITH CHECK |
+|---|---|---|---|
+| cbam_calculator_saves_select_own | SELECT | `auth.uid() = user_id` | — |
+| cbam_calculator_saves_insert_own | INSERT | — | `auth.uid() = user_id` |
+| cbam_calculator_saves_delete_own | DELETE | `auth.uid() = user_id` | — |
+
+> Roles `authenticated` (no `public`). Sin UPDATE — saves inmutables.
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| user_id | `auth.users(id)` | **CASCADE** |
+
+**Índices**:
+- `idx_calc_saves_user` — btree `(user_id, created_at DESC)` (compuesto, eficiente para listado paginado).
+
+**Triggers**: Ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-calculator-saves-schema.sql:11`.
+
+**Retención sugerida**: 4 años (proyectado por el usuario). Sin obligación legal estricta (es free tool), pero coherente con el resto del dominio CBAM.
+
+**Observaciones**:
+- **`user_id` NOT NULL** ✓ — bien diseñado, sin nullable.
+- **Sin UPDATE policy** — el usuario no puede editar un save (consistente con la idea de "snapshot del cálculo en ese momento"). Para corregir hay que borrar e insertar nuevo.
+- `source_regulation_version` con default `'v20260204'` (versión hardcoded del CBAM). Cuando cambie la normativa, recordar actualizar.
+- Sin cron de purga.
+
+---
+
+## cbam_monitoring_subscriptions
+
+**Filas**: 11
+
+**Propósito inferido del código**: Suscripciones al servicio premium de **Monitorización CBAM** (199 €/mes según comentario de la tabla). El cliente envía solicitud (`status='submitted'`), admin la autoriza (`authorized_at`), comienza (`started_at`), puede pausarse o cancelarse. Endpoints: `app/api/cbam/monitoring/route.js` (cliente) + `app/api/admin/cbam/suscripciones/*` (admin). Servicio: `lib/cbamMonitoringService.js`.
+
+**Columnas** (resumen — 24 columnas):
+| Bloque | Columnas | Tipo | Notas |
+|---|---|---|---|
+| ID / propietario | `id`, `user_id` (NN), `status` (default `'submitted'`) | uuid · uuid · text | |
+| Empresa | `company_name` (NN), `company_cif`, `company_legal_name` | text | |
+| Contacto | `contact_name` (NN), `contact_email` (NN), `contact_phone` | text | PII directa |
+| Autorización DUA | `dua_authorization_accepted_at`, `dua_authorization_text_version` | timestamptz · text | Trazabilidad de aceptación de la cláusula DUA |
+| Catálogo | `main_cbam_products` (text[]), `main_origin_countries` (text[]), `expected_monthly_volume` | array/text | |
+| Notas | `client_notes`, `admin_notes` | text | |
+| Workflow | `authorized_at`, `started_at`, `paused_at`, `cancelled_at` | timestamptz | Ciclo de vida |
+| Admin | `admin_checklist` jsonb (NN, default `'{}'`) | jsonb | |
+| Auditoría | `created_at`, `updated_at` | timestamptz NN default `now()` | |
+
+**Datos personales (PII)**: **Sí** — `contact_name`, `contact_email`, `contact_phone`, `company_cif` (PII para autónomos).
+
+**Datos comerciales del usuario**: **Sí** — `main_cbam_products`, `main_origin_countries`, `expected_monthly_volume` revelan estructura comercial del importador.
+
+**RLS habilitada**: Sí
+
+**Políticas RLS**:
+| Nombre | Comando | USING | WITH CHECK |
+|---|---|---|---|
+| cbam_monitoring_select_own | SELECT | `auth.uid() = user_id` | — |
+| cbam_monitoring_insert_own | INSERT | — | `auth.uid() = user_id` |
+| cbam_monitoring_update_own_client_fields | UPDATE | `auth.uid() = user_id` | `auth.uid() = user_id` |
+
+> Roles `authenticated`. Sin DELETE — el cliente no puede borrar su suscripción (intencional para retención y trazabilidad de cobros). El nombre de la policy UPDATE menciona "client_fields" pero la policy SQL no restringe columnas — es solo el nombre. La restricción de columnas debe enforcer-se en el endpoint backend.
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| user_id | `auth.users(id)` | **CASCADE** |
+
+**Índices**:
+- `idx_cbam_monitoring_user` — btree `(user_id, created_at DESC)`
+- `idx_cbam_monitoring_status` — btree `(status, created_at DESC)`
+
+**Triggers**:
+- `cbam_monitoring_touch_updated_at` — BEFORE UPDATE → `tg_cbam_monitoring_touch_updated_at()` (función específica, distinta del genérico `update_advisory_updated_at`).
+
+**Versionada en repo**: **Sí** — `scripts/sql/cbam-monitoring-subscriptions-schema.sql:18` (única tabla bajo el subdir `scripts/sql/`).
+
+**Retención sugerida**: 4 años post-`cancelled_at` (suscripción cerrada). Sin cron.
+
+**Observaciones**:
+- **`user_id` NOT NULL** ✓.
+- **`dua_authorization_accepted_at` + `dua_authorization_text_version`** — patrón embedded de "consentimiento operativo" (autorización al despachante para gestionar DUAs). Diferente del `user_consents` general; aquí captura una aceptación específica del servicio. Bien.
+- **`status` libre `text`** con default `'submitted'`. Valores esperados (`'submitted'`, `'authorized'`, `'active'`, `'paused'`, `'cancelled'`) sin CHECK. Añadir.
+- **`update_own_client_fields`** policy SQL no restringe columnas. Si se quiere bloquear que el cliente cambie `admin_checklist`, `admin_notes`, `authorized_at` etc., hace falta CHECK en `WITH CHECK` o un trigger BEFORE UPDATE. Hoy se confía en el endpoint backend para no exponer esos campos. Aceptable pero anotado.
+- Trigger con función propia (`tg_cbam_monitoring_touch_updated_at`) en vez de la genérica `update_advisory_updated_at` o `set_updated_at`. Inconsistencia de nombres entre dominios.
+
+---
+
+## Relaciones del dominio
+
+```
+auth.users
+    ├── cbam_advisory_requests        (user_id CASCADE)
+    │       ├── cbam_advisory_products       (request_id CASCADE)
+    │       ├── cbam_advisory_documents      (request_id CASCADE) → bucket cbam-advisory-docs ({user_id}/{request_id}/...)
+    │       ├── cbam_advisory_reports        (request_id CASCADE) → bucket cbam-advisory-reports ({request_id}/...)
+    │       │       └── cbam_advisory_report_downloads (report_id CASCADE, request_id CASCADE,
+    │       │                                            user_id SET NULL ✓)
+    │       └── cbam_advisory_report_downloads (request_id CASCADE)
+    │
+    ├── cbam_calculator_saves         (user_id CASCADE)
+    └── cbam_monitoring_subscriptions (user_id CASCADE)
+
+Buckets Storage
+    cbam-advisory-docs    (privado, 10 MB, multi-MIME)
+        ├── policy SELECT/INSERT por carpeta {user_id}/...
+        └── sin UPDATE/DELETE policies (solo service_role)
+
+    cbam-advisory-reports (privado, 20 MB, PDF only)
+        └── SIN policies en storage.objects → solo service_role
+            (cliente accede vía signed URL desde route handler que valida ownership)
+
+Anthropic API (externo, EEUU)
+    ← (ningún endpoint CBAM lo usa)
+```
+
+---
+
+## Hallazgos de la Tanda 4
+
+### 🚨 Críticos
+
+Ninguno. **El dominio CBAM Advisory es el más sólido del inventario**:
+- Buckets privados con políticas correctas (docs por carpeta de usuario; reports cerrado a service_role).
+- RLS bien diseñada en las 7 tablas (acceso a hijas derivado del request padre, reports solo tras `'paid'`/`'delivered'`).
+- Sin transferencias a Anthropic (verificado por grep exhaustivo).
+- Inmutabilidad bien aplicada (sin UPDATE/DELETE en docs y reports desde cliente; sin DELETE en requests).
+- 7/7 tablas versionadas en `scripts/`.
+- `cbam_advisory_report_downloads.user_id ON DELETE SET NULL` es **el único caso del inventario que aplica correctamente** el patrón de preservación de audit ante baja de cuenta — modelo a replicar en otras tablas.
+
+### ⚠️ Altos — al backlog / Fase 7
+
+1. **`cbam_advisory_requests.user_id` con FK `CASCADE` incumple retención CAU 4 años** al cerrar cuenta. Mismo problema que `user_consents` resuelto en Fase 1.3. Replicar patrón `ON DELETE SET NULL + user_id_hash` para conservar evidencia de la solicitud y de su facturación. Aplica también a `cbam_advisory_documents` y `cbam_advisory_reports` (cascadean desde requests, así que con corregir requests se hereda).
+2. **`cbam_calculator_saves` y `cbam_monitoring_subscriptions` con FK `CASCADE`** — al cerrar cuenta se borran. Para `cbam_monitoring_subscriptions` (servicio de pago, 199 €/mes) hay obligación mercantil de conservar evidencia de cobro. Decidir igual que arriba.
+
+### ⚠️ Altos — Fase 8 (cron)
+
+3. **Sin cron de purga a 4 años** para ninguna de las 7 tablas. Mismo patrón que dominios anteriores.
+4. **Sin limpieza de blobs huérfanos** en buckets `cbam-advisory-docs` y `cbam-advisory-reports`. Cuando se borra un `cbam_advisory_requests` (CASCADE), las filas se limpian pero los archivos en Storage permanecen. Necesita worker que escanee blobs sin fila correspondiente y los borre.
+
+### 🟡 Medios — consolidar en Sub-tanda 4C
+
+5. **`cbam_advisory_requests.user_id` nullable** pese a FK `CASCADE`. Endurecer a `NOT NULL` (verificar 0 huérfanos previos sobre 2 filas).
+6. **`status` y `payment_status` libres `text`** sin CHECK en `cbam_advisory_requests`. Añadir CHECK con la enumeración real (`'draft'`, `'intake_complete'`, `'paid'`, `'delivered'`, etc.).
+7. **`status` libre `text`** en `cbam_monitoring_subscriptions`. Mismo tratamiento.
+8. **`cbam_advisory_products` UPDATE/DELETE accesible en cualquier estado** del request padre — desalineado con el bloqueo del request en `'paid'`/`'delivered'`. Decidir si alinear (más restrictivo) o documentar que es deliberado para permitir correcciones del cliente durante la revisión.
+
+### 🟢 Bajos / cosméticos
+
+9. **`mime_type` y `file_type` ambos** en `cbam_advisory_documents` — duplicidad o distinción no documentada.
+10. **`generated_by` libre `text`** en `cbam_advisory_reports` — guardar `auth.uid()` del admin sería trazable, hoy se almacena email/etiqueta.
+11. **3 nombres de funciones de updated_at distintos** entre dominios: `update_advisory_updated_at`, `set_updated_at`, `tg_cbam_monitoring_touch_updated_at`, más el de invoice_extractions y dispatches. Consolidar en una sola.
+12. **`source_regulation_version`** hardcoded en `cbam_calculator_saves` (`'v20260204'`). Recordar actualizar al migrar normativa.
+13. **`update_own_client_fields`** en `cbam_monitoring_subscriptions` no restringe columnas en el SQL (la restricción está en el endpoint). Considerar añadir un trigger BEFORE UPDATE que rechace cambios sobre columnas `admin_*`, `authorized_at`, etc. para defense-in-depth.
+
+### Correcciones propuestas para Sub-tanda 4C
+
+Una sola migración `supabase/migrations/YYYYMMDDHHMMSS_cbam_advisory_fixes.sql`:
+
+```sql
+-- 1. cbam_advisory_requests.user_id NOT NULL (con DO block de verificación)
+DO $$
+DECLARE n INT;
+BEGIN
+  SELECT COUNT(*) INTO n FROM public.cbam_advisory_requests WHERE user_id IS NULL;
+  IF n > 0 THEN RAISE EXCEPTION 'Huérfanos en cbam_advisory_requests: %', n; END IF;
+END $$;
+ALTER TABLE public.cbam_advisory_requests ALTER COLUMN user_id SET NOT NULL;
+
+-- 2. CHECK constraints para status y payment_status
+ALTER TABLE public.cbam_advisory_requests
+  ADD CONSTRAINT cbam_advisory_requests_status_check
+  CHECK (status IN ('draft','intake_complete','submitted','in_review','paid','delivered','cancelled'));
+
+ALTER TABLE public.cbam_advisory_requests
+  ADD CONSTRAINT cbam_advisory_requests_payment_status_check
+  CHECK (payment_status IN ('unpaid','requested','paid','refunded'));
+-- (ajustar enums según los valores reales en uso; verificar previo:
+--   SELECT DISTINCT status FROM cbam_advisory_requests;
+--   SELECT DISTINCT payment_status FROM cbam_advisory_requests;)
+
+-- 3. CHECK para cbam_monitoring_subscriptions.status
+ALTER TABLE public.cbam_monitoring_subscriptions
+  ADD CONSTRAINT cbam_monitoring_subscriptions_status_check
+  CHECK (status IN ('submitted','authorized','active','paused','cancelled'));
+
+-- 4. PENDIENTES (no en esta migración, decisión tuya):
+--    - Replicar patrón user_consents (SET NULL + user_id_hash) en cbam_advisory_requests,
+--      cbam_calculator_saves, cbam_monitoring_subscriptions. Bloque para Fase 7.
+--    - Alinear policies UPDATE/DELETE de cbam_advisory_products con el bloqueo del request.
+--    - Crons de purga + limpieza de blobs huérfanos. Fase 8.
+```
+
+Checks previos recomendados:
+
+```sql
+SELECT DISTINCT status FROM public.cbam_advisory_requests;
+SELECT DISTINCT payment_status FROM public.cbam_advisory_requests;
+SELECT DISTINCT status FROM public.cbam_monitoring_subscriptions;
+SELECT 'cbam_advisory_requests' tbl, COUNT(*) FILTER (WHERE user_id IS NULL) huerfanos
+FROM public.cbam_advisory_requests;
+```
