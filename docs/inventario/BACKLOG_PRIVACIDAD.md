@@ -264,4 +264,72 @@ Si se retoma: implementar el worker (cron o edge function) que compare
 `monitored_codes` contra `tariff_changes` e inserte aquí + envíe email,
 renombrar de vuelta a `alert_notifications` y resolver `change_id` ON DELETE.
 
+## De Tanda 4 (CBAM advisory)
+
+### Pseudonimización en tablas con retención CAU/comercial 4 años
+
+Replicar patrón de `user_consents` (`SET NULL` + `user_id_hash` + trigger anonymize) en:
+
+- `cbam_advisory_requests` (FK CASCADE actual incumple retención CAU 4 años)
+- `cbam_calculator_saves` (FK CASCADE; contiene cálculos guardados con datos comerciales)
+- `cbam_monitoring_subscriptions` (FK CASCADE; suscripciones de pago, retención por obligación mercantil)
+
+Implementar en **Fase 7** (panel de baja de cuenta). El patrón:
+
+```sql
+-- Por cada tabla:
+-- 1. Cambiar FK user_id de ON DELETE CASCADE → ON DELETE SET NULL.
+-- 2. Hacer user_id nullable (si no lo es ya).
+-- 3. Añadir columna user_id_hash TEXT.
+-- 4. Bloquear UPDATE sobre filas anonimizadas (user_id IS NULL) en RLS.
+-- 5. Cron Fase 8 elimina filas con user_id IS NULL tras N años (4 aquí).
+```
+
+Nota: `cbam_advisory_report_downloads.user_id` ya usa `ON DELETE SET NULL` —
+**es el patrón correcto y debe usarse como referencia** al replicarlo en las
+otras 3 tablas.
+
+### cbam_advisory_products UPDATE/DELETE en cualquier estado
+
+Las policies `UPDATE`/`DELETE` permiten mutación mientras el `request_id`
+pertenezca al usuario, sin filtrar por `status` del request padre. En
+contraste, `cbam_advisory_requests.update_own_draft` solo permite UPDATE
+si el status está en `('draft','intake_complete')`.
+
+Decidir según UX deseada: ¿el cliente puede modificar productos después
+de pagar? Si no, alinear las policies de productos con el bloqueo del
+padre (subselect adicional sobre `cbam_advisory_requests.status`).
+
+### CBAM advisory — granularidad de status
+
+Los CHECK añadidos en sub-tanda 4C son una mejora pero siguen siendo
+listas planas. Si el flujo crece, considerar:
+
+- Tabla `cbam_advisory_status_transitions` que define transiciones válidas.
+- O un enum tipado en lugar de `text + CHECK`.
+
+No es urgente — el CHECK actual evita typos.
+
+### Crons CBAM en Fase 8
+
+- Purga de blobs huérfanos en buckets `cbam-advisory-docs` y
+  `cbam-advisory-reports` (cuando se borra un request CASCADE limpia las
+  filas pero los archivos quedan en Storage).
+- Sincronización de Storage con BD: detectar objetos en bucket sin fila
+  correspondiente en `cbam_advisory_documents` o `cbam_advisory_reports`.
+- Retención 4 años post `cbam_advisory_requests.delivered_at`:
+  ```sql
+  -- Una vez aplicada la pseudonimización (Fase 7):
+  DELETE FROM public.cbam_advisory_requests
+  WHERE user_id IS NULL
+    AND delivered_at < now() - interval '4 years';
+  ```
+
+### `mime_type` vs `file_type` en cbam_advisory_documents
+
+Duplicidad. `mime_type` es el oficial, `file_type` parece ser una etiqueta
+libre del usuario. Documentar la distinción en un CHECK o consolidar en
+una sola columna en una refactorización futura.
+
+
 

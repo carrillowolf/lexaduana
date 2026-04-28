@@ -14,6 +14,18 @@
 
 ## cbam_advisory_requests
 
+> ℹ️ **Sub-tanda 4C (2026-04-23)** — la migración
+> [`20260423160000_cbam_advisory_fixes.sql`](../../supabase/migrations/20260423160000_cbam_advisory_fixes.sql)
+> aplica dos cambios:
+> - **Bloque 1**: `user_id` → `NOT NULL` (verificado 0 huérfanos sobre 2 filas).
+> - **Bloque 2**: dos CHECK constraints
+>   - `status IN ('draft','intake_complete','submitted','paid','delivered')`
+>   - `payment_status IN ('unpaid','requested','paid','refunded')`
+>     (verificado 0 valores fuera de la lista).
+>
+> La pseudonimización (FK CASCADE → SET NULL + `user_id_hash`) queda en
+> `BACKLOG_PRIVACIDAD.md` para Fase 7.
+
 **Filas**: 2
 
 **Propósito inferido del código**: Núcleo del flujo de asesoría CBAM de pago. Cada fila es una solicitud de un importador para que LexAduana le calcule sus emisiones, costes CBAM esperados y le entregue un informe firmable. Workflow administrado por admin desde `app/api/admin/cbam/asesoria/*`. Estados conocidos: `'draft'`, `'intake_complete'`, `'paid'`, `'delivered'` (más probablemente `'submitted'`, `'in_review'` — ver Observaciones). Consumido por `lib/cbamAdvisoryService.js` (cliente) y `lib/cbamAdvisoryAdminService.js` (admin con `service_role`).
@@ -397,6 +409,14 @@
 ---
 
 ## cbam_monitoring_subscriptions
+
+> ℹ️ **Sub-tanda 4C (2026-04-23)** — la migración
+> [`20260423160000_cbam_advisory_fixes.sql`](../../supabase/migrations/20260423160000_cbam_advisory_fixes.sql)
+> (Bloque 2) añade el CHECK constraint
+> `status IN ('submitted','authorized','active','paused','cancelled')`
+> (verificado: las 11 filas tienen status `'submitted'`, dentro de la lista).
+> La pseudonimización para la retención CAU queda en `BACKLOG_PRIVACIDAD.md`
+> para Fase 7.
 
 **Filas**: 11
 
