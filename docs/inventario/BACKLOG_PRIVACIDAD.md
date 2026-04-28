@@ -331,5 +331,27 @@ Duplicidad. `mime_type` es el oficial, `file_type` parece ser una etiqueta
 libre del usuario. Documentar la distinción en un CHECK o consolidar en
 una sola columna en una refactorización futura.
 
+### Aprendizaje del proceso de inventario
+
+El grep de literales en código no captura mutaciones realizadas vía `service_role`
+sin literal explícito (admin assigns programáticamente o vía form values dinámicos).
+Para futuras tandas: cuando una tabla tenga workflow con admin, listar también los
+CHECK constraints existentes en BD antes de proponer nuevos.
+
+```sql
+-- Patrón de pre-flight para tablas con workflow:
+SELECT conrelid::regclass AS tabla, conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE contype = 'c'
+  AND conrelid::regclass::text IN ('public.<tabla1>','public.<tabla2>',...);
+```
+
+Detectado en sub-tanda 4C tras intentar añadir un `status_check` con 5 valores
+inferidos del código cuando producción ya tenía uno con 11 valores reales del
+workflow (`'analyzing'`, `'pending_supplier_data'`, `'calculating'`, `'reviewing'`,
+`'report_ready'`, `'pending_payment'`, etc.). También un `payment_status_check`
+con `'requested'` cuando el real es `'invoiced'`. Ver INVENTARIO_CBAM_ADVISORY.md
+sección "Aprendizaje del proceso (incidencia 4C)".
+
 
 

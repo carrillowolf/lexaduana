@@ -14,21 +14,46 @@
 
 ## cbam_advisory_requests
 
-> ℹ️ **Sub-tanda 4C (2026-04-23)** — la migración
+> ℹ️ **Sub-tanda 4C (2026-04-23, corregida tras diagnosis en producción)** — la migración
 > [`20260423160000_cbam_advisory_fixes.sql`](../../supabase/migrations/20260423160000_cbam_advisory_fixes.sql)
-> aplica dos cambios:
+> aplica los cambios que **NO estaban ya en producción**:
 > - **Bloque 1**: `user_id` → `NOT NULL` (verificado 0 huérfanos sobre 2 filas).
-> - **Bloque 2**: dos CHECK constraints
->   - `status IN ('draft','intake_complete','submitted','paid','delivered')`
->   - `payment_status IN ('unpaid','requested','paid','refunded')`
->     (verificado 0 valores fuera de la lista).
+> - **Bloque 2**: re-crea `payment_status_check` con la lista cuatripartita confirmada
+>   (`'unpaid','invoiced','paid','refunded'`).
+>
+> **CHECKs ya existentes en producción (no se tocan)**: `status_check` con 11 valores
+> (ver Observaciones), `advisory_package_check` (`'basic','complete'` o NULL),
+> `installations_count_check` (NULL o ≥1) y `payment_request_language_check`
+> (`'es','en'`). Mi propuesta inicial intentaba crear `status_check` y un
+> `payment_status_check` con `'requested'` en lugar de `'invoiced'`; ambos
+> redundantes/erróneos respecto al estado real de la BD. Ver Hallazgos para el
+> aprendizaje correspondiente.
 >
 > La pseudonimización (FK CASCADE → SET NULL + `user_id_hash`) queda en
 > `BACKLOG_PRIVACIDAD.md` para Fase 7.
 
 **Filas**: 2
 
-**Propósito inferido del código**: Núcleo del flujo de asesoría CBAM de pago. Cada fila es una solicitud de un importador para que LexAduana le calcule sus emisiones, costes CBAM esperados y le entregue un informe firmable. Workflow administrado por admin desde `app/api/admin/cbam/asesoria/*`. Estados conocidos: `'draft'`, `'intake_complete'`, `'paid'`, `'delivered'` (más probablemente `'submitted'`, `'in_review'` — ver Observaciones). Consumido por `lib/cbamAdvisoryService.js` (cliente) y `lib/cbamAdvisoryAdminService.js` (admin con `service_role`).
+**Propósito inferido del código**: Núcleo del flujo de asesoría CBAM de pago. Cada fila es una solicitud de un importador para que LexAduana le calcule sus emisiones, costes CBAM esperados y le entregue un informe firmable. Workflow administrado por admin desde `app/api/admin/cbam/asesoria/*`. Consumido por `lib/cbamAdvisoryService.js` (cliente) y `lib/cbamAdvisoryAdminService.js` (admin con `service_role`).
+
+**Workflow real (`status` — 11 valores, según `status_check` en BD)**:
+
+| Estado | Significado |
+|---|---|
+| `draft` | Solicitud iniciada, todavía editable por el cliente |
+| `intake_complete` | Cliente terminó intake; pasa al admin |
+| `analyzing` | Admin está analizando el caso |
+| `pending_supplier_data` | Esperando datos de emisiones del proveedor extranjero |
+| `calculating` | Cálculo de emisiones y coste CBAM en curso |
+| `reviewing` | Revisión interna previa a generar el report |
+| `report_ready` | Report PDF generado, pendiente de pago |
+| `pending_payment` | Petición de pago enviada al cliente |
+| `paid` | Pago recibido, listo para entrega |
+| `delivered` | Report entregado al cliente |
+| `cancelled` | Solicitud cancelada en cualquier punto |
+
+**Workflow real (`payment_status` — 4 valores, tras 4C)**:
+`unpaid` → `invoiced` (factura emitida) → `paid` → `refunded` (devolución, si aplica).
 
 **Columnas** (resumen agrupado — 30 columnas):
 | Bloque | Columnas | Tipo | Notas |
@@ -80,8 +105,8 @@
 
 **Observaciones**:
 - **`user_id` nullable** con FK `CASCADE` — permite huérfanos. La policy INSERT exige `auth.uid() = user_id`, así que de facto no hay nulos. Cambiar a `NOT NULL`.
-- **`status` libre `text`** sin CHECK ni enum. Los valores se derivan del código (`'draft'`, `'intake_complete'`, `'paid'`, `'delivered'` aparecen en policies). Añadir CHECK constraint para evitar typos.
-- **`payment_status` libre `text`** con default `'unpaid'`. Mismo tratamiento que `status`.
+- **`status` ya tiene CHECK** con 11 valores en BD (ver tabla del workflow real arriba). El inventario inicial inferió erróneamente que era `text` libre por no haber consultado `pg_constraint`. Sub-tanda 4C corregida: la migración no toca este CHECK.
+- **`payment_status` ya tenía CHECK** con `('unpaid','invoiced','paid','refunded')`. La 4C corregida lo re-crea idempotentemente con la misma lista (operación neutral; documentamos para que el repo refleje el estado real).
 - **Riesgo de borrado en cascada vs. retención CAU**: `ON DELETE CASCADE` borra la solicitud al cerrar `auth.users`. Para conservar 4 años obligatorios, replicar el patrón `user_consents` (Fase 1.3): cambiar a `ON DELETE SET NULL` y rellenar `user_id_hash` antes de borrar la cuenta. Decidir en Fase 7 (al backlog).
 - **Sin cron de purga** a 4 años. Como el resto de tablas con retención prometida, queda en Fase 8.
 - `contact_email` no tiene CHECK de formato; el endpoint debería validarlo.
@@ -410,11 +435,11 @@
 
 ## cbam_monitoring_subscriptions
 
-> ℹ️ **Sub-tanda 4C (2026-04-23)** — la migración
-> [`20260423160000_cbam_advisory_fixes.sql`](../../supabase/migrations/20260423160000_cbam_advisory_fixes.sql)
-> (Bloque 2) añade el CHECK constraint
-> `status IN ('submitted','authorized','active','paused','cancelled')`
-> (verificado: las 11 filas tienen status `'submitted'`, dentro de la lista).
+> ℹ️ **Sub-tanda 4C (2026-04-23, corregida)** — esta tabla **ya tenía** en
+> producción el CHECK
+> `status IN ('submitted','authorized','active','paused','cancelled')` y un
+> CHECK adicional sobre `expected_monthly_volume IN ('<50t','50-200t','200-500t','500t+')`.
+> La migración 4C corregida **no la toca** (mi propuesta inicial era redundante).
 > La pseudonimización para la retención CAU queda en `BACKLOG_PRIVACIDAD.md`
 > para Fase 7.
 
@@ -506,6 +531,40 @@ Anthropic API (externo, EEUU)
 ---
 
 ## Hallazgos de la Tanda 4
+
+### 📚 Aprendizaje del proceso (incidencia 4C)
+
+Al diseñar la sub-tanda 4C propuse tres CHECK constraints para `status`,
+`payment_status` y `cbam_monitoring_subscriptions.status`. Carlos detectó al
+revisar en producción que **dos de ellos ya existían** y que mi propuesta para
+`status` era *demasiado pequeña* (5 valores frente a los **11 reales** del
+workflow), y la de `payment_status` usaba `'requested'` en lugar del valor
+real `'invoiced'`.
+
+Causa raíz: el inventario inferó los valores válidos a partir de:
+1. `DISTINCT` sobre las filas existentes (solo 2 filas de `cbam_advisory_requests` y 11 todas en `'submitted'`).
+2. `grep` de literales en `app/` y `lib/`.
+
+Ninguno de los dos métodos captura los estados que el panel admin asigna
+**vía `service_role` con valores dinámicos** (formularios, transiciones por
+botón) sin literal explícito. Y el grep tampoco encontró el `CHECK` ya
+definido porque vive en `pg_constraint`, no en código.
+
+**Mitigación adoptada**: la 4C corregida (commit posterior) no toca CHECKs
+preexistentes y se limita a (a) `user_id NOT NULL` y (b) re-crear
+`payment_status_check` idempotente con la lista real. La nota de proceso
+también se ha registrado en `BACKLOG_PRIVACIDAD.md`.
+
+**Acción para futuras tandas**: cuando una tabla tenga workflow administrado,
+listar `pg_constraint` de tipo `c` ANTES de proponer nuevos CHECKs.
+
+```sql
+-- Patrón a ejecutar al inicio de cada tanda con tablas con workflow:
+SELECT conrelid::regclass AS tabla, conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE contype = 'c'
+  AND conrelid::regclass::text IN ('public.<tabla1>','public.<tabla2>',...);
+```
 
 ### 🚨 Críticos
 
