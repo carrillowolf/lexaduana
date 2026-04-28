@@ -207,3 +207,61 @@ con RLS paralela a la tabla (acceso por `auth.uid() = created_by OR assigned_to`
 del despacho padre), renombrar la tabla de vuelta a `dispatch_documents` y cambiar
 `dispatch_id` a `NOT NULL`.
 
+## De Tanda 3 (clasificación + OCR + alertas)
+
+### classification_examples — admin UI rota
+
+Mover mutaciones a API route con `service_role`. Carlos usa la UI rara vez.
+No es urgente (no es exposición, solo funcionalidad rota).
+
+### classification_logs — transferencia a Anthropic sin consentimiento
+
+Resuelto parcialmente en Fase 2.5 (checkbox temporal).
+Solución definitiva en Fase 4 con componente `<AIProcessingConsent />`
+y registro en `user_consents` (`consent_type = 'ai_processing_classifier'`).
+
+### invoice_extractions — transferencia a Anthropic sin consentimiento
+
+Igual que `classification_logs`. Parche temporal en Fase 2.5.
+Definitivo en Fase 4 con `consent_type = 'ai_processing_ocr_invoice'`.
+
+### rrm_requests — sin cron de purga a 4 años
+
+Implementar cron en Fase 8.
+
+### monitored_codes — FK a user_profiles en lugar de auth.users
+
+Revisar en Fase 7 (baja de cuenta) junto con resto de FKs.
+Decidir si se unifica al patrón general (FK a `auth.users`) o se documenta
+el porqué del desvío.
+
+### invoice_extractions, classification_logs — crons de purga
+
+Implementar en Fase 8:
+- `invoice_extractions`: 90 días (más limpieza de soft-delete tras 7 días).
+- `classification_logs`: 12 meses.
+- `rrm_requests`: 4 años.
+
+```sql
+-- Ejemplo de cron (pg_cron o edge function):
+DELETE FROM public.classification_logs WHERE created_at < now() - interval '12 months';
+DELETE FROM public.invoice_extractions
+  WHERE created_at < now() - interval '90 days'
+     OR (deleted_at IS NOT NULL AND deleted_at < now() - interval '7 days');
+DELETE FROM public.rrm_requests WHERE created_at < now() - interval '4 years';
+```
+
+### _deprecated_alert_notifications (revisión 2026-07-23)
+
+Eliminar si la feature de notificaciones por cambios TARIC no se ha retomado.
+Migración de drop sugerida:
+
+```sql
+DROP TABLE IF EXISTS public._deprecated_alert_notifications;
+```
+
+Si se retoma: implementar el worker (cron o edge function) que compare
+`monitored_codes` contra `tariff_changes` e inserte aquí + envíe email,
+renombrar de vuelta a `alert_notifications` y resolver `change_id` ON DELETE.
+
+

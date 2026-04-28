@@ -12,7 +12,15 @@
 
 ## classification_logs
 
-**Filas**: 732
+> ℹ️ **Sub-tanda 3C (2026-04-23)** — la migración
+> [`20260423140000_classif_ocr_alertas_fixes.sql`](../../supabase/migrations/20260423140000_classif_ocr_alertas_fixes.sql)
+> (Bloque 1) cambia `user_id` a `NOT NULL` tras verificar 0 huérfanos
+> (752/752 filas con `user_id` válido). La columna `Null` de esta ficha
+> refleja el estado previo. La transferencia a Anthropic sin consentimiento
+> queda como pendiente en `BACKLOG_PRIVACIDAD.md` (parche en Fase 2.5,
+> definitivo en Fase 4).
+
+**Filas**: 732 *(en el momento del inventario; 752 en el check de 3C, ritmo de ~20 nuevas/h)*
 
 **Propósito inferido del código**: Histórico de llamadas al clasificador IA de partidas arancelarias. Cada vez que un usuario pide clasificar un producto en `app/api/classify-product/route.js:361`, la API guarda la descripción enviada (truncada a 500 caracteres), el código HS sugerido por Claude, la confianza y el modelo usado. Sirve para estadística y límites de uso diario. **La descripción del usuario sale hacia Anthropic (EEUU)** antes de guardarse.
 
@@ -190,6 +198,13 @@
 
 ## rrm_requests
 
+> ℹ️ **Sub-tanda 3C (2026-04-23)** — la migración
+> [`20260423140000_classif_ocr_alertas_fixes.sql`](../../supabase/migrations/20260423140000_classif_ocr_alertas_fixes.sql)
+> (Bloque 1) cambia `user_id` a `NOT NULL` tras verificar 0 huérfanos
+> (1/1 fila con `user_id` válido). La columna `Null` de esta ficha
+> refleja el estado previo. El cron de purga a 4 años queda en
+> `BACKLOG_PRIVACIDAD.md` (Fase 8).
+
 **Filas**: 1
 
 **Propósito inferido del código**: Histórico de solicitudes RRM (Request for Reimbursement — solicitud de rectificación o devolución de aranceles). El endpoint `app/api/rrm/generate-docx/route.js` genera un DOCX al vuelo con los datos de la fila. **No se guarda XML crudo ni el DOCX** — la fila contiene solo datos estructurados parseados/capturados vía formulario.
@@ -267,6 +282,16 @@
 
 ## monitored_codes
 
+> ℹ️ **Sub-tanda 3C (2026-04-23)** — la migración
+> [`20260423140000_classif_ocr_alertas_fixes.sql`](../../supabase/migrations/20260423140000_classif_ocr_alertas_fixes.sql)
+> aplica dos cambios:
+> - **Bloque 1**: `user_id` → `NOT NULL` (verificado 0 huérfanos sobre 0 filas).
+> - **Bloque 2**: `DROP POLICY "Users can view own monitors"` (duplicada con
+>   `"Users can manage own monitors"` que ya cubre SELECT como ALL).
+>
+> La FK a `user_profiles` (en lugar de `auth.users`) **se mantiene** —
+> decisión movida a `BACKLOG_PRIVACIDAD.md` para Fase 7.
+
 **Filas**: 0 (en el momento del inventario)
 
 **Propósito inferido del código**: Códigos TARIC que el usuario desea monitorizar para recibir alertas cuando cambien. Usada en `app/monitor/dashboard/page.js` (líneas 58 SELECT, 81 INSERT, 118 DELETE — no hay UPDATE). Límite por plan enforced por trigger `enforce_monitor_limit`.
@@ -326,6 +351,13 @@
 ---
 
 ## alert_notifications
+
+> ⚠️ **DEPRECATED 2026-04-23** — la migración
+> [`20260423140000_classif_ocr_alertas_fixes.sql`](../../supabase/migrations/20260423140000_classif_ocr_alertas_fixes.sql)
+> (Bloque 3) renombra la tabla a `_deprecated_alert_notifications`.
+> Revisión programada: **2026-07-23**. Si el worker de notificaciones por
+> cambios TARIC no se ha implementado para entonces, se elimina. La ficha
+> siguiente describe el estado previo.
 
 **Filas**: 0
 
