@@ -7,6 +7,7 @@ import { validateExtractedInvoice, summarizeValidation } from '@/lib/invoiceVali
 import { exportInvoiceToExcel } from '@/lib/excelExporter'
 import { useTranslation } from '@/lib/i18n'
 import { facturaOcrDict } from '@/lib/i18n/factura-ocr'
+import QuickAIConsent from '@/components/privacy/QuickAIConsent'
 
 const INCOTERMS = ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF']
 const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY', 'CHF', 'HKD', 'TRY', 'INR', 'BRL']
@@ -34,6 +35,7 @@ export default function FacturaOCRPage() {
   const [history, setHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState(null)
+  const [aiConsent, setAiConsent] = useState(false)
 
   // Cargar historial del usuario
   const loadHistory = useCallback(async () => {
@@ -411,6 +413,11 @@ export default function FacturaOCRPage() {
             </div>
           )}
 
+          {/* Aviso temporal Fase 2.5 — consentimiento envío a Anthropic */}
+          <div className="mt-5">
+            <QuickAIConsent consentKey="ocr_invoice" onConsentChange={setAiConsent} />
+          </div>
+
           <div className="mt-5 flex items-center justify-between flex-wrap gap-3">
             <p className="text-xs text-slate-500">
               {usage?.unlimited
@@ -421,7 +428,7 @@ export default function FacturaOCRPage() {
             </p>
             <button
               onClick={extract}
-              disabled={!file || extracting}
+              disabled={!file || extracting || !aiConsent}
               className="px-6 py-3 bg-[#0A3D5C] text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0A3D5C]/90 transition"
             >
               {extracting ? t('step1.extracting') : t('step1.extract')}
