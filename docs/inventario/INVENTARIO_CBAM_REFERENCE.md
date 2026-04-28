@@ -216,6 +216,12 @@
 
 ## cbam_cn_codes_full
 
+> ⚠️ **DEPRECATED 2026-04-29** — la migración
+> [`20260429000000_cbam_reference_deprecations.sql`](../../supabase/migrations/20260429000000_cbam_reference_deprecations.sql)
+> renombra la tabla a `_deprecated_cbam_cn_codes_full`. Revisión programada:
+> **2026-07-29**. Si la feature no se ha retomado para entonces se elimina.
+> La ficha siguiente describe el estado previo.
+
 **Filas**: **0**
 
 **Propósito inferido**: Tabla de CN codes "enriquecida" con metadatos extensos de la asesoría CBAM (rutas de producción, precursores, datos extra requeridos, calidad del dato, indicador de carbon price abroad). Diseñada para reemplazar/complementar `cbam_cn_codes` con un esquema mucho más detallado (19 columnas vs 13). **No tiene filas hoy** — la carga prevista nunca se ha completado. Referenciada 3 veces en grep de código (probablemente en scripts ETL o admin de carga, no en la app activa).
@@ -554,6 +560,14 @@
 ---
 
 ## cbam_countries
+
+> ⚠️ **DEPRECATED 2026-04-29** — la migración
+> [`20260429000000_cbam_reference_deprecations.sql`](../../supabase/migrations/20260429000000_cbam_reference_deprecations.sql)
+> renombra la tabla a `_deprecated_cbam_countries`. Revisión programada:
+> **2026-07-29**. Si la feature no se ha retomado para entonces se elimina.
+> Si se necesita un catálogo CBAM-específico de países, ampliar
+> `public.countries` (TARIC, 62 filas, ya en uso) en lugar de mantener
+> un catálogo paralelo. La ficha siguiente describe el estado previo.
 
 **Filas**: **0**
 
