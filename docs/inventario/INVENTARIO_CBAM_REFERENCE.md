@@ -402,4 +402,193 @@
 
 ---
 
-<!-- TANDA 5 INCOMPLETA: faltan cbam_timeline, cbam_ets_prices, cbam_regulations, cbam_config, cbam_countries y la sección "Hallazgos de la Tanda 5" -->
+<!-- Sub-tanda 5B-2: añadidas cbam_timeline, cbam_ets_prices, cbam_regulations, cbam_config, cbam_countries -->
+
+## cbam_timeline
+
+**Filas**: 12
+
+**Propósito inferido**: Línea temporal de hitos regulatorios CBAM (transición 2026, definitivo 2026, paquetes Omnibus, etc.) para mostrar en la UI de la web (página informativa CBAM). Cada fila es un evento con fecha, título, descripción y tipo. Incluye flag `is_new` y `sort_order` para destacar/ordenar visualmente.
+
+**Columnas** (11):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Evento | `event_date` date (NN), `title` text (NN), `description` text (NN), `event_type` text (NN) | tipo libre |
+| Display | `quarter_label`, `icon`, `is_new` bool (def false), `sort_order` int (def 0) | |
+| Auditoría | `created_at`, `updated_at` | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_timeline_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**: solo pkey.
+
+**Triggers**: `cbam_timeline_updated_at` BEFORE UPDATE.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-schema.sql:131`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- `event_type` libre (`text`). Valores esperables: `'milestone'`, `'regulation'`, `'omnibus'`, `'transition'`. Sin CHECK.
+- Sin índice sobre `event_date` ni `sort_order` — innecesario con 12 filas, pero si crece conviene `(sort_order, event_date)`.
+- `quarter_label` (e.g. `'Q1 2026'`) denormalizado de `event_date` — para etiquetar visualmente sin recalcular.
+
+---
+
+## cbam_ets_prices
+
+**Filas**: 2
+
+**Propósito inferido**: Precios del mercado ETS (EU Allowance) usados en cálculos CBAM (€/tCO2). Solo una fila debería tener `is_current = true` en cada momento (precio vigente); el resto es histórico. UNIQUE compuesto evita duplicados por origen y fecha.
+
+**Columnas** (7):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Precio | `price` numeric (NN), `price_date` date (NN), `price_type` text (def `'closing'`), `source` text (NN) | |
+| Estado | `is_current` bool (def false) | |
+| Auditoría | `created_at` | sin updated_at |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_ets_prices_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `cbam_ets_prices_price_date_price_type_source_key` — UNIQUE `(price_date, price_type, source)`
+- `idx_cbam_ets_current` — btree `(is_current) WHERE is_current = true` (parcial, solo la fila vigente)
+
+**Triggers**: ninguno (sin columna `updated_at`).
+
+**Versionada en repo**: **Sí** — `scripts/cbam-schema.sql:149`.
+
+**Retención sugerida**: histórico indefinido (datos de mercado, útiles para auditoría y comparativas).
+
+**Observaciones**:
+- **Sin garantía de unicidad de `is_current = true`** — el índice parcial no impide tener varias filas con `is_current = true`. Sería más seguro un UNIQUE parcial: `CREATE UNIQUE INDEX ... ON (is_current) WHERE is_current = true`. Riesgo bajo (cargas controladas vía service_role) pero documentar.
+- `price_type` libre con default `'closing'`. Valores esperables: `'closing'`, `'opening'`, `'avg'`. Sin CHECK.
+- `source` libre. Valores esperables: `'EEX'`, `'ICE'`. Sin CHECK.
+- Sin `updated_at` → si se corrige un precio cargado, no queda traza. Aceptable porque típicamente se inserta nuevo y se voltea `is_current`.
+
+---
+
+## cbam_regulations
+
+**Filas**: 7
+
+**Propósito inferido**: Catálogo de reglamentos europeos CBAM (referencias, títulos, fechas de publicación/entrada en vigor, URL al texto oficial). Sirve para mostrar en la UI un índice navegable de la legislación aplicable y como FK lógica desde otras tablas vía `regulation_ref` (texto, no FK real).
+
+**Columnas** (10):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `reference` text (NN, **UNIQUE**) | e.g. `'(EU) 2025/2620'` |
+| Metadata | `title` text (NN), `regulation_type` text, `status` text (def `'in_force'`) | tipo y estado libres |
+| Fechas | `publication_date` date, `effective_date` date | |
+| Contenido | `summary` text, `url` text | enlace a EUR-Lex |
+| Auditoría | `created_at` | sin updated_at |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_regulations_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna saliente. Es referenciada **lógicamente** (no por FK SQL) desde `regulation_ref` en `cbam_cn_codes`, `cbam_emission_factors`, `cbam_benchmarks`, `cbam_benchmarks_official`, `cbam_default_value_markup`, `cbam_default_values_official`, `cbam_excluded_countries`.
+
+**Índices**: pkey + UNIQUE `(reference)`.
+
+**Triggers**: ninguno (sin columna `updated_at`).
+
+**Versionada en repo**: **Sí** — `scripts/cbam-schema.sql:180`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- `reference` UNIQUE — diseño correcto. Evita duplicar el mismo Reglamento.
+- `regulation_type` libre. Valores esperables: `'implementing'`, `'delegated'`, `'omnibus'`, `'main'`. Sin CHECK.
+- `status` libre con default `'in_force'`. Valores esperables: `'in_force'`, `'repealed'`, `'pending'`. Sin CHECK.
+- **Las columnas `regulation_ref`** en otras tablas son `text`/`varchar` libres y no FK reales a esta tabla. Si se quisiera integridad estricta, habría que añadir FKs (con el coste de invalidar cargas que mencionen un reglamento aún no insertado en `cbam_regulations`).
+- Sin `updated_at` ni trigger — los reglamentos pocas veces se editan.
+
+---
+
+## cbam_config
+
+**Filas**: 3
+
+**Propósito inferido**: Tabla de configuración key-value para parámetros runtime del módulo CBAM (probablemente cosas como precio CO2 fallback, año fiscal por defecto, flags de feature). Valor en `jsonb` para flexibilidad. Único caso del dominio reference data con FK a `auth.users` (auditoría de quién editó).
+
+**Columnas** (5):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `key` text (**PK**) | clave de config |
+| Valor | `value` jsonb (NN), `description` text | |
+| Auditoría | `updated_at` timestamptz, `updated_by` uuid | quién editó |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_config_public_read` (SELECT, public, true)
+
+**Foreign keys**:
+| Columna | Referencia | ON DELETE |
+|---|---|---|
+| updated_by | `auth.users(id)` | NO ACTION (default) |
+
+**Índices**: pkey UNIQUE sobre `(key)`.
+
+**Triggers**: ninguno (pese a tener columna `updated_at` — la app debe setearla manualmente al hacer UPDATE).
+
+**Versionada en repo**: **Sí** — `scripts/cbam-schema.sql:197`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **`updated_by` FK `NO ACTION`** — al borrar el `auth.users` que editó la última vez, queda bloqueado el borrado del usuario. Recomendación: cambiar a `ON DELETE SET NULL` (mantiene la fila de config, solo pierde la trazabilidad del editor concreto). Mismo patrón que `cbam_advisory_report_downloads.user_id SET NULL` (Tanda 4).
+- Sin trigger `updated_at` aunque la columna existe — incoherente con otras 8 tablas del dominio que sí tienen el trigger. Añadir el trigger para garantizar la trazabilidad temporal automáticamente.
+- PK textual (`key`) — coherente con `cbam_sectors` y `cbam_certificates`.
+- `value` jsonb sin CHECK estructural — flexibilidad total. Riesgo: una mala carga puede romper el módulo si la app espera un shape concreto. Documentar en código (validador en `lib/cbamService.js`).
+
+---
+
+## cbam_countries
+
+**Filas**: **0**
+
+**Propósito inferido**: Catálogo maestro de países con flags `cbam_applies` y `is_eu_member`. Diseñada como tabla de referencia genérica para clasificar países en el módulo CBAM. **Vacía** — no se ha cargado. Referenciada 3 veces en grep de código (probablemente scripts ETL o admin de carga). Solapa parcialmente con `cbam_excluded_countries` (sub-tanda 5A) en el caso `cbam_applies = false`.
+
+**Columnas** (6):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `country_code` varchar (NN, **UNIQUE**), `country_name` varchar (NN) | |
+| Flags | `cbam_applies` bool (def true), `is_eu_member` bool (def false) | |
+| Auditoría | `created_at` | sin updated_at |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_countries_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `cbam_countries_country_code_key` — UNIQUE `(country_code)`
+- `idx_cbam_countries_code` — btree `(country_code)` (redundante con el UNIQUE anterior)
+- `idx_cbam_countries_applies` — btree `(cbam_applies)`
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-assessment-schema.sql:73`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **0 filas** — tabla huérfana similar a `cbam_cn_codes_full`. Decidir en sub-tanda 5C: cargar (lista de países ISO 3166-1 con sus flags) o deprecar (RENAME a `_deprecated_cbam_countries`).
+- **Índice `idx_cbam_countries_code` redundante** con el UNIQUE constraint sobre `(country_code)` (mismo patrón que `dispatches.idx_dispatches_expediente` resuelto en sub-tanda 2C).
+- Sin `updated_at` ni trigger.
+- Si se carga, considerar UNIQUE compuesto que incluya `effective_from` para versionar (los países cambian de status raramente pero ocurre — ej. salida de Reino Unido del UE).
+
+---
+
+<!-- TANDA 5 INCOMPLETA: pendientes para sub-tandas 5B-3 y 5B-4 — análisis de los 4 pares duplicados aparentes y sección "Hallazgos de la Tanda 5" -->
