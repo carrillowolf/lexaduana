@@ -212,4 +212,194 @@
 
 ---
 
-<!-- TANDA 5 INCOMPLETA: faltan cbam_cn_codes_full, cbam_benchmarks_official, cbam_default_value_markup, cbam_default_values_official, cbam_certificates, cbam_timeline, cbam_ets_prices, cbam_regulations, cbam_config, cbam_countries y la sección "Hallazgos de la Tanda 5" -->
+<!-- Sub-tanda 5B-1: añadidas cbam_cn_codes_full, cbam_benchmarks_official, cbam_default_value_markup, cbam_default_values_official, cbam_certificates -->
+
+## cbam_cn_codes_full
+
+**Filas**: **0**
+
+**Propósito inferido**: Tabla de CN codes "enriquecida" con metadatos extensos de la asesoría CBAM (rutas de producción, precursores, datos extra requeridos, calidad del dato, indicador de carbon price abroad). Diseñada para reemplazar/complementar `cbam_cn_codes` con un esquema mucho más detallado (19 columnas vs 13). **No tiene filas hoy** — la carga prevista nunca se ha completado. Referenciada 3 veces en grep de código (probablemente en scripts ETL o admin de carga, no en la app activa).
+
+**Columnas** (19, agrupadas):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `cn_code` varchar (NN, UNIQUE) | UNIQUE simple, no versionado por fecha |
+| Categorización | `main_category` varchar (NN), `aggregated_category` varchar (NN), `description` | Más granular que `cbam_cn_codes` |
+| Aplicabilidad | `cbam_applies` bool (def true), `indirect_emissions` bool (def true), `carbon_price_abroad` bool (def true) | |
+| Datos técnicos | `quantity_unit`, `installation_data`, `special_provisions`, `production_routes`, `production_routes_detail`, `precursors`, `extra_data_required`, `indirect_emissions_data`, `data_quality` | todos `text` |
+| Vigencia | `effective_from` date (def `'2026-01-01'`), `effective_to` date | |
+| Auditoría | `created_at`, `updated_at` | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_cn_codes_full_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**: pkey, UNIQUE `(cn_code)`, btree `(cn_code)`, btree `(main_category)`, btree `(aggregated_category)`.
+
+**Triggers**: `cbam_cn_codes_full_updated_at` BEFORE UPDATE.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-assessment-schema.sql:12`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **0 filas + esquema más completo que `cbam_cn_codes`** = candidata clara a "feature a medio implementar". Decidir en sub-tanda 5C: cargar (sustituir o complementar a `cbam_cn_codes`) vs deprecar (RENAME a `_deprecated_cbam_cn_codes_full`, revisión 90 días).
+- UNIQUE sobre `cn_code` (sin `effective_from`) — distinto del patrón versionado temporal de `cbam_cn_codes`. Si se cargara, no permitiría tener varias versiones del mismo CN code en simultáneo.
+- Casi todos los campos técnicos son `text` libres sin CHECK (`production_routes`, `data_quality`, `quantity_unit`...). Si se carga en serio, conviene enums.
+- La columna `indirect_emissions` (bool) y `indirect_emissions_data` (text) coexisten — la primera flag, la segunda descripción. Coherente.
+
+---
+
+## cbam_benchmarks_official
+
+**Filas**: 1804
+
+**Propósito inferido**: Tabla v2 de benchmarks oficiales del Reglamento (EU) 2025/2620 (referencia regulatoria). Por CN code + sector con dos columnas (A y B) cada una con valor + indicador de ruta de producción. Mucho más detallada que `cbam_benchmarks` (1804 vs 24 filas). Usada en cálculos detallados según el grep (3 referencias en código). Convive con `cbam_benchmarks` (5 referencias) — coexistencia, no duplicación. Ver análisis de pares al final del archivo.
+
+**Columnas** (14, agrupadas):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `cn_code` varchar (NN), `sector` varchar (NN), `description` text | sector como `varchar` libre, **no FK** a `cbam_sectors` |
+| Valores | `column_a_value` num (def 0), `column_a_route_indicator` varchar, `column_b_value` num (def 0), `column_b_route_indicator` varchar | dos rutas de producción comparables |
+| Trazabilidad | `regulation_ref` varchar (def `'(EU) 2025/2620'`), `effective_from` date (def `'2026-01-01'`), `effective_to` date | |
+| Origen del dato | `source_version` varchar, `source_date` date | versión del fichero oficial cargado |
+| Auditoría | `created_at`, `updated_at` | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_benchmarks_official_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `idx_benchmarks_off_cn` — btree `(cn_code)`
+- `idx_benchmarks_off_sector` — btree `(sector)`
+
+**Triggers**: `cbam_benchmarks_official_updated_at` BEFORE UPDATE.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-assessment-schema.sql:48`.
+
+**Retención sugerida**: indefinida (datos regulatorios).
+
+**Observaciones**:
+- **`sector` es `varchar` libre, sin FK** a `cbam_sectors(id)` — inconsistente con `cbam_cn_codes.sector_id text` (FK). Probablemente porque la carga viene del Excel oficial y los nombres no coinciden 1:1 con los slugs de `cbam_sectors`. Documentar el mapping en código.
+- **Sin UNIQUE** sobre `(cn_code, ...)` — permite varias filas para el mismo CN code (esperable: una por ruta de producción A/B y por versión). Pero también permite duplicados accidentales en cargas ETL. Considerar UNIQUE compuesto `(cn_code, sector, source_version)` cuando se decida.
+- 1804 filas con 2 índices — adecuado para los queries por CN code o sector.
+
+---
+
+## cbam_default_value_markup
+
+**Filas**: 3
+
+**Propósito inferido**: Porcentaje de markup (incremento) que se aplica a los valores de emisión por defecto cada año. Tabla auxiliar pequeña — 1 fila por año (probablemente 2026, 2027, 2028 con porcentajes crecientes 20%/30%/50% según evolución regulatoria). Usada por la calculadora CBAM. **No es un par duplicado de `cbam_default_values_official`**, sino su complemento (proporciona los multiplicadores que `cbam_default_values_official.with_markup_2026/2027/2028` ya aplican y materializan).
+
+**Columnas** (7):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `year` int (NN, **UNIQUE**) | una fila por año |
+| Markup | `markup_pct` numeric (NN), `label` text (NN) | ej. `25%`, `'Markup transición'` |
+| Trazabilidad | `description`, `regulation_ref`, `created_at` | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_default_value_markup_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**: pkey + UNIQUE `(year)`.
+
+**Triggers**: ninguno (sin columna `updated_at`).
+
+**Versionada en repo**: **Sí** — `scripts/cbam-schema.sql:166`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- UNIQUE sobre `year` correctamente impide tener dos markups distintos para el mismo año.
+- Sin trigger updated_at + sin columna `updated_at` — coherente. Si en el futuro hay correcciones de markup tras publicar reglamento, sería útil registrar `updated_at`.
+- `label` libre — valores esperables: `'Transitional 2026'`, `'Transitional 2027'`, `'Definitive'`. Sin CHECK.
+
+---
+
+## cbam_default_values_official
+
+**Filas**: 11805
+
+**Propósito inferido**: Valores oficiales por defecto de emisión por país × CN code, según Reglamento (EU) 2025/2621. Es la **tabla más grande del dominio reference data**. Cada fila es la combinación (país de origen, CN code) con direct/indirect/total emissions y los pre-calculados con markup para 2026/2027/2028. Usada cuando el importador no tiene datos reales del proveedor.
+
+**Columnas** (16, agrupadas):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `country_code` varchar (NN), `country_name` varchar, `cn_code` varchar (NN) | sin UNIQUE compuesto |
+| Producto | `description` text, `sector` varchar, `production_route` varchar | sector libre (mismo patrón que `cbam_benchmarks_official`) |
+| Emisiones base | `direct_emissions` num, `indirect_emissions` num, `total_emissions` num | tCO2e/t |
+| Pre-cálculo con markup | `with_markup_2026` num, `with_markup_2027` num, `with_markup_2028` num | aplican el `cbam_default_value_markup.markup_pct` |
+| Trazabilidad | `regulation_ref` varchar (def `'(EU) 2025/2621'`), `source_version` varchar, `source_date` date | |
+| Auditoría | `created_at`, `updated_at` | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_dv_official_public_read` (SELECT, public, true) — **nombre de policy distinto al patrón** (`cbam_dv_off...` vs `cbam_default_values_official_public_read`). No afecta funcionalidad.
+
+**Foreign keys**: ninguna.
+
+**Índices** (4):
+- `idx_dv_off_cn` — btree `(cn_code)`
+- `idx_dv_off_country` — btree `(country_code)`
+- `idx_dv_off_country_cn` — btree `(country_code, cn_code)` (compuesto, optimiza el query típico)
+- `idx_dv_off_sector` — btree `(sector)`
+
+**Triggers**: `cbam_dv_official_updated_at` BEFORE UPDATE.
+
+**Versionada en repo**: **Sí** — `scripts/cbam-official-data-v2-schema.sql:28`.
+
+**Retención sugerida**: indefinida (catálogo regulatorio).
+
+**Observaciones**:
+- **Sin UNIQUE** sobre `(country_code, cn_code, source_version)` — permite duplicados por carga ETL repetida. La siguiente carga del Excel oficial debería hacer un upsert idempotente o limpiar antes; documentar el procedimiento.
+- 11805 filas y 4 índices: bien dimensionado para los queries del dominio.
+- `country_name` denormalizado del `country_code` — potencialmente inconsistente con `cbam_countries` (que está vacía). Mientras `cbam_countries` no se cargue, `country_name` aquí es la fuente de verdad por país.
+- `sector` libre — mismo problema que `cbam_benchmarks_official`. Mapping a `cbam_sectors.id` no garantizado.
+
+---
+
+## cbam_certificates
+
+**Filas**: 7
+
+**Propósito inferido**: Certificados aduaneros relacionados con CBAM (códigos de certificación, condicionalidad, validez por sector). Tabla pequeña con configuración de qué certificados son requeridos/opcionales y a qué sectores aplican o NO aplican. Usada por la lógica de checklists CBAM o de productos importados.
+
+**Columnas** (9):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `code` text (**PK**), `description` text (NN) | PK textual, sin id numérico |
+| Reglas | `is_required` bool (def false), `condition_code` text, `applies_to_sectors` text[], `not_applies_to_sectors` text[] | |
+| Vigencia | `valid_until` date, `sort_order` int (def 0) | sin `effective_from` |
+| Auditoría | `created_at` | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `cbam_certificates_public_read` (SELECT, public, true)
+
+**Foreign keys**: ninguna.
+
+**Índices**: pkey UNIQUE sobre `(code)`. Sin más índices.
+
+**Triggers**: ninguno (sin columna `updated_at`).
+
+**Versionada en repo**: **Sí** — `scripts/cbam-schema.sql:115`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- PK textual `code` — coherente con `cbam_sectors` (slug) y `cbam_config` (key). Patrón tripartito en reference data.
+- **`applies_to_sectors text[]` + `not_applies_to_sectors text[]`** — semántica antiintuitiva (lista positiva + lista negativa coexisten). Probablemente para cubrir el caso "aplica a todos excepto X". Documentar la lógica de prioridad cuando ambas estén llenas.
+- Sin `updated_at` — los cambios regulatorios no quedan trazados. En 5C podría añadirse si se considera relevante para audit.
+- `valid_until` sin `effective_from` — asume que el certificado está vigente desde siempre hasta `valid_until`. Para certificados que cambian, se necesitaría versionado por fecha como `cbam_cn_codes`.
+
+---
+
+<!-- TANDA 5 INCOMPLETA: faltan cbam_timeline, cbam_ets_prices, cbam_regulations, cbam_config, cbam_countries y la sección "Hallazgos de la Tanda 5" -->
