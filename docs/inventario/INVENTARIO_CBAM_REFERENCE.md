@@ -668,4 +668,55 @@ Cuatro pares de tablas con nombres sospechosos de redundancia. Tras la inspecci�
 
 ---
 
-<!-- TANDA 5 INCOMPLETA: pendiente sub-tanda 5B-4 — sección "Hallazgos de la Tanda 5" -->
+## Hallazgos de la Tanda 5
+
+### 🚨 Críticos
+
+**Ninguno.** El dominio CBAM reference data presenta un patrón muy sólido:
+
+- RLS habilitada uniformemente en las 15 tablas, con **una única policy** por tabla (`<tabla>_public_read`, `cmd=SELECT`, `role=public`, `USING true`).
+- **Ninguna policy de mutación pública** (no hay `ALL`/INSERT/UPDATE/DELETE para `public` o `authenticated`). Las cargas se hacen desde `service_role` vía scripts ETL — **no se reproduce el problema de `checklist_templates`** detectado en Tanda 2.
+- **0 CHECK constraints** en las 15 tablas (`pg_constraint contype='c'` → `[]`). No hay CHECKs problemáticos preexistentes que invaliden propuestas (problema detectado en Tanda 4 con `cbam_advisory_requests.status_check`).
+- **15/15 tablas versionadas** en el repo (`scripts/cbam-schema.sql`, `scripts/cbam-assessment-schema.sql`, `scripts/cbam-official-data-v2-schema.sql`). Único dominio del inventario completamente versionado junto con CBAM Advisory.
+
+### ⚠️ Tablas a deprecar
+
+1. **`cbam_cn_codes_full`** — 0 filas, esquema enriquecido pero sin versionado por fecha (regresión respecto a `cbam_cn_codes`), referenciada en código solo desde scripts ETL inactivos. Decisión: RENAME a `_deprecated_cbam_cn_codes_full` con revisión 90 días (2026-07-29). Si en el futuro se necesita enriquecer el catálogo, partir de `cbam_cn_codes` y conservar el versionado.
+2. **`cbam_countries`** — 0 filas, solapa funcionalmente con `public.countries` (catálogo TARIC, 62 filas, ya en uso) y con `cbam_excluded_countries` (7 filas, activa). Decisión: RENAME a `_deprecated_cbam_countries` con revisión 90 días (2026-07-29). Si crece la necesidad CBAM-específica de catálogo de países, ampliar `public.countries` con columnas adicionales en lugar de mantener un catálogo paralelo vacío.
+
+### 🟡 Mejoras menores (al backlog, fuera de 5C)
+
+3. **`cbam_config.updated_by` FK con `NO ACTION`** — al borrar el `auth.users` que editó la última vez, queda bloqueado el borrado del usuario (mismo patrón a corregir que en Fase 7 para `dispatches`/`cbam_advisory_requests`). Cambiar a `ON DELETE SET NULL` (preserva la fila de config; pierde solo la trazabilidad del editor concreto). Patrón ya aplicado correctamente en `cbam_advisory_report_downloads.user_id`.
+4. **`cbam_config` sin trigger `update_updated_at_column`** pese a tener columna `updated_at`. Las 8 tablas del dominio con columna `updated_at` tienen el trigger; `cbam_config` es la excepción incoherente. Añadir el trigger para que la app no tenga que setear `updated_at` manualmente.
+5. **`cbam_ets_prices.idx_cbam_ets_current`** es un índice parcial `WHERE is_current = true` sobre la columna `(is_current)`, **no un UNIQUE**. La intención de "solo una fila vigente" no se garantiza a nivel de BD. Convertir en `CREATE UNIQUE INDEX ... ON cbam_ets_prices (is_current) WHERE is_current = true` (o equivalente con DROP+CREATE) cuando se haga limpieza.
+6. **`cbam_timeline.event_type` y `cbam_regulations.regulation_type` libres** sin CHECK. Valores esperables identificados (timeline: `'milestone'`, `'regulation'`, `'omnibus'`, `'transition'`; regulations: `'implementing'`, `'delegated'`, `'omnibus'`, `'main'`). Añadir CHECKs en una iteración cosmética cuando se confirmen los valores reales con Carlos. Mismo tratamiento para `cbam_regulations.status` (default `'in_force'`).
+7. **`regulation_ref` referenciado lógicamente** desde `cbam_cn_codes`, `cbam_emission_factors`, `cbam_benchmarks`, `cbam_benchmarks_official`, `cbam_default_value_markup`, `cbam_default_values_official` y `cbam_excluded_countries`, **sin FK estricta** a `cbam_regulations.reference`. Riesgo: typos en cargas ETL no se detectan. Si se quiere integridad, añadir FK con el coste de invalidar cargas que mencionen un Reglamento aún no insertado en `cbam_regulations` (orden de carga importa).
+
+### 📚 Documentación de relaciones (no DDL)
+
+8. **`cbam_benchmarks` es la vista resumen por sector** de `cbam_benchmarks_official` (datos crudos por CN code). Documentar el contrato en `lib/cbamService.js` o equivalente: **UI/dashboards → `cbam_benchmarks`; cálculos detallados → `cbam_benchmarks_official`**. A largo plazo, considerar regenerar la primera como vista materializada de la segunda agrupando por sector (requiere antes mapear el `sector` libre del oficial al `sector_id` slug).
+9. **`cbam_default_values_official.with_markup_2026/2027/2028` se materializan a partir de `cbam_default_value_markup.markup_pct`**. Documentar la dependencia: cualquier UPDATE en `cbam_default_value_markup` exige un recálculo manual de las columnas `with_markup_*` en `cbam_default_values_official` (o un job que lo dispare). Hoy esa dependencia es invisible para quien edite `markup_pct` sin saberlo.
+
+---
+
+## Correcciones propuestas para Sub-tanda 5C
+
+Migración única con dos bloques de RENAME para deprecar las dos tablas vacías. **No** se tocan `cbam_config`, `cbam_ets_prices`, `cbam_timeline`, `cbam_regulations` ni los `regulation_ref`: van al backlog para iteración futura no-bloqueante.
+
+```sql
+-- Bloque 1: Deprecar cbam_cn_codes_full
+ALTER TABLE public.cbam_cn_codes_full RENAME TO _deprecated_cbam_cn_codes_full;
+COMMENT ON TABLE public._deprecated_cbam_cn_codes_full IS
+  'DEPRECATED 2026-04-29. Vacía, sin uso en código.
+   Revisar 2026-07-29 y eliminar.';
+
+-- Bloque 2: Deprecar cbam_countries
+ALTER TABLE public.cbam_countries RENAME TO _deprecated_cbam_countries;
+COMMENT ON TABLE public._deprecated_cbam_countries IS
+  'DEPRECATED 2026-04-29. Vacía. Solapamiento con public.countries y cbam_excluded_countries.
+   Revisar 2026-07-29 y eliminar.';
+```
+
+Tras aplicar:
+- Las dos tablas conservan filas (cero, en este caso) y políticas RLS heredadas; solo cambia el nombre.
+- Los 3 + 3 archivos en `scripts/` que las definen quedan desincronizados; se aceptará como "estado deprecado" hasta el DROP definitivo en 2026-07-29.

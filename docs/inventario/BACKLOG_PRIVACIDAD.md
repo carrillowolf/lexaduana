@@ -353,5 +353,96 @@ workflow (`'analyzing'`, `'pending_supplier_data'`, `'calculating'`, `'reviewing
 con `'requested'` cuando el real es `'invoiced'`. Ver INVENTARIO_CBAM_ADVISORY.md
 sección "Aprendizaje del proceso (incidencia 4C)".
 
+## De Tanda 5 (CBAM reference)
+
+Mejoras menores detectadas durante el inventario del dominio CBAM reference data
+(15 tablas). Ninguna es bloqueante; todas quedan para una iteración futura
+no-prioritaria. Las dos deprecaciones reales (`cbam_cn_codes_full` y
+`cbam_countries`) sí entran en sub-tanda 5C.
+
+### `cbam_config.updated_by` FK con `NO ACTION`
+
+Al borrar el `auth.users` que editó la última vez, queda bloqueado el borrado
+del usuario. Cambiar a `ON DELETE SET NULL` (mismo patrón ya aplicado
+correctamente en `cbam_advisory_report_downloads.user_id`). Resolver junto con
+el resto de FKs `auth.users` en Fase 7.
+
+```sql
+ALTER TABLE public.cbam_config
+  DROP CONSTRAINT cbam_config_updated_by_fkey,
+  ADD  CONSTRAINT cbam_config_updated_by_fkey
+    FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+```
+
+### `cbam_config` sin trigger `update_updated_at_column`
+
+Pese a tener columna `updated_at`, no hay trigger BEFORE UPDATE que la refresque
+automáticamente. Las 8 tablas del dominio con `updated_at` tienen el trigger;
+`cbam_config` es la única excepción. Añadir trigger para no depender de que la
+app setee `updated_at` manualmente.
+
+```sql
+CREATE TRIGGER cbam_config_updated_at
+  BEFORE UPDATE ON public.cbam_config
+  FOR EACH ROW EXECUTE FUNCTION public.update_advisory_updated_at();
+-- (o la función equivalente que usen las otras tablas del dominio)
+```
+
+### `cbam_ets_prices.idx_cbam_ets_current` no garantiza unicidad
+
+Es un índice parcial `WHERE is_current = true` pero NO es UNIQUE. La intención
+de "solo una fila vigente" se documenta pero no se enforce a nivel de BD.
+Convertir en UNIQUE parcial:
+
+```sql
+DROP INDEX public.idx_cbam_ets_current;
+CREATE UNIQUE INDEX idx_cbam_ets_current_unique
+  ON public.cbam_ets_prices (is_current)
+  WHERE is_current = true;
+```
+
+### CHECK constraints faltantes en columnas de tipo
+
+Tres columnas `text` libres con valores cerrados conocidos:
+
+- `cbam_timeline.event_type`: probablemente `'milestone'`, `'regulation'`, `'omnibus'`, `'transition'`. Confirmar con Carlos antes de proponer CHECK.
+- `cbam_regulations.regulation_type`: probablemente `'implementing'`, `'delegated'`, `'omnibus'`, `'main'`. Confirmar.
+- `cbam_regulations.status` (default `'in_force'`): probablemente `'in_force'`, `'repealed'`, `'pending'`. Confirmar.
+
+Aprendizaje de Tanda 4 aplicable: **antes de añadir CHECKs, listar `pg_constraint contype='c'` y consultar `DISTINCT` real en BD** para no infrainferir valores válidos.
+
+### `regulation_ref` sin FK estricta a `cbam_regulations.reference`
+
+Siete tablas (`cbam_cn_codes`, `cbam_emission_factors`, `cbam_benchmarks`,
+`cbam_benchmarks_official`, `cbam_default_value_markup`,
+`cbam_default_values_official`, `cbam_excluded_countries`) tienen una columna
+`regulation_ref` libre que apunta lógicamente a `cbam_regulations.reference`
+pero sin FK SQL. Typos en cargas ETL no se detectan.
+
+Si se decide añadir las FK, hay que tener en cuenta que el orden de carga
+empieza siendo importante: `cbam_regulations` debe poblarse antes que las
+tablas que la referencian. Decisión postpuesta — coste alto, beneficio
+incremental.
+
+### Documentación de relaciones materializadas (sin DDL)
+
+Dos relaciones lógicas que conviene documentar en `lib/cbamService.js` o
+equivalente para que cualquier desarrollador futuro las vea:
+
+- **`cbam_benchmarks` es vista resumen** de `cbam_benchmarks_official`
+  (UI/dashboards vs cálculos por CN code).
+- **`cbam_default_values_official.with_markup_2026/2027/2028`** se materializan
+  a partir de `cbam_default_value_markup.markup_pct`. Cambiar el markup exige
+  recalcular las columnas `with_markup_*` (manual o vía script).
+
+### Revisión 2026-07-29 (90 días tras sub-tanda 5C)
+
+Si las tablas siguen sin uso, eliminar definitivamente:
+
+```sql
+DROP TABLE IF EXISTS public._deprecated_cbam_cn_codes_full;
+DROP TABLE IF EXISTS public._deprecated_cbam_countries;
+```
+
 
 
