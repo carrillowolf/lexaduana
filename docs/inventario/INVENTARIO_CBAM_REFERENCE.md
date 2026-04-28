@@ -591,4 +591,81 @@
 
 ---
 
-<!-- TANDA 5 INCOMPLETA: pendientes para sub-tandas 5B-3 y 5B-4 — análisis de los 4 pares duplicados aparentes y sección "Hallazgos de la Tanda 5" -->
+## Análisis de duplicidades aparentes
+
+Cuatro pares de tablas con nombres sospechosos de redundancia. Tras la inspección de esquema, contenido y uso real en código, ninguno es una duplicación pura.
+
+### Par 1 — `cbam_cn_codes` (5A) vs `cbam_cn_codes_full` (5B-1)
+
+| Dimensión | `cbam_cn_codes` | `cbam_cn_codes_full` |
+|---|---|---|
+| Filas | **42** | **0** |
+| Columnas | 13 | 19 |
+| Granularidad | sector_id + gas + flags básicos | + production_routes/precursors/extra_data/data_quality |
+| Vigencia | versionado por fecha (`effective_from/to`) | UNIQUE simple sobre `cn_code` (sin versionado) |
+| Refs en código | 2 | 3 |
+
+**Naturaleza**: la `_full` es un esquema enriquecido **pensado para reemplazar o complementar** al simple, nunca cargado. No es la misma fuente con distinta granularidad: las columnas extra describen rutas de producción y precursores que `cbam_cn_codes` no contempla.
+
+**Uso en código**: la app activa lee `cbam_cn_codes` (42 filas, datos vivos). Las 3 referencias a `_full` son probablemente scripts ETL o admin de carga sin completar.
+
+**Recomendación**: **deprecar `cbam_cn_codes_full`** (RENAME a `_deprecated_cbam_cn_codes_full`, revisión 2026-07-23). Si en el futuro se decide enriquecer el catálogo, rediseñar partiendo del esquema actual de `cbam_cn_codes` (que sí tiene versionado por fecha, valor que `_full` perdió). No mantener una tabla vacía indefinidamente.
+
+---
+
+### Par 2 — `cbam_benchmarks` (5A) vs `cbam_benchmarks_official` (5B-1)
+
+| Dimensión | `cbam_benchmarks` | `cbam_benchmarks_official` |
+|---|---|---|
+| Filas | **24** | **1804** |
+| Columnas | 12 | 14 |
+| Granularidad | por sector (`sector_id` slug + `benchmark_key`) | por CN code + ruta A/B (datos crudos del Reglamento) |
+| FK a sectors | Sí (`sector_id text` FK) | No (`sector varchar` libre) |
+| Vigencia | anual (`year_from/to int`) | por fecha (`effective_from/to date`) |
+| Refs en código | 5 | 3 |
+
+**Naturaleza**: **complementarias por nivel de detalle**. `cbam_benchmarks` es la vista resumida por sector (un benchmark "representativo" por sector) para UI rápida y dashboards. `cbam_benchmarks_official` son los datos crudos del Reglamento (EU) 2025/2620 por CN code y ruta de producción, usados en cálculos detallados de la asesoría.
+
+**Uso en código**: ambas activas. `cbam_benchmarks` aparece más veces (5 refs, presumiblemente UI y vistas resumen); `_official` en cálculos profundos (3 refs, probablemente `lib/cbamAssessmentData.js`).
+
+**Recomendación**: **mantener ambas**. Documentar el contrato en `lib/cbamService.js` o equivalente: `cbam_benchmarks` para UI/dashboards, `cbam_benchmarks_official` para cálculos por CN code. Como mejora futura (no urgente), considerar regenerar `cbam_benchmarks` como vista materializada agrupando `cbam_benchmarks_official` por sector — requiere primero mapear el `sector` libre del oficial al `sector_id` slug.
+
+---
+
+### Par 3 — `cbam_default_value_markup` (5B-2) vs `cbam_default_values_official` (5B-1)
+
+| Dimensión | `cbam_default_value_markup` | `cbam_default_values_official` |
+|---|---|---|
+| Filas | **3** | **11805** |
+| Columnas | 7 | 16 |
+| Contenido | porcentajes de markup por año | valores de emisión por país × CN code |
+| Materialización | define el factor (e.g. 25 %) | aplica el factor en columnas `with_markup_2026/2027/2028` |
+| Refs en código | 2 | 2 |
+
+**Naturaleza**: **NO son un par duplicado — son complementarias**. La consulta del briefing las agrupó por similitud de nombre, pero contienen datos distintos en niveles distintos del modelo. `cbam_default_value_markup` aporta los multiplicadores anuales; `cbam_default_values_official` materializa los resultados por país × CN code aplicando esos multiplicadores en columnas dedicadas (lectura sin JOIN).
+
+**Uso en código**: ambas activas y necesarias. La calculadora CBAM lee directamente las columnas `with_markup_*` de `cbam_default_values_official` para mostrar coste estimado; `cbam_default_value_markup` se consulta para mostrar al usuario el porcentaje aplicado y trazar el origen normativo.
+
+**Recomendación**: **mantener ambas, sin consolidar**. La denormalización en columnas `with_markup_2026/2027/2028` es deliberada por performance y simplicidad de lectura. Coste: si la regulación añade un año (2029), requiere `ALTER TABLE` + recálculo. Aceptable porque la cadencia es anual y predecible. Documentar la dependencia: cualquier UPDATE en `cbam_default_value_markup` debe disparar un recálculo manual de las columnas materializadas en `cbam_default_values_official`.
+
+---
+
+### Par 4 — `cbam_countries` (5B-2) vs `cbam_excluded_countries` (5A)
+
+| Dimensión | `cbam_countries` | `cbam_excluded_countries` |
+|---|---|---|
+| Filas | **0** | **7** |
+| Columnas | 6 | 8 |
+| Modelo | catálogo maestro con flags `cbam_applies`, `is_eu_member` | lista solo de excluidos por ETS equivalente |
+| Vigencia | sin `effective_from/to` | sí (`effective_from/to date`) |
+| Refs en código | 3 | 2 |
+
+**Naturaleza**: solapamiento parcial. Si `cbam_countries.cbam_applies = false`, ese país conceptualmente sería "excluido" — equivalente a estar en `cbam_excluded_countries`. Pero `cbam_countries` está **vacía** y nunca se cargó; `cbam_excluded_countries` está activa con los 7 países con ETS reconocido (Islandia, Noruega, Suiza, Liechtenstein, etc.). Además, ya existe `public.countries` (catálogo TARIC, 62 filas) que cubre la función de "lista maestra de países".
+
+**Uso en código**: `cbam_excluded_countries` se usa en cálculos (verificar si una importación está exenta de CBAM por país de origen). Las 3 referencias a `cbam_countries` son lecturas defensivas o admin de carga sin completar.
+
+**Recomendación**: **deprecar `cbam_countries`** (RENAME a `_deprecated_cbam_countries`, revisión 2026-07-23). Si en el futuro se necesita un catálogo CBAM-específico de países más allá de los excluidos, **reutilizar `public.countries`** (ya disponible para TARIC) y añadir las columnas CBAM-específicas (`cbam_applies`, `is_eu_member`) ahí, en lugar de mantener un catálogo paralelo vacío.
+
+---
+
+<!-- TANDA 5 INCOMPLETA: pendiente sub-tanda 5B-4 — sección "Hallazgos de la Tanda 5" -->
