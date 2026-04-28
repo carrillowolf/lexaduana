@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { CBAMAlert } from '@/components/CBAMAlert'
+import QuickAIConsent from '@/components/privacy/QuickAIConsent'
 import { trackEvent } from '@/lib/analytics'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { clasificadorDict } from '@/lib/i18n/clasificador'
@@ -18,6 +19,7 @@ export default function ClasificadorPage() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [countries, setCountries] = useState([])
+  const [aiConsent, setAiConsent] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -244,10 +246,13 @@ export default function ClasificadorPage() {
               </div>
             </div>
 
+            {/* Aviso temporal Fase 2.5 — consentimiento envío a Anthropic */}
+            <QuickAIConsent consentKey="classifier" onConsentChange={setAiConsent} />
+
             {/* Botón principal */}
             <button
               type="submit"
-              disabled={loading || description.length < 10}
+              disabled={loading || description.length < 10 || !aiConsent}
               className="w-full px-6 py-3 bg-[#0A3D5C] text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0A3D5C]/90 transition flex items-center justify-center gap-2"
             >
               {loading ? (
