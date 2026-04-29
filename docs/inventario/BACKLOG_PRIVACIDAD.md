@@ -444,5 +444,158 @@ DROP TABLE IF EXISTS public._deprecated_cbam_cn_codes_full;
 DROP TABLE IF EXISTS public._deprecated_cbam_countries;
 ```
 
+## De Tanda 6 (TARIC reference)
+
+Mejoras de mantenimiento y análisis del flujo ETL del dominio TARIC reference data
+(18 tablas). Las correcciones de performance ya entran en sub-tanda 6F. Lo que
+sigue es backlog cosmético y de monitorización.
+
+### Vestigios cosméticos en nombres de pkey/sequence/policy
+
+Funcionan correctamente, solo afecta legibilidad. Renombrar en una iteración
+de limpieza posterior (sin urgencia):
+
+| Tabla | Vestigio | Origen |
+|---|---|---|
+| `measure_types` | `measure_types_new_*` | renombrado desde `measure_types_new` (Bloque 1) |
+| `measure_exclusions` | `measure_exclusions_id_seq1`, `measure_exclusions_pkey1` | drop+create previo |
+| `descriptions` | `descriptions_new_*` | renombrado desde `descriptions_new` (Bloque 1) |
+| `footnote_descriptions` | `footnote_descriptions_pkey1` | drop+create previo |
+| `certificate_types` | `certificate_types_pkey1` | drop+create previo |
+
+Patrón de rename idempotente:
+
+```sql
+ALTER INDEX public.measure_types_new_pkey RENAME TO measure_types_pkey;
+ALTER SEQUENCE public.measure_types_new_id_seq RENAME TO measure_types_id_seq;
+-- ... (idem para el resto)
+```
+
+### `descriptions` sin columna `language`
+
+Inconsistencia con `additional_codes`, `footnote_descriptions` y `certificate_types`
+(todas multilingües). Limita la posibilidad de ofrecer descripciones de mercancía
+en español sin reformatear el schema. Si se decide soportar multilingüe:
+
+```sql
+ALTER TABLE public.descriptions
+  ADD COLUMN language bpchar(2) NOT NULL DEFAULT 'EN';
+-- + drop UNIQUE actual (goods_code, goods_code_full)
+-- + add UNIQUE (goods_code, goods_code_full, language)
+-- + recargar Nomenclature ES.xlsx
+```
+
+### 6 códigos en `declarable_codes` sin descripción correspondiente
+
+25 697 filas en `declarable_codes` vs 25 691 en `descriptions`. Diferencia de 6
+códigos. Posible carga incompleta o códigos recientes sin texto en el Excel del
+mes. Reportable a Carlos para reconciliación:
+
+```sql
+SELECT dc.goods_code, dc.goods_code_full, dc.is_leaf, dc.start_date
+FROM public.declarable_codes dc
+LEFT JOIN public.descriptions d
+  ON d.goods_code = dc.goods_code AND d.goods_code_full = dc.goods_code_full
+WHERE d.id IS NULL
+ORDER BY dc.goods_code;
+```
+
+### Inconsistencia de tipo en lookups TARIC
+
+- `condition_codes.code` — `bpchar` (`character(1)`).
+- `action_codes.code` — `varchar` sin longitud.
+- `additional_codes.language`, `footnote_descriptions.language`, `certificate_types.language` — `bpchar` sin longitud explícita.
+
+Homogeneizar a `varchar(2)` o `character(2)` según convenga, con CHECK que valide
+los valores conocidos:
+
+```sql
+-- Ejemplo para language:
+ALTER TABLE public.additional_codes
+  ALTER COLUMN language TYPE varchar(2) USING language::varchar(2),
+  ADD CONSTRAINT additional_codes_language_check
+    CHECK (language IN ('EN','ES'));
+```
+
+### Sin UNIQUE compuesto en `geographical_areas_composition`
+
+Permite duplicados accidentales por carga ETL repetida. Añadir:
+
+```sql
+ALTER TABLE public.geographical_areas_composition
+  ADD CONSTRAINT geographical_areas_composition_uniq
+  UNIQUE (country_group, member_country, membership_start_date);
+```
+
+(Verificar primero que no hay duplicados existentes.)
+
+### Falta versionado en `scripts/` para tablas grandes
+
+Tablas activas que no aparecen como `CREATE TABLE` en `scripts/`:
+
+- `taric_measures` (136K filas) — sin `CREATE TABLE` activo, definición histórica.
+- `measure_conditions` (29K) — solo `_backup_mar26` en `bloque2-schema.sql`.
+- `measure_exclusions` (29K) — solo `_backup_mar26`.
+- `condition_codes` (8) — sin definición.
+- `action_codes` (8) — sin definición.
+- `measure_alerts` (15K) — sin definición (legacy).
+
+Tras aplicar 6F y cerrar la limpieza, considerar **baseline retroactivo** similar
+al de `user_consents` (Fase 1.3): un archivo `supabase/migrations/YYYYMMDDHHMMSS_taric_baseline.sql`
+con `CREATE TABLE IF NOT EXISTS` de cada una más sus índices/policies actuales,
+para que `db reset` desde limpio reconstruya el estado funcional.
+
+### `measure_alerts` con role `anon` y legacy fallback
+
+La tabla está marcada en `lib/calculateTariff.js:973-985` como fallback legacy.
+Antes de deprecar:
+
+1. Leer el bloque exacto para entender en qué casos se cae al fallback.
+2. Verificar que el sistema principal (probablemente `measureInterpreter.js`
+   sobre `taric_measures` + `measure_conditions`/`measure_footnotes`) cubre
+   todos los casos de producción.
+3. Si la cobertura es completa, RENAME a `_deprecated_measure_alerts` con
+   revisión 90 días.
+
+```sql
+ALTER TABLE public.measure_alerts RENAME TO _deprecated_measure_alerts;
+COMMENT ON TABLE public._deprecated_measure_alerts IS
+  'DEPRECATED YYYY-MM-DD. Legacy fallback en lib/calculateTariff.js. '
+  'Revisar YYYY-MM-DD y eliminar si la generación dinámica cubre todos los casos.';
+```
+
+### Análisis ETL TARIC y política de purga
+
+**Frecuencia mensual manual** (no cron) confirmada con Carlos. Solo 1 ejecución
+en `taric_update_runs` (`2026-04-13`); las cargas históricas anteriores no
+quedaron auditadas.
+
+**Crecimiento esperado de `taric_changes`**: ~18K cambios/mes ⇒ proyección
+~217K en 12 meses, ~434K en 24 meses. Considerar política de purga en **Fase 8**:
+
+```sql
+-- Opción A: purga selectiva por mes (preserva runs en taric_update_runs)
+DELETE FROM public.taric_changes
+WHERE data_month < to_char(now() - interval '24 months', 'YYYY-MM');
+
+-- Opción B: partición por data_month (refactor mayor)
+-- requiere recrear la tabla particionada por LIST/RANGE de data_month
+```
+
+**Crítico**: `taric_changes.run_id` con FK `ON DELETE CASCADE` ⇒ NO usar
+`DELETE FROM taric_update_runs` para purgar (perdería todo el run, incluida
+la bitácora histórica). Usar la opción A directamente sobre `taric_changes`.
+
+### Revisión periódica del flujo ETL
+
+Cada vez que Carlos ejecute la carga mensual:
+
+1. Verificar que `taric_update_runs` recibe la nueva fila (`status = 'success'`).
+2. Confirmar que `data_month` y `total_changes` cuadran con lo esperado.
+3. Si `total_changes` se desvía mucho de la media histórica (~18K), investigar
+   antes de mostrar la página `/cambios` al público.
+
+Sin métrica automática hoy. Considerar dashboard interno o alerta en Fase 8.
+
 
 

@@ -807,4 +807,112 @@ Cardinalidad: 5 280 descripciones × idiomas vs 121 938 referencias = ~23 refere
 
 ---
 
-<!-- TANDA 6 INCOMPLETA: pendiente sub-tanda 6E (hallazgos + propuestas para sub-tanda 6F). -->
+## Catálogos paralelos de países en LexAduana
+
+Tres catálogos coexisten activos con propósitos distintos. **No son duplicados**: cada uno cubre un caso de uso diferente.
+
+| Tabla | Filas | Dominio | Propósito | Distintivo |
+|---|---|---|---|---|
+| `geographical_areas` | 311 | TARIC | Catálogo oficial completo importado de CIRCABC | Incluye **países y grupos** (UE, EFTA, ACP, GSP...) — flag `is_country` distingue |
+| `public.countries` | 62 | General | Lookup ligero para selectores de UI | Solo países, metadata mínima (TARIC selectors, calculadora, despachos) |
+| `cbam_excluded_countries` | 7 | CBAM | Países con ETS equivalente al europeo, exentos de CBAM | Específico del flujo CBAM (Islandia, Noruega, Suiza, Liechtenstein…) |
+
+### Notas de relación
+
+- **`geographical_areas_composition`** (2 621 filas, sub-tanda 6D) **complementa** a `geographical_areas` aportando la relación M:N grupo → miembros (e.g. `'1011' → ['DE','FR','ES',...]`). Doble denormalización: replica `group_description` y `member_description` para evitar joins en hot path.
+- **`_deprecated_cbam_countries`** (sub-tanda 5C, 2026-04-29) fue un cuarto catálogo vacío que solapaba con `public.countries` y `cbam_excluded_countries`; renombrada para revisión 2026-07-29 y posterior `DROP`.
+- Los tres catálogos activos **no comparten claves primarias**: `geographical_areas.area_code` (TARIC), `public.countries.country_code` (ISO 3166-1) y `cbam_excluded_countries.country_code` (ISO 3166-1) son nominalmente compatibles para países (`'DE'`, `'CN'`, `'US'`...) pero los grupos de `geographical_areas` (`'1011'`, `'EU'`, `'EFTA'`) no existen en las otras dos.
+
+---
+
+## Hallazgos de la Tanda 6
+
+### 🚨 Críticos
+
+**Ninguno.** Las 18 tablas del dominio TARIC reference data:
+
+- Tienen RLS habilitada con policy SELECT exclusivamente.
+- Sin policies de mutación abiertas (`ALL`/INSERT/UPDATE/DELETE para `public` o `authenticated`).
+- Mutación reservada a `service_role` (cargas ETL desde scripts CIRCABC).
+- Sin reproducción del problema de `checklist_templates` (Tanda 2) ni del de `classification_examples` (Tanda 3).
+
+### ⚡ Performance (entrarán en sub-tanda 6F)
+
+Cinco redundancias de policies/índices con impacto real de espacio y mantenimiento, sobre todo en las tablas grandes:
+
+1. **Policy duplicada en `measure_footnotes`** (122K filas) — `Allow public read measure_footnotes` y `mf_public_read` con el mismo predicado SELECT public USING true. Eliminar una.
+2. **Índice duplicado en `measure_footnotes`** — `idx_mf_goods` e `idx_mf_goods_code` ambos sobre `(goods_code)`. Con 122K filas, mantener ambos cuesta espacio y ralentiza escrituras. Eliminar uno.
+3. **Índice duplicado en `measure_exclusions`** (29K filas) — `idx_me_excluded` e `idx_me_excluded_country` ambos sobre `(excluded_country_code)`. Eliminar uno.
+4. **Índice redundante en `geographical_areas`** — `idx_ga_code` (btree sobre `area_code`) cubierto por el UNIQUE `geographical_areas_area_code_key`. Eliminar.
+5. **Índice cubierto por compuesto en `measure_exclusions`** — `idx_me_goods` (sobre `goods_code`) cubierto por el prefijo de `idx_me_goods_excluded` (sobre `(goods_code, excluded_country_code)`). Eliminar.
+
+### 🛠️ Mantenimiento (al backlog, fuera de 6F)
+
+Hallazgos cosméticos o de baja prioridad que conviene recordar:
+
+a) **Vestigios de migraciones previas** en nombres de pkey/sequence/policy/UNIQUE — funcionan correctamente, solo afecta legibilidad:
+   - `measure_types_new_*` (Tanda 6A) — sufijo `_new` en pkey, sequence, policy, UNIQUE.
+   - `measure_exclusions_id_seq1` / `measure_exclusions_pkey1` (6B) — sufijo `1`.
+   - `descriptions_new_*` (6C) — sufijo `_new`.
+   - `footnote_descriptions_pkey1` (6C) — sufijo `1`.
+   - `certificate_types_pkey1` (6D) — sufijo `1`.
+
+b) **`descriptions` sin columna `language`** — inconsistencia con `additional_codes`, `footnote_descriptions` y `certificate_types` (todas multilingües). Limita la posibilidad de ofrecer descripciones de mercancía en español sin reformatear el schema (añadir `language bpchar` + UNIQUE compuesto + recargar `Nomenclature ES.xlsx`).
+
+c) **6 códigos en `declarable_codes` sin descripción correspondiente** — 25 697 filas en `declarable_codes` vs 25 691 en `descriptions`. Posible carga incompleta o códigos recientes sin texto en el Excel del mes. Reportable a Carlos para reconciliación.
+
+d) **Inconsistencia de tipo** — `condition_codes.code` (`bpchar`/`character(1)`) vs `action_codes.code` (`varchar` sin longitud). Lookups paralelos del mismo dominio TARIC con tipos distintos. Homogeneizar a `varchar(2)` o similar.
+
+e) **`language` sin longitud ni CHECK** en `additional_codes`, `footnote_descriptions`, `certificate_types` — tipo `bpchar` sin longitud explícita. Valores reales `'EN'`, `'ES'`... Considerar `varchar(2)` o enum.
+
+f) **Sin UNIQUE compuesto en `geographical_areas_composition`** — falta `(country_group, member_country, membership_start_date)`. Permite duplicados accidentales por carga ETL repetida.
+
+g) **Falta versionado en `scripts/` para tablas grandes**:
+   - `measure_conditions` (29K filas) — solo `_backup_mar26` en `bloque2-schema.sql`.
+   - `measure_exclusions` (29K filas) — solo `_backup_mar26`.
+   - `taric_measures` (136K filas) — sin `CREATE TABLE` activo.
+   - `condition_codes` y `action_codes` — sin `CREATE TABLE` activo.
+   Cuando se aplique 6F y se cierre la limpieza, considerar baseline retroactivo similar al de `user_consents` (Fase 1.3).
+
+h) **`measure_alerts` con role `anon` y marcada legacy** — revisar el fallback en `lib/calculateTariff.js:973-985` antes de deprecar. Si el sistema principal cubre todos los casos, RENAME a `_deprecated_measure_alerts` en una iteración futura.
+
+### 📊 Análisis ETL TARIC
+
+- **Frecuencia mensual manual** según `CLAUDE.md`. No hay cron automático: Carlos coloca los 14 Excel CIRCABC y ejecuta `detectChanges.js` + `loadBlock1/2/3.js` a mano.
+- **Solo 1 ejecución registrada** en `taric_update_runs` (`2026-04-13`, `data_month = '2026-04'`). Las cargas anteriores no quedaron auditadas (la bitácora se introdujo después de las primeras cargas históricas).
+- **Crecimiento esperado de `taric_changes`** — ~18 064 cambios/mes ⇒ proyección ~217K en 12 meses, ~434K en 24 meses. Considerar política de purga a **24 meses** o partición por `data_month` en Fase 8.
+- **`taric_changes.run_id` con FK ON DELETE CASCADE** — borrar un run elimina TODO su histórico de cambios. Si en el futuro se quiere purgar selectivamente, **NO usar la cascada por `run_id`**: aplicar `DELETE FROM taric_changes WHERE data_month < ...` directamente, preservando el run en `taric_update_runs` como bitácora histórica.
+
+---
+
+## Correcciones propuestas para Sub-tanda 6F
+
+Migración única con drops de policy + índices duplicados/redundantes. Todos idempotentes (`IF EXISTS`):
+
+```sql
+-- 1. Drop policy duplicada en measure_footnotes
+-- (Verificar nombre exacto de la duplicada antes de aplicar; conservar mf_public_read o
+-- Allow public read measure_footnotes según convenga)
+DROP POLICY IF EXISTS "Allow public read measure_footnotes" ON public.measure_footnotes;
+
+-- 2. Drop índice duplicado en measure_footnotes
+DROP INDEX IF EXISTS public.idx_mf_goods;
+-- conservar idx_mf_goods_code
+
+-- 3. Drop índice duplicado en measure_exclusions
+DROP INDEX IF EXISTS public.idx_me_excluded;
+-- conservar idx_me_excluded_country
+
+-- 4. Drop índice redundante en geographical_areas
+DROP INDEX IF EXISTS public.idx_ga_code;
+-- cubierto por UNIQUE geographical_areas_area_code_key
+
+-- 5. Drop índice cubierto por compuesto en measure_exclusions
+DROP INDEX IF EXISTS public.idx_me_goods;
+-- cubierto por prefijo de idx_me_goods_excluded
+```
+
+Tras aplicar:
+- Las 18 tablas conservan funcionalidad y RLS intactas.
+- Espacio liberado: principalmente del par duplicado en `measure_footnotes` (122K filas × 2 índices).
+- Resto de hallazgos (vestigios `_new`/`_pkey1`, `descriptions` sin lengua, faltante `taric_measures` en scripts, etc.) quedan en `BACKLOG_PRIVACIDAD.md` para iteración futura no-bloqueante.
