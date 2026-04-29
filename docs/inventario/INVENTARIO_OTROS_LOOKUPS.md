@@ -12,6 +12,11 @@
 
 ## countries
 
+> ✅ **Sub-tanda 7C (2026-04-29)** — la migración
+> [`20260429140000_otros_lookups_cleanup.sql`](../../supabase/migrations/20260429140000_otros_lookups_cleanup.sql)
+> (BLOQUE 4) elimina el índice redundante `idx_countries_code` (cubierto
+> por el UNIQUE `countries_country_code_key`). Sin impacto funcional.
+
 **Filas**: 62
 
 **Propósito inferido del código**: Lookup ligero de países para selectores UI (TARIC y despachos). Distinta finalidad que `geographical_areas` (311 filas, catálogo TARIC con grupos) y `cbam_excluded_countries` (7 filas, exclusiones CBAM); ver tabla comparativa al final del archivo de TARIC reference (Tanda 6E). Usada en `app/clasificador/page.js` y `lib/calculateTariff.js`. **Cubre la funcionalidad que pretendía `_deprecated_cbam_countries`** (deprecada en sub-tanda 5C).
@@ -128,6 +133,12 @@
 
 ## tariff_history
 
+> ⚠️ **DEPRECATED 2026-04-29** — la migración
+> [`20260429140000_otros_lookups_cleanup.sql`](../../supabase/migrations/20260429140000_otros_lookups_cleanup.sql)
+> (BLOQUE 2) renombra la tabla a `_deprecated_tariff_history`. Revisión
+> programada: **2026-07-29**. Reemplazada en la práctica por
+> `taric_changes` (Tanda 6A, 18K filas, en uso por `app/cambios/`).
+
 **Filas**: **0**
 
 **Propósito inferido del código**: Histórico de cambios de aranceles por código de mercancía. Pretendía registrar qué `goods_code` cambió de `old_duty` a `new_duty` y cuándo. **Vacía hoy**. Solo aparece en código en `scripts/updateTariffs.js:102` (`.from('tariff_history').insert(changes)`) — un script de carga que parece **nunca haberse ejecutado** (0 filas confirma). **Reemplazada en la práctica por `taric_changes`** (Tanda 6A, 18 064 filas, sí usada por `app/cambios/`).
@@ -163,6 +174,12 @@
 ---
 
 ## tariff_changes
+
+> ⚠️ **DEPRECATED 2026-04-29** — la migración
+> [`20260429140000_otros_lookups_cleanup.sql`](../../supabase/migrations/20260429140000_otros_lookups_cleanup.sql)
+> (BLOQUE 3) renombra la tabla a `_deprecated_tariff_changes`. Revisión
+> programada: **2026-07-29**. El rename elimina el riesgo de typo con
+> la tabla activa `taric_changes` (18K filas).
 
 **Filas**: **0**
 
@@ -312,6 +329,12 @@
 
 ## tariffs_backup_v42
 
+> 🗑️ **DROP aplicado en sub-tanda 7C (2026-04-29)** — la migración
+> [`20260429140000_otros_lookups_cleanup.sql`](../../supabase/migrations/20260429140000_otros_lookups_cleanup.sql)
+> (BLOQUE 1) elimina la tabla. Sin tabla activa equivalente con el
+> mismo esquema; los aranceles base actuales viven en `taric_measures`.
+> La ficha siguiente describe el estado previo.
+
 **Filas**: 8 373
 
 **Propósito inferido del código**: Backup de la antigua tabla `tariffs` (esquema v42), reemplazada por `taric_measures` (Tanda 6A, 136 009 filas, esquema mucho más rico). Conserva snapshots de aranceles base con `goods_code + origin + measure_type + legal_base + duty`. **No hay grep que la consulte activamente** — los nombres de sequence/pkey originales (`tariffs_id_seq`, `tariffs_pkey`) confirman que era la tabla `tariffs` original antes del rename.
@@ -351,6 +374,14 @@
 ---
 
 ## measure_exclusions_backup_v42
+
+> 🗑️ **DROP aplicado en sub-tanda 7C (2026-04-29)** — la migración
+> [`20260429140000_otros_lookups_cleanup.sql`](../../supabase/migrations/20260429140000_otros_lookups_cleanup.sql)
+> (BLOQUE 1) elimina la tabla. Carlos verificó la diferencia de filas
+> con la activa: las 5 811 filas extra del backup son **exclusiones
+> caducadas** (legítimamente limpiadas en la migración v42 → v44).
+> Backup completo seguro de eliminar. La ficha siguiente describe el
+> estado previo.
 
 **Filas**: **34 370** · última `created_at` = **2025-10-13**
 
@@ -409,6 +440,12 @@
 
 ## preferential_tariffs_backup_v42
 
+> 🗑️ **DROP aplicado en sub-tanda 7C (2026-04-29)** — la migración
+> [`20260429140000_otros_lookups_cleanup.sql`](../../supabase/migrations/20260429140000_otros_lookups_cleanup.sql)
+> (BLOQUE 1) elimina la tabla. Sin tabla activa equivalente; los
+> aranceles preferenciales en v44 están integrados en `taric_measures`.
+> La ficha siguiente describe el estado previo.
+
 **Filas**: 34 407 · última `created_at` = **2025-10-20**
 
 **Propósito inferido del código**: Backup de la antigua tabla `preferential_tariffs` (aranceles preferenciales por origen, esquema v42). Sin tabla activa equivalente — los aranceles preferenciales en v44 están integrados en `taric_measures` (con tipos de medida específicos como `142`, `143`, etc.) y enriquecidos con `measure_conditions` y `geographical_areas`. Sin grep matches en código actual.
@@ -449,4 +486,43 @@
 
 ---
 
-<!-- TANDA 7 INCOMPLETA: pendiente sub-tanda 7C (hallazgos consolidados + propuesta de migración). -->
+## Hallazgos de la Tanda 7
+
+### 🚨 Críticos
+
+**Ninguno.** Las 11 tablas del dominio Otros/Lookups con RLS habilitada y SELECT público; sin policies de mutación abiertas.
+
+### ✅ Limpieza aplicada en sub-tanda 7C (`DROP TABLE`)
+
+Tras verificación con Carlos sobre la diferencia de filas en `measure_exclusions_backup_v42` (consulta de comparación arrojó **5 811 filas extra, todas exclusiones caducadas legítimamente limpiadas en la migración v42 → v44**), procede `DROP` directo de los 3 backups (sin rename a `_deprecated_*` porque el sufijo `_backup_v42` ya los marca como históricos):
+
+- `tariffs_backup_v42` (8 373 filas) — sin tabla activa equivalente con el mismo esquema; los aranceles base actuales viven en `taric_measures`.
+- `measure_exclusions_backup_v42` (34 370 filas) — verificado: 5 811 filas extra son caducadas. La activa (`measure_exclusions`, 28 975 filas) cubre exclusiones vigentes.
+- `preferential_tariffs_backup_v42` (34 407 filas) — sin tabla activa equivalente; los preferenciales en v44 están integrados en `taric_measures` con sus `measure_type_code` específicos.
+
+### ⚠️ Deprecaciones aplicadas en sub-tanda 7C (`RENAME` con revisión 2026-07-29)
+
+- `tariff_history` (0 filas) — única referencia en `scripts/updateTariffs.js:102` (script no ejecutado). Reemplazada en la práctica por `taric_changes`.
+- `tariff_changes` (0 filas) — sin referencias en código y, además, **riesgo de confusión por typo con `taric_changes` activa** (18 K filas). El rename a `_deprecated_*` elimina el riesgo de error futuro.
+
+### 🔍 Deprecación de `exchange_rates` legacy NO aplicada en 7C — pendiente
+
+Verificación previa con grep encontró **escritura activa en `scripts/loadBlock3.js:235`** (`batchInsert('exchange_rates', rows, ...)`). Aunque la última carga real fue de marzo 2026 (Carlos parece haber dejado de ejecutar este bloque al migrar al sistema `current/upcoming`), si se renombrara la tabla, la próxima ejecución del script fallaría con "tabla no existe".
+
+**Acción pendiente**: Carlos limpia el bloque de carga de `exchange_rates` en `scripts/loadBlock3.js` y, en una migración posterior, se aplica el rename a `_deprecated_exchange_rates`. Mientras tanto, `exchange_rates` sigue siendo una tabla legacy congelada (15 monedas vs 29 del sistema actual, último `start_date = 2026-03-01`).
+
+### 🛠️ Mantenimiento — al backlog (fuera de 7C)
+
+a) **`vat_rates` solo cubre IVA español** — sin columna `country_code`. Si LexAduana se internacionaliza a otros estados miembros UE, requiere ALTER TABLE + recarga.
+
+b) **`subscription_plans.plan_name` nullable** — extraño para un identificador de plan. Probable error de diseño; debería ser `NOT NULL UNIQUE`.
+
+c) **Patrón `current/upcoming` sin archivo histórico** — al rotar `upcoming → current` el primer día del mes, las filas de `current` se sobrescriben. Si se quiere auditoría retroactiva completa de tipos de cambio publicados, considerar archivar antes en `exchange_rates` (cuando esa tabla deje de ser legacy) o en una nueva `exchange_rates_archive`.
+
+d) **Vestigios `_pkey1`/`_seq1` en `exchange_rates`** — patrón cosmético ya documentado en otras tablas del dominio. Renombrar en limpieza posterior cuando se decida el destino de la tabla.
+
+e) **Sin `country_code` en `vat_rates`** (ya cubierto en (a) — listado por separado para énfasis).
+
+f) **Excepción de role `{anon}` recurrente** — `vat_rates` (7A), `measure_alerts` (Tanda 6A), `measure_exclusions_backup_v42` (esta tanda, ya con DROP propuesto). Las dos primeras siguen activas; valorar uniformar a `{public}` en una limpieza cosmética futura.
+
+---

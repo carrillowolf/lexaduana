@@ -597,5 +597,115 @@ Cada vez que Carlos ejecute la carga mensual:
 
 Sin métrica automática hoy. Considerar dashboard interno o alerta en Fase 8.
 
+## De Tanda 7 (otros / lookups)
+
+Mejoras de mantenimiento no críticas. Las correcciones reales (3 DROPs de
+backups v42 + 2 deprecaciones de tablas legacy + 1 índice redundante en
+`countries`) ya entran en sub-tanda 7C.
+
+### `vat_rates` solo cubre IVA español
+
+La tabla no tiene columna `country_code` y modela solo los 4 tipos español
+(4 %/10 %/21 % + exenciones). Si LexAduana se internacionaliza a otros
+estados miembros UE, requiere refactor:
+
+```sql
+-- Esquema futuro multi-país:
+ALTER TABLE public.vat_rates ADD COLUMN country_code varchar(2) NOT NULL DEFAULT 'ES';
+-- + recargar tipos de cada país UE (cada uno con su tabla de productos sujetos a IVA reducido)
+-- + UNIQUE compuesto sobre (country_code, goods_code) si se quiere unicidad por par
+```
+
+### `subscription_plans.plan_name` nullable
+
+Identificador de plan permite NULL — error de diseño. Debería ser
+`NOT NULL UNIQUE` para garantizar que `user_profiles.plan_type` (text libre)
+pueda apuntar de forma fiable.
+
+```sql
+-- Verificar primero que no hay filas con plan_name NULL:
+SELECT id, price_monthly FROM public.subscription_plans WHERE plan_name IS NULL;
+
+-- Si están todos completos:
+ALTER TABLE public.subscription_plans
+  ALTER COLUMN plan_name SET NOT NULL,
+  ADD CONSTRAINT subscription_plans_plan_name_key UNIQUE (plan_name);
+```
+
+### Patrón `current/upcoming` sin archivo histórico de tipos de cambio
+
+Cuando llega el primer día del mes y `upcoming_exchange_rates` rota a
+`current_exchange_rates`, las filas de `current` se sobrescriben — los
+tipos del mes anterior desaparecen de la BD activa. Para auditoría
+retroactiva completa (e.g. recalcular un cálculo de hace 3 meses con la
+tarifa BOE exacta de aquel momento), considerar:
+
+- **Opción A**: archivar a `exchange_rates` con `effective_to` antes de la
+  rotación (cuando esa tabla deje de ser legacy y se enriquezca con
+  `boe_reference`).
+- **Opción B**: nueva tabla `exchange_rates_archive` con el mismo schema
+  de `current` + `archived_at`.
+
+Sin urgencia mientras los cálculos retroactivos no sean un caso de uso
+explícito.
+
+### Vestigios `_pkey1` / `_seq1` en `exchange_rates`
+
+Cosmético — afecta legibilidad, no funcionalidad. Renombrar cuando se
+decida el destino de la tabla (deprecar tras limpiar `loadBlock3.js` o
+mantenerla activa enriqueciendo el schema). Mismo patrón ya documentado
+en otras tablas TARIC (`measure_exclusions_pkey1`, `footnote_descriptions_pkey1`,
+`certificate_types_pkey1`).
+
+### Excepción de role `{anon}` recurrente
+
+Tres tablas activas usan `{anon}` en lugar del patrón uniforme `{public}`:
+
+- `vat_rates` (Tanda 7A).
+- `measure_alerts` (Tanda 6A — además marcada como legacy fallback).
+- `measure_exclusions_backup_v42` (Tanda 7B — DROP aplicado en 7C).
+
+Funcionalmente equivalente para SELECT público (`anon` es un subset de
+`public`), pero rompe la uniformidad. Limpieza cosmética futura:
+
+```sql
+DROP POLICY IF EXISTS "Allow public read access" ON public.vat_rates;
+CREATE POLICY "vat_rates_public_read" ON public.vat_rates
+  FOR SELECT TO public USING (true);
+-- (idem para measure_alerts si se decide conservarla)
+```
+
+### Limpieza pendiente: `exchange_rates` legacy
+
+La tabla legacy de tipos de cambio (15 monedas, congelada en 2026-03-01)
+**no se deprecó en 7C** porque `scripts/loadBlock3.js:235` todavía hace
+`batchInsert('exchange_rates', rows, ...)` — un rename ahora rompería la
+próxima ejecución del script.
+
+**Acción coordinada en dos pasos** (orden importante):
+
+1. **Limpiar el script ETL** — eliminar el bloque de carga de
+   `exchange_rates` en `scripts/loadBlock3.js` (líneas alrededor de la
+   :235). El sistema actual usa `current_exchange_rates` y
+   `upcoming_exchange_rates`, cargados por `scripts/update-rates*.js`.
+2. **Aplicar la deprecación SQL** una vez confirmado que ningún script
+   ni endpoint la consulta:
+   ```sql
+   ALTER TABLE public.exchange_rates RENAME TO _deprecated_exchange_rates;
+   COMMENT ON TABLE public._deprecated_exchange_rates IS
+     'DEPRECATED YYYY-MM-DD. Subset legacy de 15 monedas. '
+     'Reemplazado por current/upcoming_exchange_rates con 29 monedas BOE/BCE. '
+     'Revisar 90 días después y eliminar.';
+   ```
+
+### Revisión 2026-07-29 (90 días tras 7C)
+
+Si las tablas siguen sin uso, eliminar definitivamente:
+
+```sql
+DROP TABLE IF EXISTS public._deprecated_tariff_history;
+DROP TABLE IF EXISTS public._deprecated_tariff_changes;
+```
+
 
 
