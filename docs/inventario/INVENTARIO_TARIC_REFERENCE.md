@@ -452,4 +452,188 @@
 
 ---
 
-<!-- TANDA 6 INCOMPLETA: faltan sub-tandas 6C (master data + lookups), 6D (resto + duplicidades) y 6E (hallazgos + propuestas). -->
+<!-- Sub-tanda 6C: añadidas declarable_codes, descriptions, additional_codes, footnote_descriptions -->
+
+## declarable_codes
+
+**Filas**: **25 697**
+
+**Propósito inferido del código**: Catálogo de códigos de mercancía declarables (CN8 / TARIC10) — qué códigos puede declararse en una DUA. La columna `is_leaf` indica si el código es terminal (declarable) o intermedio en la jerarquía. Se distingue `goods_code` (8 dígitos sin add_code) y `goods_code_full` (incluyendo add_code de 2 dígitos extra cuando aplica). Usado en `app/api/search-codes/route.js`, `app/api/classify-product/route.js`, `lib/calculateTariff.js` y cargado por `scripts/loadBlock1.js`.
+
+**Columnas** (8):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Código | `goods_code` text (NN), `goods_code_full` text | 8 dígitos vs completo (10) |
+| Tipo | `is_leaf` bool (NN, def false) | flag declarable terminal |
+| Vigencia | `start_date` date, `declaration_start_date` date, `end_date` date | dos fechas de inicio (declaración del código vs vigencia general) |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `dc_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `idx_dc_goods_code` — btree `(goods_code)`
+- `idx_dc_unique` — UNIQUE compuesto `(goods_code, goods_code_full)` ← evita duplicados por combinación CN+full
+- `idx_dc_is_leaf` — btree parcial `(is_leaf) WHERE is_leaf = true` ← optimiza el query típico "solo códigos declarables"
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque1-schema.sql:134`.
+
+**Retención sugerida**: indefinida (datos públicos UE).
+
+**Observaciones**:
+- Diseño con índice UNIQUE compuesto `(goods_code, goods_code_full)` — permite que un mismo `goods_code` (CN8) aparezca varias veces si tiene distintos `goods_code_full` (add_codes). Coherente con la nomenclatura TARIC.
+- Índice parcial sobre `is_leaf = true` es buen patrón — evita escanear filas no declarables (intermedias) cuando se buscan terminales.
+- **Dos fechas de inicio** (`start_date` y `declaration_start_date`) — la primera para vigencia general del código, la segunda para fecha desde la que se puede declarar. Distinción importante: un código puede existir en TARIC antes de ser declarable.
+- Sin CHECK ni constraint que garantice `start_date <= declaration_start_date <= end_date`.
+
+---
+
+## descriptions
+
+**Filas**: **25 691**
+
+**Propósito inferido del código**: Texto descriptivo (en un único idioma) para cada código de mercancía + posición jerárquica. Cobertura prácticamente 1:1 con `declarable_codes` (25 691 vs 25 697). Usado en autocompletes y mostrar el nombre humano del código junto a las medidas. Cargado por `scripts/loadBlock1.js` desde el Excel oficial `Nomenclature EN.xlsx` (según `CLAUDE.md`).
+
+**Columnas** (9):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq, sequence `descriptions_new_id_seq`) | sufijo `_new` delata renombrado desde Bloque 1 |
+| Código | `goods_code` text (NN), `goods_code_full` text | |
+| Texto | `description` text (NN), `hier_pos` int2, `indent` text | jerarquía visual |
+| Vigencia | `start_date` date, `description_start_date` date, `end_date` date | |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `desc_new_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `descriptions_new_pkey` — UNIQUE sobre `(id)` (nombre con sufijo `_new`)
+- `idx_desc_new_goods_code` — btree `(goods_code)`
+- `idx_desc_new_unique` — UNIQUE compuesto `(goods_code, goods_code_full)` ← mismo patrón que declarable_codes
+- `idx_desc_new_hier` — btree `(hier_pos)`
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque1-schema.sql:79` define `descriptions_new`; la tabla actual fue renombrada desde ahí (los nombres de pkey/seq/policy/UNIQUE conservan el sufijo `_new`).
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- ⚠️ **Sin columna `language`** — a diferencia de `additional_codes` y `footnote_descriptions` que sí la tienen. Las descripciones del catálogo TARIC están en un único idioma a nivel de schema. La fuente de carga (`Nomenclature EN.xlsx`) confirma que es inglés. Si se quiere ofrecer descripciones en español en la UI, habría que añadir `language bpchar` y cargar también `Nomenclature ES.xlsx`. Inconsistencia de patrón con las otras dos tablas de descripciones del dominio.
+- **Sufijos `_new`** en pkey, sequence, policy y UNIQUE — vestigio de la migración Bloque 1 (igual que `measure_types_new_*`). Sin impacto funcional.
+- Tres columnas de fecha (`start_date`, `description_start_date`, `end_date`) — `description_start_date` permite que un mismo `goods_code` tenga descripción reescrita sin tocar la vigencia base del código. Diseño correcto para versionar texto.
+- 25 691 filas vs 25 697 en `declarable_codes` → **6 códigos sin descripción**. Posible carga incompleta o códigos recientes sin description en el Excel del mes. Reportable a Carlos para confirmar.
+
+---
+
+## additional_codes
+
+**Filas**: **6 506**
+
+**Propósito inferido del código**: Catálogo de "additional codes" TARIC (los 4 dígitos extra que se añaden tras el CN10 cuando una medida lo exige, e.g. códigos antidumping específicos del exportador). Cada combinación (`add_code`, `language`) es única — la tabla **es multilingüe**. Cargado por `scripts/loadBlock3.js`.
+
+**Columnas** (8):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Código | `add_code` text (NN), `language` bpchar (NN, def `'EN'`) | clave compuesta lógica |
+| Texto | `description` text | |
+| Vigencia | `start_date` date, `description_start_date` date, `end_date` date | |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `ac_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `idx_ac_code` — btree `(add_code)`
+- `idx_ac_code_lang` — UNIQUE compuesto `(add_code, language)` ← clave de negocio
+- `idx_ac_lang` — btree `(language)`
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque3-schema.sql:66`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **`language` es `bpchar` sin longitud explícita** — equivale a `character` variable en la práctica de PostgreSQL (acepta `'EN'`, `'ES'`...). No hay CHECK que limite los valores; valores esperables: `'EN'`, `'ES'`, `'FR'`... Considerar `varchar(2)` o un enum para tipado explícito.
+- Multilingüe: el UNIQUE `(add_code, language)` permite tener el mismo código en varios idiomas. Bien diseñado.
+- 6 506 filas / si en BD están solo en EN ⇒ ~6.5K códigos diferentes. Si se cargara también ES, esperaríamos ~13K filas.
+- Sin FK `measure_conditions.add_code` ni `measure_exclusions.add_code` ni `measure_footnotes.add_code` apuntan aquí — los add_codes de medidas son strings denormalizados (consistente con todo el dominio TARIC).
+
+---
+
+## footnote_descriptions
+
+**Filas**: **5 280**
+
+**Propósito inferido del código**: Textos de las notas a pie referenciadas desde `measure_footnotes` (sub-tanda 6B). Tabla **multilingüe** con clave de negocio `(footnote_code, language)`. Cargada por `scripts/loadBlock3.js`. Es el destino lógico del campo `measure_footnotes.footnote_code` (sin FK estricta — confirmado en 6B).
+
+**Columnas** (8):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Código | `footnote_code` text (NN), `language` bpchar (NN, def `'EN'`) | clave compuesta |
+| Texto | `description` text | |
+| Vigencia | `start_date` date, `description_start_date` date, `end_date` date | |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `fd_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `footnote_descriptions_pkey1` — UNIQUE sobre `(id)` (nombre con sufijo `1`)
+- `idx_fd_code` — btree `(footnote_code)`
+- `idx_fd_code_lang` — UNIQUE compuesto `(footnote_code, language)` ← clave de negocio
+- `idx_fd_lang` — btree `(language)`
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque3-schema.sql:45`.
+
+**Retención sugerida**: indefinida.
+
+### Relación con `measure_footnotes` (sub-tanda 6B)
+
+**Sí existe relación lógica, sin FK estricta**:
+
+- `measure_footnotes.footnote_code` (text, NN, 121 938 filas) — **denormalización**.
+- `footnote_descriptions.footnote_code` (text, NN, 5 280 filas) — **descripción del footnote**.
+
+Para resolver el texto de un footnote en una medida, la app debe hacer JOIN sobre `footnote_code` filtrando además por `language`:
+
+```sql
+SELECT mf.*, fd.description
+FROM measure_footnotes mf
+LEFT JOIN footnote_descriptions fd
+  ON fd.footnote_code = mf.footnote_code
+  AND fd.language = 'EN'
+WHERE mf.goods_code = '7208510000';
+```
+
+Cardinalidad: 5 280 descripciones × idiomas vs 121 938 referencias = ~23 referencias por descripción promedio (los footnotes se reutilizan masivamente entre medidas). Sin FK significa que si una carga ETL introduce un `footnote_code` no presente en `footnote_descriptions`, la BD no lo detecta — la app debe tolerar el LEFT JOIN sin match.
+
+**Observaciones**:
+- **`footnote_descriptions_pkey1` con sufijo `1`** — vestigio de drop+create previo (mismo patrón que `measure_exclusions_pkey1` en 6B). Sin impacto funcional.
+- Multilingüe — el UNIQUE `(footnote_code, language)` permite traducciones. Mismo diseño que `additional_codes`.
+- Sin CHECK sobre `language`. Valores esperables: `'EN'`, `'ES'`...
+- 5 280 filas — si todo está en EN, son ~5K footnotes únicos. Si se cargara también ES, esperaríamos ~10K.
+
+---
+
+<!-- TANDA 6 INCOMPLETA: faltan sub-tandas 6D (resto + duplicidades) y 6E (hallazgos + propuestas). -->
