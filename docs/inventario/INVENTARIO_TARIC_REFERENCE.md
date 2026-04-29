@@ -297,6 +297,13 @@
 
 ## measure_exclusions
 
+> ✅ **Sub-tanda 6F (2026-04-29)** — la migración
+> [`20260429120000_taric_reference_cleanup.sql`](../../supabase/migrations/20260429120000_taric_reference_cleanup.sql)
+> elimina dos índices de esta tabla: `idx_me_excluded` (duplicado idéntico a
+> `idx_me_excluded_country`) e `idx_me_goods` (cubierto por el prefijo de
+> `idx_me_goods_excluded`). El conjunto de índices restantes mantiene la
+> cobertura de queries del calculador. Sin impacto funcional.
+
 **Filas**: **28 975**
 
 **Propósito inferido del código**: Exclusiones por país sobre medidas TARIC (cuando una medida aplica a un grupo de países como "EU + EFTA" pero un país concreto está exento, aparece aquí). Cada fila tiene `goods_code + measure_type_code + start_date` y un `excluded_country_code`. Usada en `lib/calculateTariff.js`, `lib/measureInterpreter.js`, `scripts/processExclusions.js`.
@@ -339,6 +346,13 @@
 ---
 
 ## measure_footnotes
+
+> ✅ **Sub-tanda 6F (2026-04-29)** — la migración
+> [`20260429120000_taric_reference_cleanup.sql`](../../supabase/migrations/20260429120000_taric_reference_cleanup.sql)
+> elimina la policy duplicada `Allow public read measure_footnotes` (conserva
+> `mf_public_read`) y el índice duplicado `idx_mf_goods` (conserva
+> `idx_mf_goods_code`). Con 122K filas, era la tabla con mayor coste real
+> de mantener ambos índices. Sin impacto funcional.
 
 **Filas**: **121 938** (la 2ª tabla más grande del schema, tras `taric_measures`)
 
@@ -716,6 +730,11 @@ Cardinalidad: 5 280 descripciones × idiomas vs 121 938 referencias = ~23 refere
 ---
 
 ## geographical_areas
+
+> ✅ **Sub-tanda 6F (2026-04-29)** — la migración
+> [`20260429120000_taric_reference_cleanup.sql`](../../supabase/migrations/20260429120000_taric_reference_cleanup.sql)
+> elimina el índice redundante `idx_ga_code` (cubierto por el UNIQUE
+> `geographical_areas_area_code_key`). Sin impacto funcional.
 
 **Filas**: **311**
 
