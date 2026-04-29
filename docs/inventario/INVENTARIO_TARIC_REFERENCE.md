@@ -254,4 +254,202 @@
 
 ---
 
-<!-- TANDA 6 INCOMPLETA: faltan sub-tandas 6B (conditions/exclusions/footnotes), 6C (master data + lookups), 6D (resto + duplicidades) y 6E (hallazgos + propuestas). -->
+<!-- Sub-tanda 6B: añadidas measure_conditions, measure_exclusions, measure_footnotes, condition_codes, action_codes -->
+
+## measure_conditions
+
+**Filas**: **29 229**
+
+**Propósito inferido del código**: Condiciones que deben cumplirse para que una medida TARIC aplique (típicamente: "presentar certificado X", "valor unitario ≥ Y €/kg", "cantidad mínima Z"). Cada fila enlaza a una medida vía `goods_code + origin_code + measure_type_code + start_date`. Usada en `lib/calculateTariff.js`, `lib/measureInterpreter.js`, `scripts/loadBlock2.js`, `scripts/processMeasures.js`.
+
+**Columnas** (14, agrupadas):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Lookup medida | `goods_code` varchar (NN), `add_code` varchar, `order_no` varchar, `origin_code` varchar, `measure_type_code` int2 (NN), `start_date` date, `end_date` date | claves para enlazar lógicamente con `taric_measures` |
+| Condición | `condition_code` bpchar, `condition_sequence` int2, `action_code` varchar | apuntan a `condition_codes` y `action_codes` lógicamente (sin FK) |
+| Datos | `certificate_code` varchar, `condition_amount` numeric, `monetary_unit` varchar, `measurement_unit` varchar, `measurement_unit_qual` varchar | umbrales y unidades |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `Allow public read measure_conditions` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna (`condition_code`, `action_code` y `certificate_code` son denormalización por código TARIC, sin FK estricta a las tablas lookup correspondientes).
+
+**Índices**:
+- `idx_mc_goods` — btree `(goods_code)`
+- `idx_mc_cert` — btree `(certificate_code)`
+- `idx_mc_measure_full` — btree compuesto `(goods_code, origin_code, measure_type_code, start_date)` ← lookup principal con la PK lógica de la medida
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **No** activa. `scripts/bloque2-schema.sql:38` define `measure_conditions_backup_mar26` (backup); la tabla principal no aparece con `CREATE TABLE` en `scripts/`.
+
+**Retención sugerida**: indefinida (datos públicos UE; carga vía CIRCABC mensual).
+
+**Observaciones**:
+- **Sin FK a `condition_codes(code)` ni a `action_codes(code)`** — denormalización deliberada para no requerir join en hot path. Riesgo: una `condition_codes` mal cargada deja a las medidas con códigos huérfanos sin que la BD lo detecte.
+- 3 índices secundarios suficientes para los queries típicos del calculador (lookup por medida completa + por mercancía + por certificado).
+- Sin CHECK ni enum sobre `condition_code` (1 caracter), `action_code`, `monetary_unit`. Volumen de catálogo conocido (8 + 8 filas) — añadir CHECK en limpieza posterior reduciría errores ETL.
+- `start_date` y `end_date` son nullable aquí, mientras que en `taric_measures` `start_date` es NOT NULL. Inconsistencia menor.
+
+---
+
+## measure_exclusions
+
+**Filas**: **28 975**
+
+**Propósito inferido del código**: Exclusiones por país sobre medidas TARIC (cuando una medida aplica a un grupo de países como "EU + EFTA" pero un país concreto está exento, aparece aquí). Cada fila tiene `goods_code + measure_type_code + start_date` y un `excluded_country_code`. Usada en `lib/calculateTariff.js`, `lib/measureInterpreter.js`, `scripts/processExclusions.js`.
+
+**Columnas** (10):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq, secuencia `measure_exclusions_id_seq1`) | sufijo `1` delata drop+create previo |
+| Lookup medida | `goods_code` varchar (NN), `add_code` varchar, `order_no` varchar, `origin_code` varchar, `start_date` date (NN), `end_date` date | |
+| Tipo medida | `measure_type_code` int2 (NN), `measure_type_name` text | denormalizado |
+| Exclusión | `excluded_country_code` varchar, `excluded_country_name` text | el país exento |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `Allow public read measure_exclusions` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices** (6 — incluye dos duplicados):
+- `idx_me_goods` — btree `(goods_code)`
+- `idx_me_excluded` — btree `(excluded_country_code)` ← **duplicado** con `idx_me_excluded_country`
+- `idx_me_excluded_country` — btree `(excluded_country_code)` ← **idéntico al anterior**
+- `idx_me_goods_excluded` — btree `(goods_code, excluded_country_code)` ← cubre `idx_me_goods` como prefijo
+- `idx_me_measure` — btree `(measure_type_code)`
+- `idx_me_measure_full` — btree compuesto `(goods_code, origin_code, measure_type_code, start_date)`
+
+> ⚠️ **Dos índices `idx_me_excluded` y `idx_me_excluded_country` son funcionalmente idénticos**. Eliminar uno en sub-tanda 6F.
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **No** activa. `scripts/bloque2-schema.sql:52` define `measure_exclusions_backup_mar26`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **Sequence `measure_exclusions_id_seq1` y pkey `measure_exclusions_pkey1`** con sufijo `1` — vestigio de drop+create previo (la primera versión dejó la secuencia y se creó una nueva). Mismo patrón que `measure_types_new_*` (Tanda 6A). Sin impacto funcional.
+- `excluded_country_code` denormaliza el país excluido — sin FK a `geographical_areas` (que se inventaría en 6C/6D).
+- El índice compuesto `idx_me_goods_excluded` hace redundante a `idx_me_goods` (PostgreSQL puede usar el prefijo `goods_code` del compuesto). Considerar eliminar `idx_me_goods` también.
+
+---
+
+## measure_footnotes
+
+**Filas**: **121 938** (la 2ª tabla más grande del schema, tras `taric_measures`)
+
+**Propósito inferido del código**: Notas a pie aplicables a una medida concreta (informativas, requisitos especiales, referencias regulatorias). Cada fila enlaza una medida con un `footnote_code`; el texto del footnote vive en `footnote_descriptions` (sub-tanda 6C). Usada por `measureInterpreter.js` para humanizar las medidas con sus notas.
+
+**Columnas** (12):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Lookup medida | `goods_code` text (NN), `add_code` text, `order_no` text, `origin_code` text, `origin_name` text, `start_date` date, `end_date` date | toda la PK lógica de la medida |
+| Tipo medida | `measure_type_code` int2 (NN), `measure_type_name` text | denormalizado |
+| Footnote | `footnote_code` text (NN) | enlaza lógicamente con `footnote_descriptions.code` |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí, **2 policies idénticas**:
+| Nombre | Comando | USING |
+|---|---|---|
+| `Allow public read measure_footnotes` | SELECT | `true` |
+| `mf_public_read` | SELECT | `true` |
+
+> ⚠️ **Duplicación de policy** — ambas con role `{public}` y predicado `true`. Funcionalmente equivalentes; la segunda parece añadida en una iteración posterior sin eliminar la original. Eliminar una en sub-tanda 6F.
+
+**Foreign keys**: **ninguna**. **No hay FK de `measure_footnotes.footnote_code` a `footnote_descriptions.code`** — denormalización deliberada (mismo patrón que `measure_conditions.condition_code` y `measure_alerts.measure_code`). El precio: un footnote_code mal cargado puede no tener descripción correspondiente y la app debe tolerar el caso.
+
+**Índices** (4 — incluye dos duplicados):
+- `idx_mf_goods` — btree `(goods_code)` ← **duplicado** con `idx_mf_goods_code`
+- `idx_mf_goods_code` — btree `(goods_code)` ← **idéntico al anterior**
+- `idx_mf_footnote` — btree `(footnote_code)`
+- `idx_mf_measure_full` — btree compuesto `(goods_code, origin_code, measure_type_code, start_date)`
+
+> ⚠️ **`idx_mf_goods` e `idx_mf_goods_code` son funcionalmente idénticos**. Eliminar uno en sub-tanda 6F.
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque2-schema.sql:70`. Única tabla activa del lote 6B con `CREATE TABLE` actual en `scripts/`.
+
+**Retención sugerida**: indefinida (datos públicos UE).
+
+**Observaciones**:
+- **122K filas con dos índices duplicados** — coste real de espacio y de mantenimiento (cada UPDATE/INSERT actualiza ambos). Eliminar el redundante reduce tamaño y acelera escrituras.
+- **`measure_footnotes.footnote_code` sin FK** a `footnote_descriptions` — el user específicamente preguntó por esta relación: respuesta confirmada **sin FK estricta**. Si en el futuro se quiere integridad, el orden de carga importa (descriptions antes que measure_footnotes).
+- Tipos: aquí `goods_code text` mientras que en `taric_measures` y `measure_conditions` es `varchar`. Inconsistencia menor que no afecta queries (Postgres trata `text` y `varchar` casi igual) pero ensucia el esquema.
+
+---
+
+## condition_codes
+
+**Filas**: **8**
+
+**Propósito inferido**: Catálogo de los 8 códigos de condición TARIC (A, B, C, ...). Cada uno indica un tipo de condición ("se presentan documentos", "se cumple X requisito"). Lookup pequeño y estático. Probablemente cargado vía `scripts/loadBlock1.js` y reutilizable como i18n en la UI (descripciones en EN + ES).
+
+**Columnas** (3):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `code` bpchar (**PK**, sin longitud especificada → `character(1)` por defecto) | 1 letra |
+| i18n | `description_en` varchar, `description_es` varchar | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `Allow public read condition_codes` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**: solo pkey UNIQUE sobre `(code)`.
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **No** — sin `CREATE TABLE` en `scripts/`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **`code` `bpchar` sin longitud declarada** = `character(1)` por defecto. Es decir, padding con espacios si se intenta meter más de 1 carácter (truncación en realidad). Asume códigos de exactamente 1 letra. Documentar la asunción.
+- 8 filas — coincide con la cobertura conocida de la spec TARIC (A-H aproximadamente). Carlos puede confirmar si la cobertura es completa contra la spec actual de DG TAXUD.
+- Sin FK reverse desde `measure_conditions.condition_code` — denormalización aceptada para hot path.
+- PK textual coherente con `cbam_sectors`, `cbam_certificates`, `cbam_config` (Tanda 5). Patrón establecido.
+
+---
+
+## action_codes
+
+**Filas**: **8**
+
+**Propósito inferido**: Catálogo de los 8 códigos de acción TARIC (qué efecto tiene una condición cuando se cumple/no cumple: aplicar la medida, exonerar derecho, exigir certificado, etc.). Lookup pequeño paralelo a `condition_codes`. Cargado por `scripts/loadBlock1.js` (probable).
+
+**Columnas** (3):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `code` varchar (**PK**, sin longitud) | |
+| i18n | `description_en` varchar, `description_es` varchar | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `Allow public read action_codes` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**: solo pkey UNIQUE sobre `(code)`.
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **No** — sin `CREATE TABLE` en `scripts/`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- **`code` `varchar` sin longitud** vs `condition_codes.code` `bpchar` (`character(1)`). Inconsistencia: dos lookups paralelos del mismo dominio TARIC con tipos de PK distintos. Acordar uno (probablemente `varchar(2)` o `varchar(3)` según los códigos reales) en limpieza posterior.
+- Mismo patrón de denormalización: `measure_conditions.action_code` no tiene FK a esta tabla.
+- Sin trigger ni `created_at` — coherente con tabla de catálogo estático.
+
+---
+
+<!-- TANDA 6 INCOMPLETA: faltan sub-tandas 6C (master data + lookups), 6D (resto + duplicidades) y 6E (hallazgos + propuestas). -->
