@@ -636,4 +636,175 @@ Cardinalidad: 5 280 descripciones × idiomas vs 121 938 referencias = ~23 refere
 
 ---
 
-<!-- TANDA 6 INCOMPLETA: faltan sub-tandas 6D (resto + duplicidades) y 6E (hallazgos + propuestas). -->
+<!-- Sub-tanda 6D: añadidas certificate_types, legal_bases, geographical_areas, geographical_areas_composition -->
+
+## certificate_types
+
+**Filas**: **1 766**
+
+**Propósito inferido del código**: Catálogo de tipos de certificado TARIC (`Y007`, `C064`, `Y900`, etc.) con descripción multilingüe. El código de certificado se referencia desde `measure_conditions.certificate_code` (sin FK estricta — patrón TARIC habitual). Cargado por `scripts/loadBlock3.js`.
+
+**Columnas** (8):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Código | `certificate_code` text (NN), `language` bpchar (NN, def `'EN'`) | clave compuesta `(code, lang)` |
+| Texto | `description` text | |
+| Vigencia | `start_date` date, `description_start_date` date, `end_date` date | doble fecha (vigencia + texto) |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `ct_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**:
+- `certificate_types_pkey1` — UNIQUE sobre `(id)` ← **sufijo `1`** (vestigio drop+create)
+- `idx_ct_code` — btree `(certificate_code)`
+- `idx_ct_code_lang` — UNIQUE compuesto `(certificate_code, language)` ← clave de negocio
+- `idx_ct_lang` — btree `(language)`
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque3-schema.sql:21`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- 1 766 filas — si solo en EN ⇒ ~1.7K certificados únicos. Si se cargara también ES, ~3.5K filas. Cobertura coherente con el dominio TARIC oficial.
+- Mismo patrón multilingüe que `additional_codes` y `footnote_descriptions` (Tanda 6C). Patrón establecido y consistente.
+- **`certificate_types_pkey1` con sufijo `1`** — vestigio drop+create previo (igual que `measure_exclusions_pkey1` en 6B y `footnote_descriptions_pkey1` en 6C). Sin impacto funcional.
+- Sin FK reverse desde `measure_conditions.certificate_code` ni desde `measure_alerts.certificate` — denormalización aceptada en hot path.
+
+---
+
+## legal_bases
+
+**Filas**: **4 399**
+
+**Propósito inferido del código**: Catálogo de bases legales (Reglamentos, Decisiones) que sustentan las medidas TARIC. Cada fila es un instrumento legal con su referencia DOUE, página y fecha de publicación. Referenciada lógicamente desde `taric_measures.legal_base` (text libre, sin FK). Cargada por `scripts/loadBlock3.js`.
+
+**Columnas** (6):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Identificador | `legal_base` text (NN, **UNIQUE**) | e.g. `'R1825/2025'`, `'D1234/2024'` |
+| Publicación | `official_journal` text, `page` int2, `publication_date` date | DOUE + página + fecha |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `lb_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna.
+
+**Índices**: pkey + `idx_lb_base` UNIQUE sobre `(legal_base)`.
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque3-schema.sql:110`.
+
+**Retención sugerida**: indefinida (registro normativo histórico).
+
+**Observaciones**:
+- **No tiene relación FK con `measure_types`** (la pregunta del briefing). Tampoco la tiene con `taric_measures` — `taric_measures.legal_base` (text libre, ver 6A) apunta lógicamente a `legal_bases.legal_base` pero sin FK estricta. Mismo patrón TARIC: lookup denormalizado.
+- **Sin columna `language`** — la base legal es identificación normativa, no texto traducible. Solo `official_journal` puede variar por idioma del DOUE pero no se modela aquí.
+- 4 399 filas vs 136 009 medidas en `taric_measures` ⇒ promedio ~31 medidas por base legal (las medidas de un mismo Reglamento se reutilizan para muchos productos).
+- Sin CHECK ni patrón regex sobre `legal_base` — depende de la consistencia de la carga ETL.
+
+---
+
+## geographical_areas
+
+**Filas**: **311**
+
+**Propósito inferido del código**: Catálogo TARIC oficial de áreas geográficas — incluye **países individuales** y **grupos** (UE, EFTA, ACP, GSP, etc.). El flag `is_country` discrimina ambos casos: `true` para países individuales, `false` para grupos/uniones. Las 311 filas cubren todas las jurisdicciones reconocidas por la nomenclatura TARIC. Cargada por `scripts/loadBlock1.js`.
+
+**Columnas** (9):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq), `area_code` text (NN, **UNIQUE**) | e.g. `'CN'`, `'EU'`, `'1011'` |
+| Texto | `abbrev` text, `description` text (NN) | |
+| Tipo | `is_country` bool (def false) | flag país vs grupo |
+| Vigencia | `start_date` date, `description_start_date` date, `end_date` date | |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `ga_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: ninguna saliente. Es la fuente lógica de los códigos `origin_code` denormalizados en `taric_measures`, `measure_conditions`, `measure_exclusions`, `measure_footnotes` (sin FK estricta, patrón consistente).
+
+**Índices**:
+- `geographical_areas_area_code_key` — UNIQUE `(area_code)`
+- `idx_ga_code` — btree `(area_code)` ← **redundante con el UNIQUE**
+- `idx_ga_is_country` — btree `(is_country)` ← útil para filtrar países vs grupos
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque1-schema.sql:51`.
+
+**Retención sugerida**: indefinida.
+
+**Observaciones**:
+- ⚠️ **Índice `idx_ga_code` redundante** con el UNIQUE `geographical_areas_area_code_key` — mismo patrón ya identificado en `measure_types` (6A) y `cbam_countries` (5C). Eliminar en sub-tanda 6F.
+- **Sin lengua** — `description` está en un único idioma (inglés según la fuente CIRCABC). Si se quisiera soporte multilingüe, requeriría reformatear como `additional_codes/footnote_descriptions` (con UNIQUE compuesto sobre `(area_code, language)`).
+- 311 filas: cobertura completa de la nomenclatura TARIC. Cardinalidad esperada (~250 países + grupos UE/EFTA/ACP/GSP/SPGL/etc.).
+
+### Relación con `public.countries` y `cbam_excluded_countries`
+
+| Tabla | Filas | Propósito | Estado |
+|---|---|---|---|
+| `geographical_areas` | 311 | Catálogo TARIC oficial (países + grupos) | activa, fuente principal del dominio TARIC |
+| `public.countries` | 62 | Lookup ligero para selectores de UI (TARIC) | activa (Tanda 0, fuera de este inventario) |
+| `cbam_excluded_countries` | 7 | Específico CBAM: países con ETS equivalente | activa (Tanda 5A) |
+| `_deprecated_cbam_countries` | 0 | Catálogo CBAM duplicado huérfano | deprecada en sub-tanda 5C |
+
+**Conclusión**: las tres tablas activas tienen propósitos distintos y **no se reemplazan entre sí**. `geographical_areas` es el catálogo TARIC oficial (incluye grupos como `'EU'`, `'1011'`, `'2200'`). `public.countries` es probablemente un subset de países individuales con metadata mínima para selectores. `cbam_excluded_countries` lista los 7 países que tienen ETS equivalente al europeo y están exentos de CBAM. Coexistencia coherente con el dominio funcional de cada una.
+
+---
+
+## geographical_areas_composition
+
+**Filas**: **2 621**
+
+**Propósito inferido del código**: Tabla M:N de **composición de grupos geográficos**: qué países forman parte de cada grupo TARIC (e.g. `'EU' → ['DE', 'FR', 'ES', ...]`, `'EFTA' → ['CH', 'NO', 'IS', 'LI']`). Crítica para resolver medidas que aplican a un grupo cuando el origen real es uno de sus miembros. Cargada por `scripts/loadBlock1.js`.
+
+**Columnas** (11):
+| Bloque | Columnas | Notas |
+|---|---|---|
+| ID | `id` (int4 seq) | |
+| Grupo | `country_group` text (NN), `group_abbrev` text, `group_description` text | denormalizado de `geographical_areas` |
+| Miembro | `member_country` text (NN), `member_abbrev` text, `member_description` text | denormalizado igualmente |
+| Vigencia membresía | `membership_start_date` date, `membership_end_date` date | versiona cambios (e.g. salida UK de UE en 2020) |
+| Vigencia grupo | `group_start_date` date, `group_end_date` date | el grupo en sí también versiona |
+| Auditoría | `created_at` timestamptz (def `now()`) | |
+
+**PII**: No · **Datos comerciales del usuario**: No
+
+**RLS**: Sí · `gac_public_read` (SELECT, role `{public}`, USING `true`)
+
+**Foreign keys**: **ninguna**. Pese a ser una tabla de relación M:N con dos claves naturales (`country_group`, `member_country`) que apuntan lógicamente a `geographical_areas.area_code`, **no se ha definido FK** — denormalización deliberada (incluye `group_description` y `member_description` para evitar joins en hot path).
+
+**Índices**:
+- `idx_gac_group` — btree `(country_group)`
+- `idx_gac_member` — btree `(member_country)`
+- `idx_gac_member_group` — btree compuesto `(member_country, country_group)` ← lookup invertido típico ("¿a qué grupos pertenece DE?")
+- `idx_gac_membership_dates` — btree `(membership_start_date, membership_end_date)` ← optimiza filtros de vigencia
+
+**Triggers**: ninguno.
+
+**Versionada en repo**: **Sí** — `scripts/bloque1-schema.sql:21`.
+
+**Retención sugerida**: indefinida (registro histórico de membresías).
+
+**Observaciones**:
+- **Doble denormalización** — `group_description` y `member_description` se replican aquí en lugar de hacer JOIN a `geographical_areas`. Coste: si se actualiza una descripción en `geographical_areas`, hay que regenerar (o sincronizar) `geographical_areas_composition`. Beneficio: consultas de membresía sin JOIN. Aceptable en hot path.
+- **Sin UNIQUE** sobre `(country_group, member_country, membership_start_date)` — permite duplicados accidentales por carga ETL repetida. Considerar añadirlo en limpieza posterior.
+- **Cuatro fechas** (membership_start/end + group_start/end) — el modelo permite que una membresía empiece después de la creación del grupo y termine antes (cambios históricos). Diseño correcto.
+- 2 621 filas vs 311 áreas / si asumimos que ~50 son grupos y ~250 países ⇒ promedio ~50 países por grupo (algunos grupos como `'1011'` agrupan toda la UE; otros más pequeños).
+
+---
+
+<!-- TANDA 6 INCOMPLETA: pendiente sub-tanda 6E (hallazgos + propuestas para sub-tanda 6F). -->
