@@ -1125,7 +1125,7 @@ lexaduana/
 │   ├── tipos-cambio/             # Tipos de cambio
 │   ├── glosario/                 # Glosario términos
 │   ├── page.js                   # Landing page (Hero + Features + CTA inline, bilingüe)
-│   └── layout.js                 # Layout global (SEO, GA4, Schema.org)
+│   └── layout.js                 # Layout global (SEO, Plausible, Schema.org)
 ├── 📁 components/                # Componentes React
 │   ├── LanguageSwitcher.js       # 🆕 Toggle ES/EN con localStorage
 │   ├── UserMenu.js               # Menú autenticación
@@ -1158,7 +1158,7 @@ lexaduana/
 │   ├── vatCalculator.js          # Lógica IVA variable
 │   ├── csvParser.js              # Parser CSV bulk
 │   ├── excelExporter.js          # Exportador Excel
-│   ├── analytics.js              # GA4 trackEvent helper
+│   ├── analytics.js              # trackEvent helper (no-op tras migración a Plausible solo pageviews)
 │   ├── i18n.js                   # 🆕 Core i18n (LocaleProvider, useLocale, useTranslation)
 │   ├── i18n/                     # 🆕 Diccionarios de traducción ES/EN
 │   │   ├── auth.js               # Login, register, forgot/reset password
@@ -1411,10 +1411,12 @@ UPSTASH_REDIS_REST_TOKEN=xxx
 - **Calculadora eliminada de landing**: La landing es puerta de entrada, no herramienta
 - **Footer actualizado**: Subtítulo "Suite Profesional de Comercio Exterior"
 
-#### 📊 Google Analytics 4 - Eventos Custom
-- **GA4 ya integrado** con ID G-PYT83VPMB7 en layout.js
-- **Helper `lib/analytics.js`**: Función `trackEvent()` reutilizable
-- **Eventos trackeados**: `calculate_tariff`, `classify_product`, `cbam_check`, `compare_origins`
+#### 📊 Plausible Analytics — Privacy-friendly, EU
+- **Plausible Cloud** integrado en `app/layout.js` vía `<PlausibleAnalytics />` (`components/analytics/PlausibleAnalytics.jsx`).
+- **Datos en EU** (Frankfurt), sin cookies, sin tracking cross-site → no requiere consent banner RGPD.
+- **Modo actual**: solo pageviews. Sin custom events ni goals.
+- **Helper `lib/analytics.js`**: `trackEvent()` queda como **no-op** preservando los call sites existentes (`calculate_tariff`, `classify_product`, `compare_origins`, `cbam_check`, `generate_rrm`). Cuando se habiliten goals en Plausible, redirigir el cuerpo a `window.plausible(eventName, { props: params })`.
+- **Migración**: ver commit `feat: migración analítica GA4 → Plausible` (2026-04-29). GA4 (`G-PYT83VPMB7`) eliminado completamente.
 - **Páginas instrumentadas**: calculadora, clasificador, CBAMVerifier, comparador
 
 #### 🔍 SEO Actualizado

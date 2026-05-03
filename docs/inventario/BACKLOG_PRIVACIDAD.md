@@ -353,5 +353,359 @@ workflow (`'analyzing'`, `'pending_supplier_data'`, `'calculating'`, `'reviewing
 con `'requested'` cuando el real es `'invoiced'`. Ver INVENTARIO_CBAM_ADVISORY.md
 sección "Aprendizaje del proceso (incidencia 4C)".
 
+## De Tanda 5 (CBAM reference)
+
+Mejoras menores detectadas durante el inventario del dominio CBAM reference data
+(15 tablas). Ninguna es bloqueante; todas quedan para una iteración futura
+no-prioritaria. Las dos deprecaciones reales (`cbam_cn_codes_full` y
+`cbam_countries`) sí entran en sub-tanda 5C.
+
+### `cbam_config.updated_by` FK con `NO ACTION`
+
+Al borrar el `auth.users` que editó la última vez, queda bloqueado el borrado
+del usuario. Cambiar a `ON DELETE SET NULL` (mismo patrón ya aplicado
+correctamente en `cbam_advisory_report_downloads.user_id`). Resolver junto con
+el resto de FKs `auth.users` en Fase 7.
+
+```sql
+ALTER TABLE public.cbam_config
+  DROP CONSTRAINT cbam_config_updated_by_fkey,
+  ADD  CONSTRAINT cbam_config_updated_by_fkey
+    FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+```
+
+### `cbam_config` sin trigger `update_updated_at_column`
+
+Pese a tener columna `updated_at`, no hay trigger BEFORE UPDATE que la refresque
+automáticamente. Las 8 tablas del dominio con `updated_at` tienen el trigger;
+`cbam_config` es la única excepción. Añadir trigger para no depender de que la
+app setee `updated_at` manualmente.
+
+```sql
+CREATE TRIGGER cbam_config_updated_at
+  BEFORE UPDATE ON public.cbam_config
+  FOR EACH ROW EXECUTE FUNCTION public.update_advisory_updated_at();
+-- (o la función equivalente que usen las otras tablas del dominio)
+```
+
+### `cbam_ets_prices.idx_cbam_ets_current` no garantiza unicidad
+
+Es un índice parcial `WHERE is_current = true` pero NO es UNIQUE. La intención
+de "solo una fila vigente" se documenta pero no se enforce a nivel de BD.
+Convertir en UNIQUE parcial:
+
+```sql
+DROP INDEX public.idx_cbam_ets_current;
+CREATE UNIQUE INDEX idx_cbam_ets_current_unique
+  ON public.cbam_ets_prices (is_current)
+  WHERE is_current = true;
+```
+
+### CHECK constraints faltantes en columnas de tipo
+
+Tres columnas `text` libres con valores cerrados conocidos:
+
+- `cbam_timeline.event_type`: probablemente `'milestone'`, `'regulation'`, `'omnibus'`, `'transition'`. Confirmar con Carlos antes de proponer CHECK.
+- `cbam_regulations.regulation_type`: probablemente `'implementing'`, `'delegated'`, `'omnibus'`, `'main'`. Confirmar.
+- `cbam_regulations.status` (default `'in_force'`): probablemente `'in_force'`, `'repealed'`, `'pending'`. Confirmar.
+
+Aprendizaje de Tanda 4 aplicable: **antes de añadir CHECKs, listar `pg_constraint contype='c'` y consultar `DISTINCT` real en BD** para no infrainferir valores válidos.
+
+### `regulation_ref` sin FK estricta a `cbam_regulations.reference`
+
+Siete tablas (`cbam_cn_codes`, `cbam_emission_factors`, `cbam_benchmarks`,
+`cbam_benchmarks_official`, `cbam_default_value_markup`,
+`cbam_default_values_official`, `cbam_excluded_countries`) tienen una columna
+`regulation_ref` libre que apunta lógicamente a `cbam_regulations.reference`
+pero sin FK SQL. Typos en cargas ETL no se detectan.
+
+Si se decide añadir las FK, hay que tener en cuenta que el orden de carga
+empieza siendo importante: `cbam_regulations` debe poblarse antes que las
+tablas que la referencian. Decisión postpuesta — coste alto, beneficio
+incremental.
+
+### Documentación de relaciones materializadas (sin DDL)
+
+Dos relaciones lógicas que conviene documentar en `lib/cbamService.js` o
+equivalente para que cualquier desarrollador futuro las vea:
+
+- **`cbam_benchmarks` es vista resumen** de `cbam_benchmarks_official`
+  (UI/dashboards vs cálculos por CN code).
+- **`cbam_default_values_official.with_markup_2026/2027/2028`** se materializan
+  a partir de `cbam_default_value_markup.markup_pct`. Cambiar el markup exige
+  recalcular las columnas `with_markup_*` (manual o vía script).
+
+### Revisión 2026-07-29 (90 días tras sub-tanda 5C)
+
+Si las tablas siguen sin uso, eliminar definitivamente:
+
+```sql
+DROP TABLE IF EXISTS public._deprecated_cbam_cn_codes_full;
+DROP TABLE IF EXISTS public._deprecated_cbam_countries;
+```
+
+## De Tanda 6 (TARIC reference)
+
+Mejoras de mantenimiento y análisis del flujo ETL del dominio TARIC reference data
+(18 tablas). Las correcciones de performance ya entran en sub-tanda 6F. Lo que
+sigue es backlog cosmético y de monitorización.
+
+### Vestigios cosméticos en nombres de pkey/sequence/policy
+
+Funcionan correctamente, solo afecta legibilidad. Renombrar en una iteración
+de limpieza posterior (sin urgencia):
+
+| Tabla | Vestigio | Origen |
+|---|---|---|
+| `measure_types` | `measure_types_new_*` | renombrado desde `measure_types_new` (Bloque 1) |
+| `measure_exclusions` | `measure_exclusions_id_seq1`, `measure_exclusions_pkey1` | drop+create previo |
+| `descriptions` | `descriptions_new_*` | renombrado desde `descriptions_new` (Bloque 1) |
+| `footnote_descriptions` | `footnote_descriptions_pkey1` | drop+create previo |
+| `certificate_types` | `certificate_types_pkey1` | drop+create previo |
+
+Patrón de rename idempotente:
+
+```sql
+ALTER INDEX public.measure_types_new_pkey RENAME TO measure_types_pkey;
+ALTER SEQUENCE public.measure_types_new_id_seq RENAME TO measure_types_id_seq;
+-- ... (idem para el resto)
+```
+
+### `descriptions` sin columna `language`
+
+Inconsistencia con `additional_codes`, `footnote_descriptions` y `certificate_types`
+(todas multilingües). Limita la posibilidad de ofrecer descripciones de mercancía
+en español sin reformatear el schema. Si se decide soportar multilingüe:
+
+```sql
+ALTER TABLE public.descriptions
+  ADD COLUMN language bpchar(2) NOT NULL DEFAULT 'EN';
+-- + drop UNIQUE actual (goods_code, goods_code_full)
+-- + add UNIQUE (goods_code, goods_code_full, language)
+-- + recargar Nomenclature ES.xlsx
+```
+
+### 6 códigos en `declarable_codes` sin descripción correspondiente
+
+25 697 filas en `declarable_codes` vs 25 691 en `descriptions`. Diferencia de 6
+códigos. Posible carga incompleta o códigos recientes sin texto en el Excel del
+mes. Reportable a Carlos para reconciliación:
+
+```sql
+SELECT dc.goods_code, dc.goods_code_full, dc.is_leaf, dc.start_date
+FROM public.declarable_codes dc
+LEFT JOIN public.descriptions d
+  ON d.goods_code = dc.goods_code AND d.goods_code_full = dc.goods_code_full
+WHERE d.id IS NULL
+ORDER BY dc.goods_code;
+```
+
+### Inconsistencia de tipo en lookups TARIC
+
+- `condition_codes.code` — `bpchar` (`character(1)`).
+- `action_codes.code` — `varchar` sin longitud.
+- `additional_codes.language`, `footnote_descriptions.language`, `certificate_types.language` — `bpchar` sin longitud explícita.
+
+Homogeneizar a `varchar(2)` o `character(2)` según convenga, con CHECK que valide
+los valores conocidos:
+
+```sql
+-- Ejemplo para language:
+ALTER TABLE public.additional_codes
+  ALTER COLUMN language TYPE varchar(2) USING language::varchar(2),
+  ADD CONSTRAINT additional_codes_language_check
+    CHECK (language IN ('EN','ES'));
+```
+
+### Sin UNIQUE compuesto en `geographical_areas_composition`
+
+Permite duplicados accidentales por carga ETL repetida. Añadir:
+
+```sql
+ALTER TABLE public.geographical_areas_composition
+  ADD CONSTRAINT geographical_areas_composition_uniq
+  UNIQUE (country_group, member_country, membership_start_date);
+```
+
+(Verificar primero que no hay duplicados existentes.)
+
+### Falta versionado en `scripts/` para tablas grandes
+
+Tablas activas que no aparecen como `CREATE TABLE` en `scripts/`:
+
+- `taric_measures` (136K filas) — sin `CREATE TABLE` activo, definición histórica.
+- `measure_conditions` (29K) — solo `_backup_mar26` en `bloque2-schema.sql`.
+- `measure_exclusions` (29K) — solo `_backup_mar26`.
+- `condition_codes` (8) — sin definición.
+- `action_codes` (8) — sin definición.
+- `measure_alerts` (15K) — sin definición (legacy).
+
+Tras aplicar 6F y cerrar la limpieza, considerar **baseline retroactivo** similar
+al de `user_consents` (Fase 1.3): un archivo `supabase/migrations/YYYYMMDDHHMMSS_taric_baseline.sql`
+con `CREATE TABLE IF NOT EXISTS` de cada una más sus índices/policies actuales,
+para que `db reset` desde limpio reconstruya el estado funcional.
+
+### `measure_alerts` con role `anon` y legacy fallback
+
+La tabla está marcada en `lib/calculateTariff.js:973-985` como fallback legacy.
+Antes de deprecar:
+
+1. Leer el bloque exacto para entender en qué casos se cae al fallback.
+2. Verificar que el sistema principal (probablemente `measureInterpreter.js`
+   sobre `taric_measures` + `measure_conditions`/`measure_footnotes`) cubre
+   todos los casos de producción.
+3. Si la cobertura es completa, RENAME a `_deprecated_measure_alerts` con
+   revisión 90 días.
+
+```sql
+ALTER TABLE public.measure_alerts RENAME TO _deprecated_measure_alerts;
+COMMENT ON TABLE public._deprecated_measure_alerts IS
+  'DEPRECATED YYYY-MM-DD. Legacy fallback en lib/calculateTariff.js. '
+  'Revisar YYYY-MM-DD y eliminar si la generación dinámica cubre todos los casos.';
+```
+
+### Análisis ETL TARIC y política de purga
+
+**Frecuencia mensual manual** (no cron) confirmada con Carlos. Solo 1 ejecución
+en `taric_update_runs` (`2026-04-13`); las cargas históricas anteriores no
+quedaron auditadas.
+
+**Crecimiento esperado de `taric_changes`**: ~18K cambios/mes ⇒ proyección
+~217K en 12 meses, ~434K en 24 meses. Considerar política de purga en **Fase 8**:
+
+```sql
+-- Opción A: purga selectiva por mes (preserva runs en taric_update_runs)
+DELETE FROM public.taric_changes
+WHERE data_month < to_char(now() - interval '24 months', 'YYYY-MM');
+
+-- Opción B: partición por data_month (refactor mayor)
+-- requiere recrear la tabla particionada por LIST/RANGE de data_month
+```
+
+**Crítico**: `taric_changes.run_id` con FK `ON DELETE CASCADE` ⇒ NO usar
+`DELETE FROM taric_update_runs` para purgar (perdería todo el run, incluida
+la bitácora histórica). Usar la opción A directamente sobre `taric_changes`.
+
+### Revisión periódica del flujo ETL
+
+Cada vez que Carlos ejecute la carga mensual:
+
+1. Verificar que `taric_update_runs` recibe la nueva fila (`status = 'success'`).
+2. Confirmar que `data_month` y `total_changes` cuadran con lo esperado.
+3. Si `total_changes` se desvía mucho de la media histórica (~18K), investigar
+   antes de mostrar la página `/cambios` al público.
+
+Sin métrica automática hoy. Considerar dashboard interno o alerta en Fase 8.
+
+## De Tanda 7 (otros / lookups)
+
+Mejoras de mantenimiento no críticas. Las correcciones reales (3 DROPs de
+backups v42 + 2 deprecaciones de tablas legacy + 1 índice redundante en
+`countries`) ya entran en sub-tanda 7C.
+
+### `vat_rates` solo cubre IVA español
+
+La tabla no tiene columna `country_code` y modela solo los 4 tipos español
+(4 %/10 %/21 % + exenciones). Si LexAduana se internacionaliza a otros
+estados miembros UE, requiere refactor:
+
+```sql
+-- Esquema futuro multi-país:
+ALTER TABLE public.vat_rates ADD COLUMN country_code varchar(2) NOT NULL DEFAULT 'ES';
+-- + recargar tipos de cada país UE (cada uno con su tabla de productos sujetos a IVA reducido)
+-- + UNIQUE compuesto sobre (country_code, goods_code) si se quiere unicidad por par
+```
+
+### `subscription_plans.plan_name` nullable
+
+Identificador de plan permite NULL — error de diseño. Debería ser
+`NOT NULL UNIQUE` para garantizar que `user_profiles.plan_type` (text libre)
+pueda apuntar de forma fiable.
+
+```sql
+-- Verificar primero que no hay filas con plan_name NULL:
+SELECT id, price_monthly FROM public.subscription_plans WHERE plan_name IS NULL;
+
+-- Si están todos completos:
+ALTER TABLE public.subscription_plans
+  ALTER COLUMN plan_name SET NOT NULL,
+  ADD CONSTRAINT subscription_plans_plan_name_key UNIQUE (plan_name);
+```
+
+### Patrón `current/upcoming` sin archivo histórico de tipos de cambio
+
+Cuando llega el primer día del mes y `upcoming_exchange_rates` rota a
+`current_exchange_rates`, las filas de `current` se sobrescriben — los
+tipos del mes anterior desaparecen de la BD activa. Para auditoría
+retroactiva completa (e.g. recalcular un cálculo de hace 3 meses con la
+tarifa BOE exacta de aquel momento), considerar:
+
+- **Opción A**: archivar a `exchange_rates` con `effective_to` antes de la
+  rotación (cuando esa tabla deje de ser legacy y se enriquezca con
+  `boe_reference`).
+- **Opción B**: nueva tabla `exchange_rates_archive` con el mismo schema
+  de `current` + `archived_at`.
+
+Sin urgencia mientras los cálculos retroactivos no sean un caso de uso
+explícito.
+
+### Vestigios `_pkey1` / `_seq1` en `exchange_rates`
+
+Cosmético — afecta legibilidad, no funcionalidad. Renombrar cuando se
+decida el destino de la tabla (deprecar tras limpiar `loadBlock3.js` o
+mantenerla activa enriqueciendo el schema). Mismo patrón ya documentado
+en otras tablas TARIC (`measure_exclusions_pkey1`, `footnote_descriptions_pkey1`,
+`certificate_types_pkey1`).
+
+### Excepción de role `{anon}` recurrente
+
+Tres tablas activas usan `{anon}` en lugar del patrón uniforme `{public}`:
+
+- `vat_rates` (Tanda 7A).
+- `measure_alerts` (Tanda 6A — además marcada como legacy fallback).
+- `measure_exclusions_backup_v42` (Tanda 7B — DROP aplicado en 7C).
+
+Funcionalmente equivalente para SELECT público (`anon` es un subset de
+`public`), pero rompe la uniformidad. Limpieza cosmética futura:
+
+```sql
+DROP POLICY IF EXISTS "Allow public read access" ON public.vat_rates;
+CREATE POLICY "vat_rates_public_read" ON public.vat_rates
+  FOR SELECT TO public USING (true);
+-- (idem para measure_alerts si se decide conservarla)
+```
+
+### Limpieza pendiente: `exchange_rates` legacy
+
+La tabla legacy de tipos de cambio (15 monedas, congelada en 2026-03-01)
+**no se deprecó en 7C** porque `scripts/loadBlock3.js:235` todavía hace
+`batchInsert('exchange_rates', rows, ...)` — un rename ahora rompería la
+próxima ejecución del script.
+
+**Acción coordinada en dos pasos** (orden importante):
+
+1. **Limpiar el script ETL** — eliminar el bloque de carga de
+   `exchange_rates` en `scripts/loadBlock3.js` (líneas alrededor de la
+   :235). El sistema actual usa `current_exchange_rates` y
+   `upcoming_exchange_rates`, cargados por `scripts/update-rates*.js`.
+2. **Aplicar la deprecación SQL** una vez confirmado que ningún script
+   ni endpoint la consulta:
+   ```sql
+   ALTER TABLE public.exchange_rates RENAME TO _deprecated_exchange_rates;
+   COMMENT ON TABLE public._deprecated_exchange_rates IS
+     'DEPRECATED YYYY-MM-DD. Subset legacy de 15 monedas. '
+     'Reemplazado por current/upcoming_exchange_rates con 29 monedas BOE/BCE. '
+     'Revisar 90 días después y eliminar.';
+   ```
+
+### Revisión 2026-07-29 (90 días tras 7C)
+
+Si las tablas siguen sin uso, eliminar definitivamente:
+
+```sql
+DROP TABLE IF EXISTS public._deprecated_tariff_history;
+DROP TABLE IF EXISTS public._deprecated_tariff_changes;
+```
+
 
 
