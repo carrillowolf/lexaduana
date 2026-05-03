@@ -27,9 +27,12 @@ export default function sitemap() {
     { url: '/glosario', priority: 0.8, changeFrequency: 'monthly' },
     { url: '/tipos-cambio', priority: 0.6, changeFrequency: 'daily' },
 
-    // Legal
-    { url: '/politica-privacidad', priority: 0.3, changeFrequency: 'yearly' },
-    { url: '/terminos-uso', priority: 0.3, changeFrequency: 'yearly' },
+    // Legal (URLs canónicas; las antiguas /politica-privacidad y /terminos-uso
+    // sirven 308 redirect y no se indexan)
+    { url: '/privacidad', priority: 0.3, changeFrequency: 'yearly' },
+    { url: '/aviso-legal', priority: 0.3, changeFrequency: 'yearly' },
+    { url: '/cookies', priority: 0.3, changeFrequency: 'yearly' },
+    { url: '/terminos', priority: 0.3, changeFrequency: 'yearly' },
   ]
 
   return routes.map(route => ({

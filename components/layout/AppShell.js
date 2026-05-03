@@ -10,6 +10,11 @@ import AppTopbar from './AppTopbar'
 const BARE_ROUTES = [
   '/',
   '/auth',
+  '/privacidad',
+  '/aviso-legal',
+  '/cookies',
+  '/terminos',
+  // Legacy redirects (308 → URL canónica)
   '/politica-privacidad',
   '/terminos-uso',
 ]
