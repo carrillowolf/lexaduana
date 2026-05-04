@@ -1,3 +1,4 @@
+import { safeLogger } from '@/lib/safe-logger'
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -31,13 +32,13 @@ export async function GET(request) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching favorites:', error);
+      safeLogger.error('Error fetching favorites:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ favorites });
   } catch (error) {
-    console.error('Error in favorites GET:', error);
+    safeLogger.error('Error in favorites GET:', error);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }
@@ -84,13 +85,13 @@ export async function POST(request) {
       if (error.code === '23505') {
         return NextResponse.json({ error: 'Este producto ya está en favoritos' }, { status: 409 });
       }
-      console.error('Error adding favorite:', error);
+      safeLogger.error('Error adding favorite:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ favorite: data }, { status: 201 });
   } catch (error) {
-    console.error('Error in favorites POST:', error);
+    safeLogger.error('Error in favorites POST:', error);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }
@@ -127,13 +128,13 @@ export async function DELETE(request) {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error deleting favorite:', error);
+      safeLogger.error('Error deleting favorite:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error in favorites DELETE:', error);
+    safeLogger.error('Error in favorites DELETE:', error);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
 }

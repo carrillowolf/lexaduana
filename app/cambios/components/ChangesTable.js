@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import ChangeTypeBadge from './ChangeTypeBadge'
 import SeverityBadge from './SeverityBadge'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function ChangesTable({ month, chapter, searchCode, t }) {
   const [data, setData] = useState([])
@@ -45,7 +46,7 @@ export default function ChangesTable({ month, chapter, searchCode, t }) {
       setData(changes)
       setPagination(json.pagination || null)
     } catch (err) {
-      console.error('Error cargando cambios:', err)
+      safeLogger.error('Error cargando cambios:', err)
     }
     setLoading(false)
   }

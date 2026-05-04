@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET  /api/admin/cbam/suscripciones/[id]     — detalle admin
@@ -57,7 +58,7 @@ export async function GET(request, { params }) {
     }
     return NextResponse.json({ success: true, data: mapRow(data) })
   } catch (err) {
-    console.error('Error suscripcion GET:', err)
+    safeLogger.error('Error suscripcion GET:', err)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })
   }
 }
@@ -97,12 +98,12 @@ export async function PATCH(request, { params }) {
       .single()
 
     if (error) {
-      console.error('[Monitoring Admin] Error PATCH:', error.message)
+      safeLogger.error('[Monitoring Admin] Error PATCH:', error.message)
       return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
     }
     return NextResponse.json({ success: true, data: mapRow(data) })
   } catch (err) {
-    console.error('Error suscripcion PATCH:', err)
+    safeLogger.error('Error suscripcion PATCH:', err)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })
   }
 }

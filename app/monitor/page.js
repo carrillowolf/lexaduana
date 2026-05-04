@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { monitorDict } from '@/lib/i18n/monitor'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function MonitorAuth() {
   const [isLogin, setIsLogin] = useState(true)
@@ -61,7 +62,7 @@ export default function MonitorAuth() {
               max_monitors: 5
             })
             
-          if (profileError) console.error('Error creating profile:', profileError)
+          if (profileError) safeLogger.error('Error creating profile:', profileError)
         }
         
         setMessage({

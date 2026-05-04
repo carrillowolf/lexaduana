@@ -11,6 +11,7 @@ import {
   defaultLanguageForAdvisory,
   generatePaymentRequestReference,
 } from '@/lib/cbamAdvisoryPaymentRequest'
+import { safeLogger } from '@/lib/safe-logger'
 
 const FROM = 'LexAduana CBAM <cbam@lexaduana.es>'
 const REPLY_TO = 'cbam@lexaduana.es'
@@ -65,7 +66,7 @@ export async function GET(request, { params }) {
       },
     })
   } catch (error) {
-    console.error('Error en payment-request GET:', error)
+    safeLogger.error('Error en payment-request GET:', error)
     return NextResponse.json({ error: error.message || 'Error al cargar preview' }, { status: 500 })
   }
 }
@@ -131,7 +132,7 @@ export async function POST(request, { params }) {
       tags: [{ name: 'category', value: 'payment_request' }],
     })
     if (result.error) {
-      console.error('[Payment Request] Resend error:', result.error)
+      safeLogger.error('[Payment Request] Resend error:', result.error)
       return NextResponse.json(
         { error: result.error.message || 'Error al enviar el email' },
         { status: 502 }
@@ -160,7 +161,7 @@ export async function POST(request, { params }) {
       },
     })
   } catch (error) {
-    console.error('Error en payment-request POST:', error)
+    safeLogger.error('Error en payment-request POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al enviar solicitud de pago' },
       { status: 500 }

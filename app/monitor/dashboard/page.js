@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { monitorDict } from '@/lib/i18n/monitor'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function MonitorDashboard() {
   const router = useRouter()
@@ -47,7 +48,7 @@ export default function MonitorDashboard() {
       // Obtener monitores
       await loadMonitors(user.id)
     } catch (error) {
-      console.error('Error:', error)
+      safeLogger.error('Error:', error)
     } finally {
       setLoading(false)
     }

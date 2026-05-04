@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { getFieldLabel, getValueLabel, formatRelativeTime } from '@/lib/dispatchActivity'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function ActivityTimeline({ dispatchId }) {
   const [events, setEvents] = useState([])
@@ -23,7 +24,7 @@ export default function ActivityTimeline({ dispatchId }) {
         .limit(100)
       if (!active) return
       if (error) {
-        console.error('Error cargando timeline:', error)
+        safeLogger.error('Error cargando timeline:', error)
         setEvents([])
       } else {
         setEvents(data || [])

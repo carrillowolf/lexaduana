@@ -1,3 +1,4 @@
+import { safeLogger } from '@/lib/safe-logger'
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -39,7 +40,7 @@ export default function FavoritosPage() {
                 setFavorites(data.favorites);
             }
         } catch (error) {
-            console.error('Error loading favorites:', error);
+            safeLogger.error('Error loading favorites:', error);
         } finally {
             setLoading(false);
         }
@@ -57,7 +58,7 @@ export default function FavoritosPage() {
                 setFavorites(favorites.filter(f => f.id !== id));
             }
         } catch (error) {
-            console.error('Error deleting favorite:', error);
+            safeLogger.error('Error deleting favorite:', error);
         }
     }
 

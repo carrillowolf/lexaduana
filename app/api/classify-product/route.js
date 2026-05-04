@@ -23,6 +23,7 @@ import {
 } from '@/lib/rate-limit'
 import { validateClassificationInput } from '@/lib/validation'
 import { isAdminEmail } from '@/lib/cbamAdminAuth'
+import { safeLogger } from '@/lib/safe-logger'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -295,7 +296,7 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
         throw new Error('No se pudo extraer JSON de la respuesta')
       }
     } catch (parseError) {
-      console.error('Error parseando respuesta de Claude:', parseError)
+      safeLogger.error('Error parseando respuesta de Claude:', parseError)
       return NextResponse.json({
         error: 'Error al procesar la respuesta de IA',
         rawResponse: responseText
@@ -401,7 +402,7 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
     })
 
   } catch (error) {
-    console.error('Error en clasificación:', error)
+    safeLogger.error('Error en clasificación:', error)
 
     // No exponer detalles internos en producción
     return NextResponse.json(

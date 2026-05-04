@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { formatRelativeTime } from '@/lib/dispatchActivity'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function CommentThread({ dispatchId }) {
   const [comments, setComments] = useState([])
@@ -29,7 +30,7 @@ export default function CommentThread({ dispatchId }) {
         .order('created_at', { ascending: false })
       if (!active) return
       if (error) {
-        console.error('Error cargando comentarios:', error)
+        safeLogger.error('Error cargando comentarios:', error)
         setComments([])
       } else {
         setComments(data || [])
@@ -51,7 +52,7 @@ export default function CommentThread({ dispatchId }) {
       .single()
     setPosting(false)
     if (error) {
-      console.error('Error añadiendo comentario:', error)
+      safeLogger.error('Error añadiendo comentario:', error)
       alert('No se pudo añadir el comentario')
       return
     }
@@ -63,7 +64,7 @@ export default function CommentThread({ dispatchId }) {
     if (!confirm('¿Borrar este comentario?')) return
     const { error } = await supabase.from('dispatch_comments').delete().eq('id', id)
     if (error) {
-      console.error('Error borrando:', error)
+      safeLogger.error('Error borrando:', error)
       return
     }
     setComments(prev => prev.filter(c => c.id !== id))

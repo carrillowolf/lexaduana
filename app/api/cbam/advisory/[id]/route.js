@@ -6,6 +6,7 @@ import {
   updateAdvisoryRequest,
   deleteAdvisoryRequest,
 } from '@/lib/cbamAdvisoryService'
+import { safeLogger } from '@/lib/safe-logger'
 
 /** Helper para verificar que la solicitud pertenece al usuario */
 async function verifyOwnership(requestId, userId, client) {
@@ -36,7 +37,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ success: true, data: advisory })
   } catch (error) {
-    console.error('Error en /api/cbam/advisory/[id] GET:', error)
+    safeLogger.error('Error en /api/cbam/advisory/[id] GET:', error)
     return NextResponse.json({ error: 'Error al obtener solicitud' }, { status: 500 })
   }
 }
@@ -72,7 +73,7 @@ export async function PATCH(request, { params }) {
     const updated = await updateAdvisoryRequest(id, body, supabase)
     return NextResponse.json({ success: true, data: updated })
   } catch (error) {
-    console.error('Error en /api/cbam/advisory/[id] PATCH:', error)
+    safeLogger.error('Error en /api/cbam/advisory/[id] PATCH:', error)
     return NextResponse.json({ error: error.message || 'Error al actualizar' }, { status: 500 })
   }
 }
@@ -107,7 +108,7 @@ export async function DELETE(request, { params }) {
     await deleteAdvisoryRequest(id, supabase)
     return NextResponse.json({ success: true, message: 'Solicitud eliminada' })
   } catch (error) {
-    console.error('Error en /api/cbam/advisory/[id] DELETE:', error)
+    safeLogger.error('Error en /api/cbam/advisory/[id] DELETE:', error)
     return NextResponse.json({ error: error.message || 'Error al eliminar' }, { status: 500 })
   }
 }

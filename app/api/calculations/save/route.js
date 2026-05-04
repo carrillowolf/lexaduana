@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function POST(request) {
   try {
@@ -64,7 +65,7 @@ export async function POST(request) {
       data
     })
   } catch (error) {
-    console.error('Error guardando cálculo:', error)
+    safeLogger.error('Error guardando cálculo:', error)
     return NextResponse.json(
       { error: 'Error al guardar el cálculo' },
       { status: 500 }

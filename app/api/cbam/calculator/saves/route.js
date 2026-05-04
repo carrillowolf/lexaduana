@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { resolveTrafficLight, shouldShowCost } from '@/lib/cbamDiagnosticBuilder'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/cbam/calculator/saves
@@ -31,7 +32,7 @@ export async function GET() {
       .limit(10)
 
     if (error) {
-      console.error('[GET /api/cbam/calculator/saves]', error)
+      safeLogger.error('[GET /api/cbam/calculator/saves]', error)
       return NextResponse.json({ error: 'Error cargando historial' }, { status: 500 })
     }
 
@@ -64,7 +65,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: items })
   } catch (err) {
-    console.error('[GET /api/cbam/calculator/saves]', err)
+    safeLogger.error('[GET /api/cbam/calculator/saves]', err)
     return NextResponse.json({ error: 'Error cargando historial', detail: err.message }, { status: 500 })
   }
 }

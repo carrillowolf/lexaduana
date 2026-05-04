@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { getAdvisoryRequestAsAdmin } from '@/lib/cbamAdvisoryAdminService'
 import { buildPaymentRequestPayload } from '@/lib/cbamAdvisoryPaymentRequest'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST — Re-renderiza el preview del email sin enviarlo.
@@ -33,7 +34,7 @@ export async function POST(request, { params }) {
 
     return NextResponse.json({ success: true, data: { preview } })
   } catch (error) {
-    console.error('Error en payment-request/preview POST:', error)
+    safeLogger.error('Error en payment-request/preview POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error generando preview' },
       { status: 500 }

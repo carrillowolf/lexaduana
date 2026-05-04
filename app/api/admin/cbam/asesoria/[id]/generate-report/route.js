@@ -9,6 +9,7 @@ import {
 } from '@/lib/cbamAdvisoryAdminService'
 import { buildReportSnapshot } from '@/lib/cbamReportSnapshot'
 import { renderReportPdf } from '@/lib/cbamReportGenerator'
+import { safeLogger } from '@/lib/safe-logger'
 
 // React-PDF requiere Node runtime (no edge)
 export const runtime = 'nodejs'
@@ -103,7 +104,7 @@ export async function POST(request, { params }) {
       },
     })
   } catch (error) {
-    console.error('Error en generate-report POST:', error)
+    safeLogger.error('Error en generate-report POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al generar el informe' },
       { status: 500 }

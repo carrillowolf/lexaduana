@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server'
 // Importar sistema de seguridad
 import { checkRateLimit, calculatorLimiter, rateLimitHeaders } from '@/lib/rate-limit'
 import { validateCalculationInput } from '@/lib/validation'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function POST(request) {
   try {
@@ -97,7 +98,7 @@ export async function POST(request) {
     })
 
   } catch (error) {
-    console.error('Error en cálculo:', error)
+    safeLogger.error('Error en cálculo:', error)
     return NextResponse.json(
       { error: 'Error al procesar la solicitud' },
       { status: 500 }
@@ -129,7 +130,7 @@ export async function GET(request) {
       headers: rateLimitHeaders(rateLimit),
     })
   } catch (error) {
-    console.error('Error obteniendo países:', error)
+    safeLogger.error('Error obteniendo países:', error)
     return NextResponse.json(
       { success: true, countries: [] },
       { status: 200 }

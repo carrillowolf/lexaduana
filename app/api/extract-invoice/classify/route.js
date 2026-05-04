@@ -17,6 +17,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies, headers as nextHeaders } from 'next/headers'
 
 import { SECURE_RESPONSE_HEADERS, isSameOrigin } from '@/lib/fileSecurity'
+import { safeLogger } from '@/lib/safe-logger'
 
 const MAX_CONCURRENT = 3
 const MAX_LINES_PER_REQUEST = 30
@@ -150,7 +151,7 @@ export async function POST(request) {
       { headers: SECURE_RESPONSE_HEADERS }
     )
   } catch (error) {
-    console.error('[extract-invoice/classify] Unhandled:', error?.message)
+    safeLogger.error('[extract-invoice/classify] Unhandled:', error?.message)
     return errorResponse('Error inesperado.', 500)
   }
 }

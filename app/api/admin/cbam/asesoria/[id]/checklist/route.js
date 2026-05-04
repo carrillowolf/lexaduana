@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { applyManualStepToggle } from '@/lib/cbamChecklist'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST /api/admin/cbam/asesoria/[id]/checklist
@@ -52,7 +53,7 @@ export async function POST(request, { params }) {
       .single()
 
     if (upErr) {
-      console.error('[Checklist] Error al actualizar:', upErr.message)
+      safeLogger.error('[Checklist] Error al actualizar:', upErr.message)
       return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
     }
 
@@ -61,7 +62,7 @@ export async function POST(request, { params }) {
       data: { checklist: updated.admin_checklist },
     })
   } catch (err) {
-    console.error('Error checklist advisory POST:', err)
+    safeLogger.error('Error checklist advisory POST:', err)
     return NextResponse.json(
       { error: err.message || 'Error interno' },
       { status: 500 }

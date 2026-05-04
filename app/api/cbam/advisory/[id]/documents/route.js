@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getAdvisoryRequest, uploadAdvisoryDocument } from '@/lib/cbamAdvisoryService'
+import { safeLogger } from '@/lib/safe-logger'
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -66,7 +67,7 @@ export async function POST(request, { params }) {
     const doc = await uploadAdvisoryDocument(id, user.id, file, fileType, notes, supabase)
     return NextResponse.json({ success: true, data: doc }, { status: 201 })
   } catch (error) {
-    console.error('Error en documents POST:', error)
+    safeLogger.error('Error en documents POST:', error)
     return NextResponse.json({ error: error.message || 'Error al subir documento' }, { status: 500 })
   }
 }

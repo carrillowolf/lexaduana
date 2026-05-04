@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
   const [inputValue, setInputValue] = useState(value || '')
@@ -62,7 +63,7 @@ export default function HSCodeAutocomplete({ value, onChange, onSelect }) {
         setShowSuggestions(false)
       }
     } catch (error) {
-      console.error('Error buscando códigos:', error)
+      safeLogger.error('Error buscando códigos:', error)
       setSuggestions([])
     } finally {
       setIsLoading(false)

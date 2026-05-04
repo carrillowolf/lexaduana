@@ -13,6 +13,7 @@ import { generateRrmDocx } from '@/lib/rrmDocxGenerator'
 import { checkRateLimit, generalLimiter, rateLimitHeaders } from '@/lib/rate-limit'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function POST(request) {
   try {
@@ -74,7 +75,7 @@ export async function POST(request) {
         }
       } catch (persistErr) {
         // No bloqueamos la generación si falla el guardado
-        console.error('[generate-docx] persist error:', persistErr)
+        safeLogger.error('[generate-docx] persist error:', persistErr)
       }
     }
 
@@ -89,7 +90,7 @@ export async function POST(request) {
       },
     })
   } catch (err) {
-    console.error('[generate-docx] error:', err)
+    safeLogger.error('[generate-docx] error:', err)
     return NextResponse.json(
       { error: 'No se pudo generar el documento', details: err?.message || String(err) },
       { status: 500 }

@@ -35,6 +35,7 @@ import {
   summarizeValidation,
 } from '@/lib/invoiceValidator'
 import { isAdminEmail } from '@/lib/cbamAdminAuth'
+import { safeLogger } from '@/lib/safe-logger'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -270,7 +271,7 @@ export async function POST(request) {
       })
     } catch (err) {
       // Log SOLO el mensaje, no el contenido del archivo
-      console.error('[extract-invoice] Claude API error:', err?.message || 'unknown')
+      safeLogger.error('[extract-invoice] Claude API error:', err?.message || 'unknown')
       return errorResponse('No se ha podido procesar la factura. Inténtalo de nuevo.', 502)
     } finally {
       // Liberar buffer cuanto antes
@@ -285,7 +286,7 @@ export async function POST(request) {
       if (!jsonMatch) throw new Error('No JSON found')
       parsedData = JSON.parse(jsonMatch[0])
     } catch (err) {
-      console.error('[extract-invoice] JSON parse error:', err?.message)
+      safeLogger.error('[extract-invoice] JSON parse error:', err?.message)
       return errorResponse('La IA devolvió una respuesta inesperada. Inténtalo de nuevo.', 502)
     }
 
@@ -320,7 +321,7 @@ export async function POST(request) {
       extractionId = insertRes?.id || null
     } catch (err) {
       // Si no existe la tabla aún, no romper el flujo
-      console.error('[extract-invoice] DB insert failed:', err?.message)
+      safeLogger.error('[extract-invoice] DB insert failed:', err?.message)
     }
 
     // 11. Respuesta
@@ -344,7 +345,7 @@ export async function POST(request) {
     )
   } catch (error) {
     // Nunca exponer detalles internos
-    console.error('[extract-invoice] Unhandled:', error?.message || 'unknown')
+    safeLogger.error('[extract-invoice] Unhandled:', error?.message || 'unknown')
     return errorResponse('Error inesperado. Inténtalo de nuevo.', 500)
   }
 }

@@ -10,6 +10,7 @@ import DispatchChecklist from '@/components/DispatchChecklist'
 import ActivityTimeline from '@/components/despachos/ActivityTimeline'
 import CommentThread from '@/components/despachos/CommentThread'
 import Link from 'next/link'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function DespachoDetalle() {
   const [user, setUser] = useState(null)
@@ -81,7 +82,7 @@ export default function DespachoDetalle() {
       })
       setStateChanges(ch)
     } catch (err) {
-      console.error('Error cargando despacho:', err)
+      safeLogger.error('Error cargando despacho:', err)
       setError('Despacho no encontrado')
     } finally {
       setLoading(false)
@@ -112,7 +113,7 @@ export default function DespachoDetalle() {
         })
       }
     } catch (err) {
-      console.error('Error actualizando:', err)
+      safeLogger.error('Error actualizando:', err)
       alert('Error al guardar')
     } finally {
       setSaving(false)

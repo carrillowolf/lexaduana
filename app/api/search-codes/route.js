@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function GET(request) {
   try {
@@ -105,7 +106,7 @@ export async function GET(request) {
     })
     
   } catch (error) {
-    console.error('Error en búsqueda:', error)
+    safeLogger.error('Error en búsqueda:', error)
     return NextResponse.json(
       { error: 'Error al buscar códigos' },
       { status: 500 }

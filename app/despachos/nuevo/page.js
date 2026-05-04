@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { despachosDict } from '@/lib/i18n/despachos'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function NuevoDespacho() {
   const [user, setUser] = useState(null)
@@ -165,7 +166,7 @@ export default function NuevoDespacho() {
       // Redirigir al detalle
       router.push(`/despachos/${data.id}`)
     } catch (err) {
-      console.error('Error creando despacho:', err)
+      safeLogger.error('Error creando despacho:', err)
       if (err.code === '23505') {
         setError('Ya existe un despacho con ese nº de expediente')
       } else {

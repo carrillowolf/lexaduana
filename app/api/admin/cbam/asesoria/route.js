@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { listAllAdvisoryRequests } from '@/lib/cbamAdvisoryAdminService'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/admin/cbam/asesoria
@@ -19,7 +20,7 @@ export async function GET(request) {
     const requests = await listAllAdvisoryRequests({ status, search })
     return NextResponse.json({ success: true, data: requests })
   } catch (error) {
-    console.error('Error en /api/admin/cbam/asesoria GET:', error)
+    safeLogger.error('Error en /api/admin/cbam/asesoria GET:', error)
     return NextResponse.json(
       { error: error.message || 'Error al listar solicitudes' },
       { status: 500 }

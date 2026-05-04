@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { getAdvisoryRequestAsAdmin } from '@/lib/cbamAdvisoryAdminService'
 import { calculateAdvisoryRequest } from '@/lib/cbamAdvisoryCalculator'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { safeLogger } from '@/lib/safe-logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -37,7 +38,7 @@ export async function POST(request, { params }) {
       message: 'Cálculo completado',
     })
   } catch (error) {
-    console.error('Error en admin calculate POST:', error)
+    safeLogger.error('Error en admin calculate POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al ejecutar el cálculo' },
       { status: 500 }

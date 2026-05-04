@@ -5,6 +5,7 @@ import {
   updateAdvisoryProductAsAdmin,
   deleteAdvisoryProductAsAdmin,
 } from '@/lib/cbamAdvisoryAdminService'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST /api/admin/cbam/asesoria/[id]/products
@@ -28,7 +29,7 @@ export async function POST(request, { params }) {
     const product = await addAdvisoryProductAsAdmin(id, body)
     return NextResponse.json({ success: true, data: product }, { status: 201 })
   } catch (error) {
-    console.error('Error en admin products POST:', error)
+    safeLogger.error('Error en admin products POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al añadir producto' },
       { status: 500 }
@@ -55,7 +56,7 @@ export async function PATCH(request) {
     const updated = await updateAdvisoryProductAsAdmin(productId, data)
     return NextResponse.json({ success: true, data: updated })
   } catch (error) {
-    console.error('Error en admin products PATCH:', error)
+    safeLogger.error('Error en admin products PATCH:', error)
     return NextResponse.json(
       { error: error.message || 'Error al actualizar producto' },
       { status: 500 }
@@ -82,7 +83,7 @@ export async function DELETE(request) {
     await deleteAdvisoryProductAsAdmin(productId)
     return NextResponse.json({ success: true, message: 'Producto eliminado' })
   } catch (error) {
-    console.error('Error en admin products DELETE:', error)
+    safeLogger.error('Error en admin products DELETE:', error)
     return NextResponse.json(
       { error: error.message || 'Error al eliminar producto' },
       { status: 500 }

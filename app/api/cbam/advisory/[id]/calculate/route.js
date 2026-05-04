@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getAdvisoryRequest } from '@/lib/cbamAdvisoryService'
 import { calculateAdvisoryRequest } from '@/lib/cbamAdvisoryCalculator'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST /api/cbam/advisory/[id]/calculate
@@ -41,7 +42,7 @@ export async function POST(request, { params }) {
       message: 'Cálculo completado',
     })
   } catch (error) {
-    console.error('Error en calculate POST:', error)
+    safeLogger.error('Error en calculate POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al ejecutar el cálculo' },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function GET(request) {
   try {
@@ -37,7 +38,7 @@ export async function GET(request) {
       total: count || 0
     })
   } catch (error) {
-    console.error('Error obteniendo historial:', error)
+    safeLogger.error('Error obteniendo historial:', error)
     return NextResponse.json(
       { error: 'Error al obtener historial' },
       { status: 500 }

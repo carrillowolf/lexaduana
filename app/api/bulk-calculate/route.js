@@ -2,6 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { calculateTariff, resolveOriginGroups } from '@/lib/calculateTariff'
+import { safeLogger } from '@/lib/safe-logger'
 
 // Procesa un lote de promesas con concurrencia limitada
 async function processWithConcurrency(items, fn, concurrency = 10) {
@@ -171,7 +172,7 @@ export async function POST(request) {
       }
     })
   } catch (error) {
-    console.error('Error en bulk calculate:', error)
+    safeLogger.error('Error en bulk calculate:', error)
     return NextResponse.json(
       { error: 'Error al procesar el lote' },
       { status: 500 }

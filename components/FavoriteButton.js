@@ -1,3 +1,4 @@
+import { safeLogger } from '@/lib/safe-logger'
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -35,7 +36,7 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
             const response = await fetch('/api/favorites');
 
             if (!response.ok) {
-                console.log('Error al cargar favoritos, usuario no autenticado');
+                safeLogger.log('Error al cargar favoritos, usuario no autenticado');
                 return;
             }
 
@@ -50,7 +51,7 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
                 }
             }
         } catch (error) {
-            console.error('Error checking favorite:', error);
+            safeLogger.error('Error checking favorite:', error);
         }
     }
 
@@ -96,7 +97,7 @@ export default function FavoriteButton({ hsCode, countryCode, cifValue, calculat
                 }
             }
         } catch (error) {
-            console.error('Error toggling favorite:', error);
+            safeLogger.error('Error toggling favorite:', error);
             alert(t('favorite.errorSaving'));
         } finally {
             setLoading(false);

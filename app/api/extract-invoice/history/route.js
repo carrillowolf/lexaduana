@@ -16,6 +16,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 import { SECURE_RESPONSE_HEADERS, isSameOrigin } from '@/lib/fileSecurity'
+import { safeLogger } from '@/lib/safe-logger'
 
 function err(msg, status, extra = {}) {
   return NextResponse.json(
@@ -74,7 +75,7 @@ export async function GET(request) {
       { headers: SECURE_RESPONSE_HEADERS }
     )
   } catch (e) {
-    console.error('[extract-invoice/history] GET:', e?.message)
+    safeLogger.error('[extract-invoice/history] GET:', e?.message)
     return err('Error al obtener historial', 500)
   }
 }
@@ -107,7 +108,7 @@ export async function DELETE(request) {
       { headers: SECURE_RESPONSE_HEADERS }
     )
   } catch (e) {
-    console.error('[extract-invoice/history] DELETE:', e?.message)
+    safeLogger.error('[extract-invoice/history] DELETE:', e?.message)
     return err('Error al borrar la extracción', 500)
   }
 }
