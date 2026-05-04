@@ -1,5 +1,5 @@
-import { safeLogger } from '@/lib/safe-logger'
 'use client';
+import { safeLogger } from '@/lib/safe-logger'
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
