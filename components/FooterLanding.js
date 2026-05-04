@@ -97,13 +97,23 @@ export default function FooterLanding() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/politica-privacidad" className="text-gray-300 hover:text-white transition">
+                  <Link href="/privacidad" className="text-gray-300 hover:text-white transition">
                     {t('company.privacy')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terminos-uso" className="text-gray-300 hover:text-white transition">
+                  <Link href="/terminos" className="text-gray-300 hover:text-white transition">
                     {t('company.terms')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/aviso-legal" className="text-gray-300 hover:text-white transition">
+                    {t('company.legalNotice')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cookies" className="text-gray-300 hover:text-white transition">
+                    {t('company.cookies')}
                   </Link>
                 </li>
               </ul>

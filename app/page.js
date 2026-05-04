@@ -75,7 +75,7 @@ const STAT_SUFFIXES = ['', '+', '', '']
 
 const FOOTER_TOOL_HREFS = ['/cbam', '/calculadora', '/clasificador', '/comparador', '/bulk', '/despachos']
 const FOOTER_RESOURCE_HREFS = ['/incoterms', '/valor-en-aduana', '/glosario', '/tipos-cambio', '/eudr', '/cambios']
-const FOOTER_LEGAL_HREFS = ['/politica-privacidad', '/terminos-uso', 'mailto:soporte@lexaduana.es']
+const FOOTER_LEGAL_HREFS = ['/privacidad', '/terminos', 'mailto:soporte@lexaduana.es']
 
 const HEADER_LINKS = ['/calculadora', '/incoterms', '/cbam', '/clasificador', '/valor-en-aduana']
 
