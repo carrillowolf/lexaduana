@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { exportBulkToExcel } from '@/lib/excelExporter'
 import { useTranslation } from '@/lib/i18n'
 import { dashboardDict } from '@/lib/i18n/dashboard'
+import { safeLogger } from '@/lib/safe-logger'
 
 // Admin email
 const ADMIN_EMAIL = 'ccarrillodelolmo@gmail.com'
@@ -48,7 +49,7 @@ export default function DashboardPage() {
         setCalculations(data.data)
       }
     } catch (error) {
-      console.error('Error cargando historial:', error)
+      safeLogger.error('Error cargando historial:', error)
     } finally {
       setLoadingHistory(false)
     }

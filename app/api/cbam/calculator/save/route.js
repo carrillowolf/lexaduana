@@ -4,6 +4,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { calculateProducts } from '@/lib/cbamAdvisoryCalculator'
 import { toFreeTierPayload, toDiagnosticPayload } from '@/lib/cbamCalculatorPayload'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
+import { safeLogger } from '@/lib/safe-logger'
 
 const MAX_SAVES_PER_USER = 10
 
@@ -84,7 +85,7 @@ export async function POST(request) {
       .single()
 
     if (insertError) {
-      console.error('[POST /api/cbam/calculator/save] insert error', insertError)
+      safeLogger.error('[POST /api/cbam/calculator/save] insert error', insertError)
       return NextResponse.json({ error: 'Error guardando el cálculo' }, { status: 500 })
     }
 
@@ -111,7 +112,7 @@ export async function POST(request) {
       },
     })
   } catch (err) {
-    console.error('[POST /api/cbam/calculator/save]', err)
+    safeLogger.error('[POST /api/cbam/calculator/save]', err)
     return NextResponse.json({ error: 'Error guardando cálculo', detail: err.message }, { status: 500 })
   }
 }

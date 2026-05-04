@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { toDiagnosticFromSnapshot } from '@/lib/cbamCalculatorPayload'
 import { shouldShowCost } from '@/lib/cbamDiagnosticBuilder'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/cbam/calculator/saves/[id]
@@ -63,7 +64,7 @@ export async function GET(_request, { params }) {
 
     return NextResponse.json({ success: true, data: responseData })
   } catch (err) {
-    console.error('[GET /api/cbam/calculator/saves/[id]]', err)
+    safeLogger.error('[GET /api/cbam/calculator/saves/[id]]', err)
     return NextResponse.json({ error: 'Error', detail: err.message }, { status: 500 })
   }
 }
@@ -90,13 +91,13 @@ export async function DELETE(_request, { params }) {
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('[DELETE /api/cbam/calculator/saves/[id]]', error)
+      safeLogger.error('[DELETE /api/cbam/calculator/saves/[id]]', error)
       return NextResponse.json({ error: 'Error borrando el cálculo' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[DELETE /api/cbam/calculator/saves/[id]]', err)
+    safeLogger.error('[DELETE /api/cbam/calculator/saves/[id]]', err)
     return NextResponse.json({ error: 'Error', detail: err.message }, { status: 500 })
   }
 }

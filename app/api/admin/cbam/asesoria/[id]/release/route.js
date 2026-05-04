@@ -6,6 +6,7 @@ import {
   getCurrentReportForRequest,
 } from '@/lib/cbamAdvisoryAdminService'
 import { sendDeliveredEmail } from '@/lib/cbamAdvisoryEmails'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST /api/admin/cbam/asesoria/[id]/release
@@ -59,7 +60,7 @@ export async function POST(request, { params }) {
       emailSent: emailResult?.success || false,
     })
   } catch (error) {
-    console.error('Error en release POST:', error)
+    safeLogger.error('Error en release POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al liberar informe' },
       { status: 500 }

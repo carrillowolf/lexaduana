@@ -3,6 +3,7 @@ import { getAllCountries, getCBAMApplicableCountries } from '@/lib/cbamAssessmen
 
 import AdvisoryIntakeForm from '@/components/cbam/advisory/AdvisoryIntakeForm'
 import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
+import { safeLogger } from '@/lib/safe-logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export default async function SolicitudPage() {
       name: c.name,
     }))
   } catch (err) {
-    console.error('Error cargando países:', err)
+    safeLogger.error('Error cargando países:', err)
   }
 
   return (

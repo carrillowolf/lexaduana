@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { trackEvent } from '@/lib/analytics'
 import { useTranslation } from '@/lib/i18n'
 import { comparadorDict } from '@/lib/i18n/comparador'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function ComparadorPage() {
     const t = useTranslation(comparadorDict)
@@ -79,7 +80,7 @@ export default function ComparadorPage() {
                 setCountries(mappedCountries);
             }
         } catch (error) {
-            console.error('Error cargando países:', error);
+            safeLogger.error('Error cargando países:', error);
         }
         setLoadingCountries(false);
     }
@@ -125,7 +126,7 @@ export default function ComparadorPage() {
                 alert(data.error || t('errors.compareError'));
             }
         } catch (error) {
-            console.error('Error comparing:', error);
+            safeLogger.error('Error comparing:', error);
             alert(t('errors.comparisonError'));
         } finally {
             setLoading(false);

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import AdvisoryStatusBadge from '@/components/cbam/advisory/AdvisoryStatusBadge'
 import AdminChecklistStepper from '@/components/cbam/admin/AdminChecklistStepper'
+import { safeLogger } from '@/lib/safe-logger'
 
 const ADMIN_EMAILS = ['ccarrillodelolmo@gmail.com']
 
@@ -680,7 +681,7 @@ function ReportTab({ advisory, onChange, showToast }) {
       const json = await res.json()
       if (res.ok) setReport(json.data?.current || null)
     } catch (err) {
-      console.error(err)
+      safeLogger.error(err)
     } finally {
       setLoadingReport(false)
     }

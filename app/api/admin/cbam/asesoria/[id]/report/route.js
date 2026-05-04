@@ -5,6 +5,7 @@ import {
   listReportsForRequest,
   getReportSignedUrl,
 } from '@/lib/cbamAdvisoryAdminService'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/admin/cbam/asesoria/[id]/report
@@ -55,7 +56,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ success: true, data: result })
   } catch (error) {
-    console.error('Error en admin report GET:', error)
+    safeLogger.error('Error en admin report GET:', error)
     return NextResponse.json({ error: error.message || 'Error' }, { status: 500 })
   }
 }

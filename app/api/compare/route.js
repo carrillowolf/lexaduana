@@ -12,6 +12,7 @@
 
 import { calculateTariff } from '@/lib/calculateTariff'
 import { NextResponse } from 'next/server'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function POST(request) {
   try {
@@ -50,14 +51,14 @@ export async function POST(request) {
 
     const results = []
 
-    console.log('=== INICIANDO COMPARACIÓN MULTI-ORIGEN ===')
-    console.log('HS Code:', hsCode)
-    console.log('CIF Value:', parsedCifValue)
-    console.log('Países:', countryCodes)
+    safeLogger.log('=== INICIANDO COMPARACIÓN MULTI-ORIGEN ===')
+    safeLogger.log('HS Code:', hsCode)
+    safeLogger.log('CIF Value:', parsedCifValue)
+    safeLogger.log('Países:', countryCodes)
 
     // Calcular para cada país usando el módulo compartido
     for (const countryCode of countryCodes) {
-      console.log(`\n--- Calculando para país: ${countryCode} ---`)
+      safeLogger.log(`\n--- Calculando para país: ${countryCode} ---`)
 
       try {
         // Llamar DIRECTAMENTE al módulo compartido (no fetch HTTP)
@@ -80,7 +81,7 @@ export async function POST(request) {
 
         // Si hay error en el cálculo
         if (!calcResult.success) {
-          console.error(`Error calculando ${countryCode}:`, calcResult.error)
+          safeLogger.error(`Error calculando ${countryCode}:`, calcResult.error)
           results.push({
             countryCode,
             countryName: countryCode,
@@ -91,7 +92,7 @@ export async function POST(request) {
 
         const data = calcResult.data
 
-        console.log(`✓ ${data.country.name}: Arancel ${data.duty.appliedRate}% = €${data.duty.amount.toFixed(2)}`)
+        safeLogger.log(`✓ ${data.country.name}: Arancel ${data.duty.appliedRate}% = €${data.duty.amount.toFixed(2)}`)
 
         // Determinar si hay arancel preferencial diferente al estándar
         const hasPreferential = data.duty.appliedRate < data.duty.standardRate
@@ -167,7 +168,7 @@ export async function POST(request) {
         }
 
       } catch (error) {
-        console.error(`Error procesando ${countryCode}:`, error)
+        safeLogger.error(`Error procesando ${countryCode}:`, error)
         results.push({
           countryCode,
           countryName: countryCode,
@@ -200,10 +201,10 @@ export async function POST(request) {
     }
 
     const bestOption = results.find(r => r.isBest)
-    console.log('\n=== COMPARACIÓN COMPLETADA ===')
-    console.log(`Total resultados: ${results.length}`)
+    safeLogger.log('\n=== COMPARACIÓN COMPLETADA ===')
+    safeLogger.log(`Total resultados: ${results.length}`)
     if (bestOption) {
-      console.log(`Mejor opción: ${bestOption.countryName} (€${bestOption.totalCost})`)
+      safeLogger.log(`Mejor opción: ${bestOption.countryName} (€${bestOption.totalCost})`)
     }
 
     return NextResponse.json({
@@ -223,7 +224,7 @@ export async function POST(request) {
     })
 
   } catch (error) {
-    console.error('Error in compare API:', error)
+    safeLogger.error('Error in compare API:', error)
     return NextResponse.json(
       { error: 'Error del servidor: ' + error.message },
       { status: 500 }

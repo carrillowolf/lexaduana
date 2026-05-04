@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function GET() {
   try {
@@ -20,7 +21,7 @@ export async function GET() {
       data: data || []
     })
   } catch (error) {
-    console.error('Error obteniendo tipos de cambio:', error)
+    safeLogger.error('Error obteniendo tipos de cambio:', error)
     return NextResponse.json(
       { error: 'Error al obtener tipos de cambio' },
       { status: 500 }

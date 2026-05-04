@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/admin/cbam/suscripciones
@@ -25,7 +26,7 @@ export async function GET(request) {
 
     const { data, error } = await query
     if (error) {
-      console.error('[Monitoring Admin] Error listando:', error.message)
+      safeLogger.error('[Monitoring Admin] Error listando:', error.message)
       return NextResponse.json({ error: 'Error al listar suscripciones' }, { status: 500 })
     }
 
@@ -52,7 +53,7 @@ export async function GET(request) {
 
     return NextResponse.json({ success: true, data: list })
   } catch (err) {
-    console.error('Error suscripciones GET:', err)
+    safeLogger.error('Error suscripciones GET:', err)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@
 
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function exportToPDF(result, formatCurrency) {
   const pdf = new jsPDF('p', 'mm', 'a4')
@@ -30,7 +31,7 @@ export async function exportToPDF(result, formatCurrency) {
       img.onerror = resolve // Continuar sin logo si hay error
     })
   } catch (e) {
-    console.log('Logo no disponible')
+    safeLogger.log('Logo no disponible')
   }
   
   // Título

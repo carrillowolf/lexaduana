@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useTranslation } from '@/lib/i18n'
 import { sharedComponentsDict } from '@/lib/i18n/shared-components'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function DispatchChecklist({ dispatchId, dispatchType }) {
   const [checklist, setChecklist] = useState([])
@@ -33,7 +34,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
       if (error) throw error
       setChecklist(data || [])
     } catch (error) {
-      console.error('Error cargando checklist:', error)
+      safeLogger.error('Error cargando checklist:', error)
     } finally {
       setLoading(false)
     }
@@ -59,7 +60,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
           : item
       ))
     } catch (error) {
-      console.error('Error actualizando item:', error)
+      safeLogger.error('Error actualizando item:', error)
       alert(t('checklist.errorUpdating'))
     } finally {
       setSaving(false)
@@ -92,7 +93,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
       setNewItemText('')
       setShowAddItem(false)
     } catch (error) {
-      console.error('Error añadiendo item:', error)
+      safeLogger.error('Error añadiendo item:', error)
       alert(t('checklist.errorAdding'))
     } finally {
       setSaving(false)
@@ -113,7 +114,7 @@ export default function DispatchChecklist({ dispatchId, dispatchType }) {
 
       setChecklist(prev => prev.filter(item => item.id !== itemId))
     } catch (error) {
-      console.error('Error eliminando item:', error)
+      safeLogger.error('Error eliminando item:', error)
       alert(t('checklist.errorDeleting'))
     } finally {
       setSaving(false)

@@ -5,6 +5,7 @@ import {
   createMonitoringSubscription,
   getMonitoringSubscriptions,
 } from '@/lib/cbamMonitoringService'
+import { safeLogger } from '@/lib/safe-logger'
 
 export async function GET() {
   try {
@@ -19,7 +20,7 @@ export async function GET() {
     const list = await getMonitoringSubscriptions(user.id, supabase)
     return NextResponse.json({ success: true, data: list })
   } catch (error) {
-    console.error('Error en /api/cbam/monitoring GET:', error)
+    safeLogger.error('Error en /api/cbam/monitoring GET:', error)
     return NextResponse.json({ error: 'Error al obtener suscripciones' }, { status: 500 })
   }
 }
@@ -52,7 +53,7 @@ export async function POST(request) {
     const created = await createMonitoringSubscription(user.id, body, supabase)
     return NextResponse.json({ success: true, data: created }, { status: 201 })
   } catch (error) {
-    console.error('Error en /api/cbam/monitoring POST:', error)
+    safeLogger.error('Error en /api/cbam/monitoring POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al crear suscripción' },
       { status: 500 },

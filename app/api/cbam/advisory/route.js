@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createAdvisoryRequest, getAdvisoryRequests } from '@/lib/cbamAdvisoryService'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/cbam/advisory
@@ -20,7 +21,7 @@ export async function GET() {
     const requests = await getAdvisoryRequests(user.id, supabase)
     return NextResponse.json({ success: true, data: requests })
   } catch (error) {
-    console.error('Error en /api/cbam/advisory GET:', error)
+    safeLogger.error('Error en /api/cbam/advisory GET:', error)
     return NextResponse.json({ error: 'Error al obtener solicitudes' }, { status: 500 })
   }
 }
@@ -69,7 +70,7 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, data: created }, { status: 201 })
   } catch (error) {
-    console.error('Error en /api/cbam/advisory POST:', error)
+    safeLogger.error('Error en /api/cbam/advisory POST:', error)
     return NextResponse.json({ error: error.message || 'Error al crear solicitud' }, { status: 500 })
   }
 }

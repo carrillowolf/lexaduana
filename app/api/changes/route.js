@@ -18,6 +18,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, generalLimiter, rateLimitHeaders } from '@/lib/rate-limit'
+import { safeLogger } from '@/lib/safe-logger'
 
 /** Nombres de capítulos TARIC en español */
 const CHAPTER_NAMES = {
@@ -401,7 +402,7 @@ export async function GET(request) {
     }, { headers })
 
   } catch (error) {
-    console.error('Error en /api/changes:', error)
+    safeLogger.error('Error en /api/changes:', error)
     return NextResponse.json(
       { error: 'Error al consultar cambios arancelarios' },
       { status: 500 }

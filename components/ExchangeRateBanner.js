@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { sharedComponentsDict } from '@/lib/i18n/shared-components'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function ExchangeRateBanner() {
   const [upcomingRates, setUpcomingRates] = useState(null)
@@ -41,7 +42,7 @@ export default function ExchangeRateBanner() {
           setShowBanner(true)
         }
       } catch (error) {
-        console.error('Error verificando tipos próximos:', error)
+        safeLogger.error('Error verificando tipos próximos:', error)
       }
     }
 

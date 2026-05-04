@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/cbamAdminAuth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/admin/cbam/asesoria/[id]/documents/[docId]
@@ -29,13 +30,13 @@ export async function GET(request, { params }) {
       .createSignedUrl(doc.file_path, 3600)
 
     if (signErr) {
-      console.error('Error generando signed URL doc:', signErr.message)
+      safeLogger.error('Error generando signed URL doc:', signErr.message)
       return NextResponse.json({ error: 'Error generando enlace' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, url: signed.signedUrl, fileName: doc.file_name })
   } catch (error) {
-    console.error('Error en admin docs GET:', error)
+    safeLogger.error('Error en admin docs GET:', error)
     return NextResponse.json({ error: error.message || 'Error' }, { status: 500 })
   }
 }

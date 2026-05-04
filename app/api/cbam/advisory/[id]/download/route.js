@@ -7,6 +7,7 @@ import {
   getReportSignedUrl,
   logReportDownload,
 } from '@/lib/cbamAdvisoryAdminService'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/cbam/advisory/[id]/download
@@ -78,7 +79,7 @@ export async function GET(request, { params }) {
       reportRef: report.report_ref,
     })
   } catch (error) {
-    console.error('Error en download GET:', error)
+    safeLogger.error('Error en download GET:', error)
     return NextResponse.json(
       { error: error.message || 'Error al obtener descarga' },
       { status: 500 }

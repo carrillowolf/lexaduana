@@ -17,6 +17,7 @@ import { trackEvent } from '@/lib/analytics'
 import { useTranslation } from '@/lib/i18n'
 import { calculadoraDict } from '@/lib/i18n/calculadora'
 import DocumentRequirements from '../../components/DocumentRequirements'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function Home() {
   const searchParams = useSearchParams()
@@ -55,7 +56,7 @@ export default function Home() {
           setExchangeRates(data.data)
         }
       } catch (error) {
-        console.error('Error cargando tipos de cambio:', error)
+        safeLogger.error('Error cargando tipos de cambio:', error)
       }
     }
     fetchExchangeRates()
@@ -104,7 +105,7 @@ export default function Home() {
         setCountries(data.countries)
       }
     } catch (err) {
-      console.error('Error cargando países:', err)
+      safeLogger.error('Error cargando países:', err)
     }
   }
 
@@ -181,7 +182,7 @@ export default function Home() {
           })
         }
       } catch (saveError) {
-        console.log('No se pudo guardar el cálculo:', saveError)
+        safeLogger.log('No se pudo guardar el cálculo:', saveError)
       }
 
       if (typeof window !== 'undefined') {

@@ -8,6 +8,7 @@ import {
   bulkUpdateAdvisoryProducts,
 } from '@/lib/cbamAdvisoryService'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
+import { safeLogger } from '@/lib/safe-logger'
 
 const ELECTRICITY_NOT_SUPPORTED_MSG =
   'El sector de electricidad (CN 2716) no está incluido en esta estimación automática. Contacte con LexAduana para una consultoría especializada.'
@@ -42,7 +43,7 @@ export async function GET(request, { params }) {
     const products = await getAdvisoryProducts(id, supabase)
     return NextResponse.json({ success: true, data: products })
   } catch (error) {
-    console.error('Error en products GET:', error)
+    safeLogger.error('Error en products GET:', error)
     return NextResponse.json({ error: 'Error al obtener productos' }, { status: 500 })
   }
 }
@@ -104,7 +105,7 @@ export async function POST(request, { params }) {
 
     return NextResponse.json({ success: true, data: product }, { status: 201 })
   } catch (error) {
-    console.error('Error en products POST:', error)
+    safeLogger.error('Error en products POST:', error)
     return NextResponse.json({ error: error.message || 'Error al añadir producto' }, { status: 500 })
   }
 }
@@ -149,7 +150,7 @@ export async function PUT(request, { params }) {
     const results = await bulkUpdateAdvisoryProducts(id, body.products, supabase)
     return NextResponse.json({ success: true, data: results })
   } catch (error) {
-    console.error('Error en products PUT:', error)
+    safeLogger.error('Error en products PUT:', error)
     return NextResponse.json({ error: error.message || 'Error al actualizar productos' }, { status: 500 })
   }
 }

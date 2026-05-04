@@ -3,6 +3,7 @@ import { getCurrentETSPrice, getETSPriceHistory, updateETSPrice } from '@/lib/cb
 import { checkRateLimit, calculatorLimiter } from '@/lib/rate-limit'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { safeLogger } from '@/lib/safe-logger'
 
 // Admin emails (mismo patrón que /admin/clasificaciones)
 const ADMIN_EMAILS = ['ccarrillodelolmo@gmail.com']
@@ -52,7 +53,7 @@ export async function GET(request) {
       }
     })
   } catch (error) {
-    console.error('Error en /api/cbam/ets-price GET:', error)
+    safeLogger.error('Error en /api/cbam/ets-price GET:', error)
     return NextResponse.json(
       { error: 'Error al obtener precio EU ETS' },
       { status: 500 }
@@ -115,7 +116,7 @@ export async function POST(request) {
       message: `Precio EU ETS actualizado a €${price}/tCO₂ (${date})`
     })
   } catch (error) {
-    console.error('Error en /api/cbam/ets-price POST:', error)
+    safeLogger.error('Error en /api/cbam/ets-price POST:', error)
     return NextResponse.json(
       { error: 'Error al actualizar precio EU ETS' },
       { status: 500 }

@@ -9,6 +9,7 @@ import { calculadoraCbamDict } from '@/lib/i18n/calculadora-cbam'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
 import CalculatorProductLine from './CalculatorProductLine'
 import CbamRestoreBanner from './CbamRestoreBanner'
+import { safeLogger } from '@/lib/safe-logger'
 
 const MAX_PRODUCTS = 5
 const MAX_SAVES = 10
@@ -131,7 +132,7 @@ export default function CalculatorClient({ countries }) {
         setSaveCount(saveJson.data?.totalCount || saveCount + 1)
       }
     } catch (err) {
-      console.error('Auto-save after restore failed', err)
+      safeLogger.error('Auto-save after restore failed', err)
     } finally {
       setCalculating(false)
     }

@@ -8,6 +8,7 @@ import KanbanView from '@/components/despachos/KanbanView'
 import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { despachosDict } from '@/lib/i18n/despachos'
+import { safeLogger } from '@/lib/safe-logger'
 
 export default function DespachosTableV2() {
   const [user, setUser] = useState(null)
@@ -93,7 +94,7 @@ export default function DespachosTableV2() {
       })
       setCommentSummary(summary)
     } catch (error) {
-      console.error('Error cargando despachos:', error)
+      safeLogger.error('Error cargando despachos:', error)
     } finally {
       setLoading(false)
     }
@@ -132,7 +133,7 @@ export default function DespachosTableV2() {
         })
       }
     } catch (error) {
-      console.error('Error actualizando:', error)
+      safeLogger.error('Error actualizando:', error)
     } finally {
       setSaving(false)
     }

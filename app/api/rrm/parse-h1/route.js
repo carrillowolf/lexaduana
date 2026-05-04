@@ -11,6 +11,7 @@
 import { NextResponse } from 'next/server'
 import { parseH1Xml } from '@/lib/rrmParser'
 import { checkRateLimit, generalLimiter, rateLimitHeaders } from '@/lib/rate-limit'
+import { safeLogger } from '@/lib/safe-logger'
 
 const MAX_XML_SIZE = 2 * 1024 * 1024 // 2 MB
 
@@ -49,7 +50,7 @@ export async function POST(request) {
     const data = await parseH1Xml(xml)
     return NextResponse.json({ success: true, data })
   } catch (err) {
-    console.error('[parse-h1] error:', err)
+    safeLogger.error('[parse-h1] error:', err)
     return NextResponse.json(
       { error: 'No se pudo parsear el XML', details: err?.message || String(err) },
       { status: 400 }

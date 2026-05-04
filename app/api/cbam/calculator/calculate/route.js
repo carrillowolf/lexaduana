@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { calculateProducts } from '@/lib/cbamAdvisoryCalculator'
 import { toDiagnosticPayload } from '@/lib/cbamCalculatorPayload'
 import { isCnSupportedByAdvisory } from '@/lib/cbamData'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST /api/cbam/calculator/calculate
@@ -78,7 +79,7 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, data: payload })
   } catch (err) {
-    console.error('[POST /api/cbam/calculator/calculate]', err)
+    safeLogger.error('[POST /api/cbam/calculator/calculate]', err)
     return NextResponse.json(
       { error: 'Error calculando CBAM', detail: err.message },
       { status: 500 }

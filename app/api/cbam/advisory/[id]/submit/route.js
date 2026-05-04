@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { getAdvisoryRequest, submitAdvisoryRequest } from '@/lib/cbamAdvisoryService'
 import { sendIntakeReceivedEmail, sendAdminNewRequestEmail } from '@/lib/cbamAdvisoryEmails'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * POST /api/cbam/advisory/[id]/submit
@@ -40,7 +41,7 @@ export async function POST(request, { params }) {
       message: 'Solicitud enviada correctamente',
     })
   } catch (error) {
-    console.error('Error en submit POST:', error)
+    safeLogger.error('Error en submit POST:', error)
     return NextResponse.json(
       { error: error.message || 'Error al enviar solicitud' },
       { status: 400 }

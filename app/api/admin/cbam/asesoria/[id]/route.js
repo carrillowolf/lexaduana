@@ -5,6 +5,7 @@ import {
   updateAdvisoryRequestAsAdmin,
 } from '@/lib/cbamAdvisoryAdminService'
 import { sendPendingPaymentEmail } from '@/lib/cbamAdvisoryEmails'
+import { safeLogger } from '@/lib/safe-logger'
 
 /**
  * GET /api/admin/cbam/asesoria/[id]
@@ -22,7 +23,7 @@ export async function GET(request, { params }) {
     }
     return NextResponse.json({ success: true, data: advisory })
   } catch (error) {
-    console.error('Error en /api/admin/cbam/asesoria/[id] GET:', error)
+    safeLogger.error('Error en /api/admin/cbam/asesoria/[id] GET:', error)
     return NextResponse.json(
       { error: error.message || 'Error al obtener solicitud' },
       { status: 500 }
@@ -60,7 +61,7 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ success: true, data: updated })
   } catch (error) {
-    console.error('Error en /api/admin/cbam/asesoria/[id] PATCH:', error)
+    safeLogger.error('Error en /api/admin/cbam/asesoria/[id] PATCH:', error)
     return NextResponse.json(
       { error: error.message || 'Error al actualizar' },
       { status: 500 }

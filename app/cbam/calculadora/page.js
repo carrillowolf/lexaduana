@@ -1,6 +1,7 @@
 import { getAllCountries } from '@/lib/cbamService'
 import CbamBreadcrumb from '@/components/cbam/CbamBreadcrumb'
 import CalculatorClient from '@/components/cbam/calculator/CalculatorClient'
+import { safeLogger } from '@/lib/safe-logger'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -15,7 +16,7 @@ export default async function CbamCalculadoraPage() {
   try {
     countries = await getAllCountries()
   } catch (err) {
-    console.error('[cbam/calculadora] error loading countries', err)
+    safeLogger.error('[cbam/calculadora] error loading countries', err)
     countries = []
   }
 
