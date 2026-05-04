@@ -38,7 +38,9 @@
       "Bash(git commit:*)",
       "mcp__82fa56df-d255-47a7-ad6e-5603d2bafd28__execute_sql",
       "mcp__2da156d3-40d8-4a78-aa39-efbd815191f4__list_teams",
-      "mcp__2da156d3-40d8-4a78-aa39-efbd815191f4__list_deployments"
+      "mcp__2da156d3-40d8-4a78-aa39-efbd815191f4__list_deployments",
+      "mcp__2da156d3-40d8-4a78-aa39-efbd815191f4__get_deployment_build_logs",
+      "mcp__2da156d3-40d8-4a78-aa39-efbd815191f4__get_deployment"
     ]
   }
 }
