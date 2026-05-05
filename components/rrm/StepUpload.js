@@ -29,6 +29,30 @@ function fmtMoney(n) {
   return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 }
 
+// Convierte una partida parseada (shape nuevo del parser) en una entrada
+// editable del state.selectedItems para el paso de Revisión.
+function buildSelectedItem(parsedItem) {
+  const dutiesDeclared = {}
+  if (parsedItem.duty?.amount != null) dutiesDeclared.A00 = parsedItem.duty.amount
+  if (parsedItem.vat?.amount != null) dutiesDeclared.B00 = parsedItem.vat.amount
+  return {
+    sequenceNumber: parsedItem.sequenceNumber,
+    taricCode: parsedItem.taricCode,
+    description: parsedItem.description,
+    originCountry: parsedItem.originCountry,
+    preferentialOrigin: parsedItem.preferentialOrigin,
+    preference: parsedItem.preference,
+    netMass: parsedItem.netMass,
+    grossMass: parsedItem.grossMass,
+    supplementaryUnits: parsedItem.supplementaryUnits,
+    statisticalValue: parsedItem.statisticalValue,
+    invoiceAmount: parsedItem.invoiceAmount,
+    additionsAK: parsedItem.additions?.AK ?? null,
+    dutiesDeclared,
+    dutiesCorrected: { ...dutiesDeclared },
+  }
+}
+
 export default function StepUpload({ state, setState, onAdvance }) {
   const t = useTranslation(rrmDict)
   const fileInput = useRef(null)
@@ -72,13 +96,15 @@ export default function StepUpload({ state, setState, onAdvance }) {
   }
 
   // Aplica los datos de UNA partida (la indicada por idx) al state. Útil cuando hay 1 sola partida
-  // o cuando el usuario selecciona en la tabla multi-partida (commit 3).
+  // o cuando el usuario selecciona en la tabla multi-partida.
   const applyItemToState = (d, idx) => {
     const item0 = (d.goodsItems && d.goodsItems[idx]) || {}
+    const parsedItem = (d.items && d.items[idx]) || null
     const dutiesDeclared = {}
     ;(item0.duties || []).forEach((dt) => {
       if (dt.type) dutiesDeclared[dt.type] = (dutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
     })
+    const selectedItem = parsedItem ? buildSelectedItem(parsedItem) : null
     setState((prev) => ({
       ...prev,
       commodityCode: item0.commodityCode || '',
@@ -89,6 +115,7 @@ export default function StepUpload({ state, setState, onAdvance }) {
       preferenceDeclared: item0.preference || '',
       dutiesDeclared,
       dutiesCorrected: { ...dutiesDeclared },
+      selectedItems: selectedItem ? [selectedItem] : prev.selectedItems,
     }))
   }
 
@@ -149,12 +176,38 @@ export default function StepUpload({ state, setState, onAdvance }) {
     setState((prev) => ({ ...prev, selectedItemIndices: [] }))
   }
 
-  // Click en "Continuar con N partidas seleccionadas". Aplica la primera
-  // partida seleccionada al state (compat con paso 3 actual). El refactor
-  // multi-partida real del paso 3 llega en commit 4.
+  // Click en "Continuar con N partidas seleccionadas". Construye el array
+  // state.selectedItems con todas las marcadas (para que StepReview itere
+  // sobre todas) y aplica la primera al state legacy (commodityCode,
+  // dutiesDeclared, ...) por compatibilidad con flujos no-XML.
   const continueWithSelected = () => {
-    const idx = (state.selectedItemIndices || [])[0]
-    if (idx != null && parseResult) applyItemToState(parseResult, idx)
+    const indices = state.selectedItemIndices || []
+    if (!parseResult || indices.length === 0) return
+
+    const items = parseResult.items || []
+    const legacyItems = parseResult.goodsItems || []
+    const selectedItems = indices.map((i) => items[i]).filter(Boolean).map(buildSelectedItem)
+
+    const firstIdx = indices[0]
+    const firstLegacy = legacyItems[firstIdx] || {}
+    const firstDutiesDeclared = {}
+    ;(firstLegacy.duties || []).forEach((dt) => {
+      if (dt.type) firstDutiesDeclared[dt.type] = (firstDutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
+    })
+
+    setState((prev) => ({
+      ...prev,
+      commodityCode: firstLegacy.commodityCode || '',
+      goodsDescription: firstLegacy.description || '',
+      netMass: firstLegacy.netMass || '',
+      supplementaryUnits: firstLegacy.supplementaryUnits || '',
+      countryOfOrigin: firstLegacy.countryOfOrigin || '',
+      preferenceDeclared: firstLegacy.preference || '',
+      dutiesDeclared: firstDutiesDeclared,
+      dutiesCorrected: { ...firstDutiesDeclared },
+      selectedItems,
+    }))
+
     onAdvance?.()
   }
 

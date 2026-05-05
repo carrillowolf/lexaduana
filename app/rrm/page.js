@@ -47,6 +47,7 @@ const INITIAL_STATE = {
   // Iteración 3 — parser/selección
   parseResult: null,
   selectedItemIndices: [],
+  selectedItems: [],
 }
 
 export default function RrmPage() {
