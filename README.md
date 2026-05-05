@@ -249,13 +249,15 @@ Generador de **Solicitudes de Devolución/Condonación de Derechos** (art. 116-1
 
 #### Generador DOCX (`lib/rrmDocxGenerator.js`)
 
-- Basado en `docx` v9.6.1 (Document, Packer, Paragraph, Table, ShadingType, BorderStyle)
-- Tipografía Arial 10pt, A4 (11906×16838 DXA), cabeceras con shading `D5E8F0`
-- Estructura fiel al formulario AEAT:
-  - Cabecera con datos del solicitante
-  - **REQUISITOS COMUNES**: casillas 31 01, 32, 33, 34, 35, 38
-  - **REQUISITOS ESPECÍFICOS**: casillas 48 01–48 14 según base legal
-  - **Anexo I** con tabla comparativa DICE/DEBE DECIR por código de tributo + total a devolver
+- Basado en `docx` v9.6.1 (Document, Packer, Paragraph, Table, ImageRun, VerticalAlign, ShadingType, BorderStyle)
+- Tipografía Arial 10pt, A4 (11906×16838 DXA), tres niveles de cabecera (azul `B4D4E5` para bloques maestros, gris `D9D9D9` para sub-secciones, lila `D9D2E9` para notas al pie)
+- Maquetación fiel al modelo oficial AEAT (Reglamento Delegado UE 2015/2446):
+  - Cabecera con bandera UE embebida (PNG 120×80, `public/assets/eu-flag.png`) + título oficial en mayúsculas
+  - **REQUISITOS COMUNES** con sub-secciones: Información sobre la solicitud, Documentos justificativos, Partes, Fechas/lugares, Identificación de las mercancías, Otros
+  - **REQUISITOS ESPECÍFICOS**: casillas 48 01–48 14 individuales con notas al pie referenciadas; casilla 48 10 con texto por defecto `"Acondicionada para la venta"` (`DEFAULT_USO_DESTINO` exportable); 48 11 y 48 12 vacías por diseño
+  - Página dedicada a **Notas al pie** (1)–(16) y (*) con texto literal del modelo oficial
+  - **Anexo I**: mini-tabla por partida (multi-partida) o tabla consolidada (legacy) + bloque "TOTAL GENERAL A REGULARIZAR" con separación A00 (devolución directa) y B00 (regularización en próxima declaración periódica de IVA)
+- Etiquetas y notas SIEMPRE en castellano (documento legal dirigido a la AEAT)
 - Devuelve `Buffer` listo para descargar
 
 #### API endpoints
