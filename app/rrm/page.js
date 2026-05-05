@@ -66,7 +66,7 @@ export default function RrmPage() {
 
   if (!authReady) {
     return (
-      <div className="min-h-screen bg-[#060d16] text-gray-400 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-500 flex items-center justify-center">
         <div className="animate-pulse">…</div>
       </div>
     )
@@ -86,20 +86,20 @@ export default function RrmPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060d16] text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Hero */}
-        <div className="mb-6">
-          <div className="inline-block text-xs px-2 py-1 rounded bg-[#0A3D5C]/40 border border-[#F4C542]/30 text-[#F4C542] mb-2">
+        <div className="bg-[#0A3D5C] rounded-2xl px-6 sm:px-8 py-8 mb-8 shadow-sm">
+          <div className="inline-block text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-medium mb-3">
             {t('hero.badge')}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{t('hero.title')}</h1>
-          <p className="text-gray-400 max-w-3xl">{t('hero.description')}</p>
+          <p className="text-slate-200 max-w-3xl leading-relaxed">{t('hero.description')}</p>
         </div>
 
         <RRMProgressBar current={step} />
 
-        <div className="bg-[#0a1628]/40 border border-[#1a2d4a] rounded-xl p-5 sm:p-7">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
           {step === 1 && <StepSelector state={state} setState={setState} />}
           {step === 2 && <StepUpload state={state} setState={setState} />}
           {step === 3 && <StepReview state={state} setState={setState} />}
@@ -107,18 +107,18 @@ export default function RrmPage() {
 
           {/* Botones de navegación */}
           {step < 4 && (
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-[#1a2d4a]">
+            <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-200">
               <button
                 onClick={() => setStep((s) => Math.max(1, s - 1))}
                 disabled={step === 1}
-                className="border border-[#1a2d4a] text-gray-300 px-5 py-2 rounded hover:border-[#F4C542]/50 transition-colors disabled:opacity-30"
+                className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-6 py-3 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 ← {t('common.back')}
               </button>
               <button
                 onClick={() => setStep((s) => Math.min(4, s + 1))}
                 disabled={!canAdvance}
-                className="bg-[#F4C542] text-black font-semibold px-5 py-2 rounded hover:bg-[#e3b637] transition-colors disabled:opacity-50"
+                className="bg-[#0A3D5C] hover:bg-[#082c44] text-white font-medium px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('common.next')} →
               </button>

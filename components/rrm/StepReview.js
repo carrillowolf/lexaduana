@@ -6,8 +6,8 @@ import { rrmDict } from '@/lib/i18n/rrm'
 import { DUTY_CODES, SPANISH_CUSTOMS_OFFICES, IBAN_REGEX } from '@/lib/rrmData'
 
 const inputCls =
-  'w-full bg-[#0d1f35] border border-[#1a2d4a] rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-[#F4C542]'
-const labelCls = 'block text-xs text-gray-400 mb-1'
+  'w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-[#0A3D5C] focus:ring-1 focus:ring-[#0A3D5C]'
+const labelCls = 'block text-sm font-medium text-slate-700 mb-1'
 
 function fmt(n) {
   if (n == null || Number.isNaN(Number(n))) return '0,00'
@@ -60,17 +60,17 @@ export default function StepReview({ state, setState }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-white mb-2">{t('review.title')}</h2>
-      <p className="text-gray-400 mb-6">{t('review.subtitle')}</p>
+      <h2 className="text-2xl font-semibold text-slate-900 mb-2">{t('review.title')}</h2>
+      <p className="text-slate-600 leading-relaxed mb-6">{t('review.subtitle')}</p>
 
       {/* Tabla comparativa */}
-      <div className="bg-[#0a1628] border border-[#1a2d4a] rounded-lg p-4 mb-6 overflow-x-auto">
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-gray-400 border-b border-[#1a2d4a]">
+            <tr className="text-slate-600 border-b border-slate-200">
               <th className="text-left py-2 px-2">Tributo</th>
-              <th className="text-right py-2 px-2 bg-red-950/30">{t('review.declared')} (€)</th>
-              <th className="text-right py-2 px-2 bg-green-950/30">{t('review.correct')} (€)</th>
+              <th className="text-right py-2 px-2 bg-red-50">{t('review.declared')} (€)</th>
+              <th className="text-right py-2 px-2 bg-emerald-50">{t('review.correct')} (€)</th>
               <th className="text-right py-2 px-2">{t('review.diff')} (€)</th>
             </tr>
           </thead>
@@ -80,12 +80,12 @@ export default function StepReview({ state, setState }) {
               const corr = Number(state.dutiesCorrected?.[code] || 0)
               const diff = decl - corr
               return (
-                <tr key={code} className="border-b border-[#1a2d4a]/50">
-                  <td className="py-2 px-2 text-white">
+                <tr key={code} className="border-b border-slate-100">
+                  <td className="py-2 px-2 text-slate-900">
                     <div className="font-mono">{code}</div>
-                    <div className="text-xs text-gray-500">{DUTY_CODES[code] || ''}</div>
+                    <div className="text-xs text-slate-500">{DUTY_CODES[code] || ''}</div>
                   </td>
-                  <td className="py-1 px-2 bg-red-950/10">
+                  <td className="py-1 px-2 bg-red-50/50">
                     <input
                       type="number"
                       step="0.01"
@@ -94,7 +94,7 @@ export default function StepReview({ state, setState }) {
                       className={`${inputCls} text-right`}
                     />
                   </td>
-                  <td className="py-1 px-2 bg-green-950/10">
+                  <td className="py-1 px-2 bg-emerald-50/50">
                     <input
                       type="number"
                       step="0.01"
@@ -103,7 +103,7 @@ export default function StepReview({ state, setState }) {
                       className={`${inputCls} text-right`}
                     />
                   </td>
-                  <td className={`py-2 px-2 text-right font-mono ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                  <td className={`py-2 px-2 text-right font-mono ${diff > 0 ? 'text-emerald-700' : diff < 0 ? 'text-red-700' : 'text-slate-500'}`}>
                     {fmt(diff)}
                   </td>
                 </tr>
@@ -111,14 +111,14 @@ export default function StepReview({ state, setState }) {
             })}
             <tr>
               <td colSpan={4} className="py-2 px-2">
-                <button onClick={addDuty} type="button" className="text-xs text-[#F4C542] hover:underline">
+                <button onClick={addDuty} type="button" className="text-xs text-[#0A3D5C] font-medium hover:underline">
                   + {t('review.addDuty')}
                 </button>
               </td>
             </tr>
-            <tr className="bg-[#F4C542]/10 border-t-2 border-[#F4C542]">
-              <td colSpan={3} className="py-3 px-2 text-right font-semibold text-white">{t('review.total')}</td>
-              <td className="py-3 px-2 text-right font-mono font-bold text-[#F4C542]">{fmt(totalDiff)} €</td>
+            <tr className="bg-amber-50 border-t-2 border-[#F4C542]">
+              <td colSpan={3} className="py-3 px-2 text-right font-semibold text-slate-900">{t('review.total')}</td>
+              <td className="py-3 px-2 text-right font-mono font-bold text-[#0A3D5C]">{fmt(totalDiff)} €</td>
             </tr>
           </tbody>
         </table>
@@ -126,7 +126,7 @@ export default function StepReview({ state, setState }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Motivos */}
-        <div className="lg:col-span-2 bg-[#0a1628] border border-[#1a2d4a] rounded-lg p-4">
+        <div className="lg:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-5">
           <label className={labelCls}>{t('review.motivos')}</label>
           <textarea
             rows={5}
@@ -135,12 +135,12 @@ export default function StepReview({ state, setState }) {
             className={`${inputCls} font-mono`}
             placeholder={t('review.motivosHelp')}
           />
-          <p className="text-xs text-gray-500 mt-1">{t('review.motivosHelp')}</p>
+          <p className="text-xs text-slate-500 mt-1">{t('review.motivosHelp')}</p>
         </div>
 
         {/* Contacto */}
-        <div className="bg-[#0a1628] border border-[#1a2d4a] rounded-lg p-4">
-          <h3 className="text-white font-semibold mb-3">{t('review.contact')}</h3>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+          <h3 className="text-slate-900 font-semibold mb-3">{t('review.contact')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>{t('review.contactName')}</label>
@@ -162,8 +162,8 @@ export default function StepReview({ state, setState }) {
         </div>
 
         {/* Ubicación / Aduanas */}
-        <div className="bg-[#0a1628] border border-[#1a2d4a] rounded-lg p-4">
-          <h3 className="text-white font-semibold mb-3">Ubicación y aduanas</h3>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+          <h3 className="text-slate-900 font-semibold mb-3">Ubicación y aduanas</h3>
           <div className="grid grid-cols-1 gap-3">
             <div>
               <label className={labelCls}>{t('review.location')}</label>
@@ -190,10 +190,10 @@ export default function StepReview({ state, setState }) {
         </div>
 
         {/* Banco */}
-        <div className="lg:col-span-2 bg-[#0a1628] border border-[#1a2d4a] rounded-lg p-4">
+        <div className="lg:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-semibold">{t('review.bank')}</h3>
-            <span className={`text-xs ${isRep ? 'text-[#F4C542]' : 'text-gray-500'}`}>
+            <h3 className="text-slate-900 font-semibold">{t('review.bank')}</h3>
+            <span className={`text-xs font-medium ${isRep ? 'text-[#0A3D5C]' : 'text-slate-500'}`}>
               {isRep ? t('review.bankRequired') : t('common.optional')}
             </span>
           </div>
@@ -205,14 +205,14 @@ export default function StepReview({ state, setState }) {
             <div>
               <label className={labelCls}>{t('review.bankIban')}</label>
               <input className={inputCls} value={state.bank?.iban || ''} onChange={(e) => setState({ ...state, bank: { ...state.bank, iban: e.target.value } })} placeholder="ES00 0000 0000 00 0000000000" />
-              {ibanInvalid && <p className="text-xs text-orange-400 mt-1">Formato IBAN no válido</p>}
+              {ibanInvalid && <p className="text-xs text-orange-700 mt-1">Formato IBAN no válido</p>}
             </div>
             <div>
               <label className={labelCls}>{t('review.bankBic')}</label>
               <input className={inputCls} value={state.bank?.bic || ''} onChange={(e) => setState({ ...state, bank: { ...state.bank, bic: e.target.value } })} />
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">🔒 {t('review.bankWarning')}</p>
+          <p className="text-xs text-slate-500 mt-2">🔒 {t('review.bankWarning')}</p>
         </div>
       </div>
     </div>

@@ -23,10 +23,10 @@ export default function RRMProgressBar({ current }) {
               <div className="flex items-center gap-3 flex-1">
                 <div
                   className={[
-                    'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border',
-                    done && 'bg-[#F4C542] text-black border-[#F4C542]',
-                    active && 'bg-[#0A3D5C] text-white border-[#F4C542]',
-                    !done && !active && 'bg-[#0a1628] text-gray-500 border-[#1a2d4a]',
+                    'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm',
+                    done && 'bg-[#F4C542] text-slate-900',
+                    active && 'bg-[#0A3D5C] text-white',
+                    !done && !active && 'bg-white border-2 border-slate-300 text-slate-400',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -36,7 +36,7 @@ export default function RRMProgressBar({ current }) {
                 <div
                   className={[
                     'text-xs sm:text-sm hidden sm:block',
-                    active ? 'text-white font-semibold' : done ? 'text-[#F4C542]' : 'text-gray-500',
+                    active ? 'text-slate-900 font-semibold' : done ? 'text-slate-700' : 'text-slate-400',
                   ].join(' ')}
                 >
                   {s.label}
@@ -46,7 +46,7 @@ export default function RRMProgressBar({ current }) {
                 <div
                   className={[
                     'h-px flex-1 mx-2',
-                    done ? 'bg-[#F4C542]' : 'bg-[#1a2d4a]',
+                    done ? 'bg-[#F4C542]' : 'bg-slate-200',
                   ].join(' ')}
                 />
               )}
