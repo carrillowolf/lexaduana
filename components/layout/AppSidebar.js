@@ -107,25 +107,38 @@ function ExpandableNavItem({ item, pathname, onNavigate, user }) {
   // Filtra children que requieren sesión si no hay usuario
   const visibleChildren = item.children.filter(c => !c.authRequired || user)
 
+  const rowClasses = `flex items-center text-sm transition-colors ${
+    isParentActive
+      ? 'bg-blue-50 text-[#0A3D5C] font-semibold border-l-[3px] border-[#0A3D5C] -ml-px'
+      : 'text-gray-700 font-medium hover:bg-gray-100'
+  }`
+
   return (
     <div>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-          isParentActive
-            ? 'bg-blue-50 text-[#0A3D5C] font-semibold border-l-[3px] border-[#0A3D5C] -ml-px'
-            : 'text-gray-700 font-medium hover:bg-gray-100'
-        }`}
-      >
-        <span className="text-base flex-shrink-0 w-5 text-center">{item.icon}</span>
-        <span className="truncate flex-1 text-left">{item.label}</span>
-        <svg
-          className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${expanded ? 'rotate-90' : ''}`}
-          fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+      <div className={`${rowClasses} rounded-lg`}>
+        <Link
+          href={item.href}
+          onClick={onNavigate}
+          className="flex items-center gap-3 px-3 py-2 flex-1 min-w-0 rounded-l-lg"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-        </svg>
-      </button>
+          <span className="text-base flex-shrink-0 w-5 text-center">{item.icon}</span>
+          <span className="truncate flex-1 text-left">{item.label}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          aria-label={expanded ? 'Colapsar' : 'Expandir'}
+          aria-expanded={expanded}
+          className="px-2 py-2 flex-shrink-0 rounded-r-lg hover:bg-black/5"
+        >
+          <svg
+            className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
+            fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
 
       {expanded && (
         <div className={`ml-8 mt-0.5 space-y-0.5 border-l pl-3 rounded-r-md ${
