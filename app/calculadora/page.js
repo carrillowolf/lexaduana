@@ -265,89 +265,71 @@ export default function Home() {
       <div className="pt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
           
-          {/* Quick Access Buttons - SOLO para logueados */}
+          {/* Quick Access - SOLO para logueados */}
           {user && (
-            <div className="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {/* Dashboard */}
-              <Link
-                href="/dashboard"
-                className="group relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
-              >
-                <div className="flex flex-col items-center text-white">
-                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <h3 className="font-bold text-sm">{t('quickAccess.dashboard')}</h3>
-                  <p className="text-xs text-blue-100">{t('quickAccess.dashboardDesc')}</p>
-                </div>
-              </Link>
+            <div className="mb-8">
+              {/* Atajos discretos a la derecha */}
+              <div className="flex flex-wrap items-center justify-end gap-x-1 gap-y-2 mb-4 text-sm">
+                <Link
+                  href="/dashboard"
+                  className="text-slate-600 hover:text-[#0A3D5C] underline-offset-2 hover:underline"
+                >
+                  {t('quickAccess.dashboard')}
+                </Link>
+                <span className="text-slate-300" aria-hidden="true">·</span>
+                <Link
+                  href="/favoritos"
+                  className="text-slate-600 hover:text-[#0A3D5C] underline-offset-2 hover:underline"
+                >
+                  {t('quickAccess.favorites')}
+                </Link>
+                <span className="text-slate-300" aria-hidden="true">·</span>
+                <Link
+                  href="/bulk"
+                  className="text-slate-600 hover:text-[#0A3D5C] underline-offset-2 hover:underline"
+                >
+                  {t('quickAccess.bulkCalc')} <span className="text-slate-400">({t('quickAccess.bulkCalcDesc')})</span>
+                </Link>
+              </div>
 
-              {/* Comparador */}
-              <Link
-                href="/comparador"
-                className="group relative bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
-              >
-                <div className="flex flex-col items-center text-white">
-                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* 3 cards destacadas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Comparador */}
+                <Link
+                  href="/comparador"
+                  className="group bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition p-5 flex flex-col"
+                >
+                  <svg className="w-6 h-6 text-[#0A3D5C] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h3 className="font-bold text-sm">{t('quickAccess.comparator')}</h3>
-                  <p className="text-xs text-emerald-100">{t('quickAccess.comparatorDesc')}</p>
-                </div>
-              </Link>
+                  <h3 className="text-slate-900 font-semibold">{t('quickAccess.comparator')}</h3>
+                  <p className="text-slate-500 text-sm mt-1">{t('quickAccess.comparatorDesc')}</p>
+                </Link>
 
-              {/* Favoritos */}
-              <Link
-                href="/favoritos"
-                className="group relative bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
-              >
-                <div className="flex flex-col items-center text-white">
-                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                  </svg>
-                  <h3 className="font-bold text-sm">{t('quickAccess.favorites')}</h3>
-                  <p className="text-xs text-amber-100">{t('quickAccess.favoritesDesc')}</p>
-                </div>
-              </Link>
-
-              {/* Calculadora Masiva */}
-              <Link
-                href="/bulk"
-                className="group relative bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
-              >
-                <div className="flex flex-col items-center text-white">
-                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h3 className="font-bold text-sm">{t('quickAccess.bulkCalc')}</h3>
-                  <p className="text-xs text-purple-100">{t('quickAccess.bulkCalcDesc')}</p>
-                </div>
-              </Link>
-
-              {/* Clasificador IA */}
-              <Link
-                href="/clasificador"
-                className="group relative bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
-              >
-                <div className="flex flex-col items-center text-white">
-                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Clasificador IA */}
+                <Link
+                  href="/clasificador"
+                  className="group bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition p-5 flex flex-col"
+                >
+                  <svg className="w-6 h-6 text-[#0A3D5C] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
-                  <h3 className="font-bold text-sm">{t('quickAccess.classifier')}</h3>
-                  <p className="text-xs text-pink-100">{t('quickAccess.classifierDesc')}</p>
-                </div>
-              </Link>
-              {/* CBAM */}
-              <Link
-                href="/cbam"
-                className="group relative bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-4 shadow-lg hover:shadow-2xl transition-all hover:scale-105"
-              >
-                <div className="flex flex-col items-center text-white">
-                  <span className="text-3xl mb-2">🌍</span>
-                  <h3 className="font-bold text-sm">{t('quickAccess.cbam')}</h3>
-                  <p className="text-xs text-teal-100">{t('quickAccess.cbamDesc')}</p>
-                </div>
-              </Link>
+                  <h3 className="text-slate-900 font-semibold">{t('quickAccess.classifier')}</h3>
+                  <p className="text-slate-500 text-sm mt-1">{t('quickAccess.classifierDesc')}</p>
+                </Link>
+
+                {/* CBAM */}
+                <Link
+                  href="/cbam"
+                  className="group bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition p-5 flex flex-col"
+                >
+                  <svg className="w-6 h-6 text-[#0A3D5C] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <h3 className="text-slate-900 font-semibold">{t('quickAccess.cbam')}</h3>
+                  <p className="text-slate-500 text-sm mt-1">{t('quickAccess.cbamDesc')}</p>
+                </Link>
+              </div>
             </div>
           )}
 
@@ -879,48 +861,47 @@ export default function Home() {
 
             {/* Sidebar derecho */}
             <div className="space-y-6">
-              
+
               {/* Widget de tipos de cambio */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
-                <div className="bg-gradient-to-r from-[#F4C542] to-[#f5d05e] px-6 py-4">
-                  <h3 className="font-bold text-[#0A3D5C] flex items-center space-x-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{t('sidebar.exchangeRates')}</span>
-                  </h3>
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-[#F4C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-slate-900 font-semibold text-base">{t('sidebar.exchangeRates')}</h3>
                 </div>
-                <div className="p-4">
-                  {exchangeRates && exchangeRates.length > 0 ? (
-                    <div className="space-y-2">
+                {exchangeRates && exchangeRates.length > 0 ? (
+                  <>
+                    <div className="space-y-0">
                       {exchangeRates.slice(0, 5).map((rate, index) => (
-                        <div key={`rate-${index}`} className="flex justify-between items-center text-sm">
-                          <span className="font-medium text-gray-700">{rate.currency_code || rate.currency}</span>
-                          <span className="font-bold text-[#0A3D5C]">{rate.rate?.toFixed(4)}</span>
+                        <div
+                          key={`rate-${index}`}
+                          className="flex justify-between items-center py-2 border-b border-slate-100 last:border-b-0 font-mono tabular-nums text-sm text-slate-700"
+                        >
+                          <span>{rate.currency_code || rate.currency}</span>
+                          <span className="font-semibold text-slate-900">{rate.rate?.toFixed(4)}</span>
                         </div>
                       ))}
-                      <a href="/tipos-cambio" className="text-xs text-[#0A3D5C] hover:underline block mt-2">
-                        {t('sidebar.viewAll')}
-                      </a>
                     </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">{t('sidebar.loading')}</p>
-                  )}
-                </div>
+                    <a href="/tipos-cambio" className="text-sm text-[#0A3D5C] hover:underline mt-3 inline-block">
+                      {t('sidebar.viewAll')} →
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-500">{t('sidebar.loading')}</p>
+                )}
               </div>
 
               {/* Búsquedas recientes */}
               {recentSearches.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="bg-gradient-to-r from-slate-100 to-gray-100 px-6 py-4">
-                    <h3 className="font-bold text-[#0A3D5C] flex items-center space-x-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>{t('sidebar.recentSearches')}</span>
-                    </h3>
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-5 h-5 text-[#0A3D5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-slate-900 font-semibold text-base">{t('sidebar.recentSearches')}</h3>
                   </div>
-                  <div className="p-4 space-y-2">
+                  <div className="space-y-1">
                     {recentSearches.map((search, index) => (
                       <button
                         key={index}
@@ -929,18 +910,18 @@ export default function Home() {
                           setError('')
                           setResult(null)
                         }}
-                        className="w-full text-left p-3 bg-gray-50 hover:bg-blue-50 rounded-xl transition-all group border border-gray-100 hover:border-[#0A3D5C]"
+                        className="w-full text-left py-2 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 -mx-2 px-2 rounded transition-colors group"
                       >
-                        <div className="flex justify-between items-center">
-                          <div className="flex-1">
-                            <span className="font-mono text-sm font-bold text-[#0A3D5C] group-hover:text-[#083049]">
+                        <div className="flex justify-between items-center gap-2">
+                          <div className="flex-1 min-w-0">
+                            <span className="font-mono tabular-nums text-sm font-semibold text-[#0A3D5C]">
                               {search.code}
                             </span>
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">
                               {search.description}
                             </p>
                           </div>
-                          <svg className="w-4 h-4 text-gray-400 group-hover:text-[#0A3D5C] transition-colors flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-slate-300 group-hover:text-[#0A3D5C] transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
@@ -952,44 +933,38 @@ export default function Home() {
 
               {/* Info cards */}
               <div className="space-y-4">
-                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <svg className="w-5 h-5 text-[#0A3D5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-[#0A3D5C] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">{t('sidebar.originDocs')}</h4>
-                      <p className="text-xs text-gray-600">{t('sidebar.originDocsDesc')}</p>
+                      <h4 className="text-slate-900 font-semibold text-sm mb-1">{t('sidebar.originDocs')}</h4>
+                      <p className="text-sm text-slate-500">{t('sidebar.originDocsDesc')}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-amber-100 rounded-lg">
-                      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                    </div>
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-[#F4C542] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">{t('sidebar.important')}</h4>
-                      <p className="text-xs text-gray-600">{t('sidebar.importantDesc')}</p>
+                      <h4 className="text-slate-900 font-semibold text-sm mb-1">{t('sidebar.important')}</h4>
+                      <p className="text-sm text-slate-500">{t('sidebar.importantDesc')}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-[#0A3D5C] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">{t('sidebar.alwaysVerify')}</h4>
-                      <p className="text-xs text-gray-600">{t('sidebar.alwaysVerifyDesc')}</p>
+                      <h4 className="text-slate-900 font-semibold text-sm mb-1">{t('sidebar.alwaysVerify')}</h4>
+                      <p className="text-sm text-slate-500">{t('sidebar.alwaysVerifyDesc')}</p>
                     </div>
                   </div>
                 </div>
