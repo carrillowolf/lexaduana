@@ -24,6 +24,11 @@ function Field({ label, value, onChange, placeholder, type = 'text' }) {
   )
 }
 
+function fmtMoney(n) {
+  if (n == null || Number.isNaN(Number(n))) return '—'
+  return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+}
+
 export default function StepUpload({ state, setState }) {
   const t = useTranslation(rrmDict)
   const fileInput = useRef(null)
@@ -31,6 +36,7 @@ export default function StepUpload({ state, setState }) {
   const [error, setError] = useState('')
   const [tab, setTab] = useState('paste')
   const [pastedText, setPastedText] = useState('')
+  const [parseResult, setParseResult] = useState(null)
 
   const showWarning = isCloseTo3YearLimit(state.acceptanceDate)
   const mrnInvalid = state.mrn && !MRN_REGEX.test(state.mrn)
@@ -46,6 +52,42 @@ export default function StepUpload({ state, setState }) {
     await onFile(file)
   }
 
+  // Aplica los datos del header de la declaración al state (siempre, sea cual sea el número de partidas).
+  const applyHeaderToState = (d) => {
+    setState((prev) => ({
+      ...prev,
+      mrn: d.mrn || '',
+      acceptanceDate: d.acceptanceDate || '',
+      customsOffice: d.customsOffice || prev.customsOffice,
+      requestedProcedure: d.requestedProcedure || '',
+      deliveryTerms: d.deliveryTerms || '',
+      customsValue: d.customsValue ?? prev.customsValue,
+      importer: d.importer || prev.importer,
+      representative: d.representative || prev.representative,
+    }))
+  }
+
+  // Aplica los datos de UNA partida (la indicada por idx) al state. Útil cuando hay 1 sola partida
+  // o cuando el usuario selecciona en la tabla multi-partida (commit 3).
+  const applyItemToState = (d, idx) => {
+    const item0 = (d.goodsItems && d.goodsItems[idx]) || {}
+    const dutiesDeclared = {}
+    ;(item0.duties || []).forEach((dt) => {
+      if (dt.type) dutiesDeclared[dt.type] = (dutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
+    })
+    setState((prev) => ({
+      ...prev,
+      commodityCode: item0.commodityCode || '',
+      goodsDescription: item0.description || '',
+      netMass: item0.netMass || '',
+      supplementaryUnits: item0.supplementaryUnits || '',
+      countryOfOrigin: item0.countryOfOrigin || '',
+      preferenceDeclared: item0.preference || '',
+      dutiesDeclared,
+      dutiesCorrected: { ...dutiesDeclared },
+    }))
+  }
+
   const onFile = async (file) => {
     if (!file) return
     setUploading(true)
@@ -58,38 +100,23 @@ export default function StepUpload({ state, setState }) {
         body: xml,
       })
       const json = await res.json()
-      if (!res.ok || !json.success) {
+      if (!res.ok || !(json.ok || json.success)) {
         setError(json.error || t('upload.parseError'))
+        setParseResult(null)
         return
       }
       const d = json.data
-      const item0 = (d.goodsItems && d.goodsItems[0]) || {}
-      // Construir liquidación inicial a partir del primer ítem
-      const dutiesDeclared = {}
-      ;(item0.duties || []).forEach((dt) => {
-        if (dt.type) dutiesDeclared[dt.type] = (dutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
-      })
-      setState({
-        ...state,
-        mrn: d.mrn || '',
-        acceptanceDate: d.acceptanceDate || '',
-        customsOffice: d.customsOffice || state.customsOffice,
-        requestedProcedure: d.requestedProcedure || '',
-        deliveryTerms: d.deliveryTerms || '',
-        customsValue: d.customsValue ?? state.customsValue,
-        importer: d.importer || state.importer,
-        representative: d.representative || state.representative,
-        commodityCode: item0.commodityCode || '',
-        goodsDescription: item0.description || '',
-        netMass: item0.netMass || '',
-        supplementaryUnits: item0.supplementaryUnits || '',
-        countryOfOrigin: item0.countryOfOrigin || '',
-        preferenceDeclared: item0.preference || '',
-        dutiesDeclared,
-        dutiesCorrected: { ...dutiesDeclared },
-      })
+      setParseResult(d)
+      applyHeaderToState(d)
+      // Si hay exactamente 1 partida, autoseleccionar y rellenar campos del item.
+      // Si hay 2+ partidas, esperar selección del usuario en la tabla (commit 3).
+      const itemCount = (d.items || d.goodsItems || []).length
+      if (itemCount === 1) {
+        applyItemToState(d, 0)
+      }
     } catch (e) {
       setError(t('upload.parseError'))
+      setParseResult(null)
     } finally {
       setUploading(false)
     }
@@ -182,6 +209,62 @@ export default function StepUpload({ state, setState }) {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-4 text-sm">
           {error}
+        </div>
+      )}
+
+      {/* Resumen del header (tras parsear con éxito) */}
+      {parseResult && parseResult.header && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-4">
+          <h3 className="text-slate-900 font-semibold mb-3">{t('upload.summaryTitle')}</h3>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryMRN')}</dt>
+              <dd className="text-slate-900 font-mono text-right truncate">{parseResult.mrn || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryDate')}</dt>
+              <dd className="text-slate-900 text-right">{parseResult.header.preparationDateFormatted || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryCustoms')}</dt>
+              <dd className="text-slate-900 text-right">{parseResult.header.customsOfficeOfImport || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryImporter')}</dt>
+              <dd className="text-slate-900 text-right truncate">
+                {parseResult.header.importer?.eori || '—'}
+                {parseResult.header.importer?.name ? ` · ${parseResult.header.importer.name}` : ''}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryExporter')}</dt>
+              <dd className="text-slate-900 text-right truncate">{parseResult.header.exporter?.name || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryItems')}</dt>
+              <dd className="text-slate-900 font-semibold text-right">{parseResult.summary?.totalItems ?? 0}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryDuty')}</dt>
+              <dd className="text-slate-900 font-mono text-right">{fmtMoney(parseResult.summary?.totalDuty)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryVAT')}</dt>
+              <dd className="text-slate-900 font-mono text-right">{fmtMoney(parseResult.summary?.totalVAT)}</dd>
+            </div>
+          </dl>
+
+          {/* Mensaje contextual según número de partidas */}
+          {parseResult.summary?.totalItems === 1 && (
+            <div className="mt-4 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+              ✓ {t('upload.autoFilledSingle')}
+            </div>
+          )}
+          {parseResult.summary?.totalItems >= 2 && (
+            <div className="mt-4 px-3 py-2 rounded-lg bg-[#0A3D5C]/5 border border-[#0A3D5C]/20 text-[#0A3D5C] text-sm font-medium">
+              {t('upload.multiItemsDetected').replace('{n}', parseResult.summary.totalItems)}
+            </div>
+          )}
         </div>
       )}
 
