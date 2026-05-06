@@ -8,6 +8,7 @@ import { exportBulkToExcel } from '@/lib/excelExporter'
 import { useTranslation } from '@/lib/i18n'
 import { dashboardDict } from '@/lib/i18n/dashboard'
 import { safeLogger } from '@/lib/safe-logger'
+import DeleteAccountButton from '@/components/account/DeleteAccountButton'
 
 // Admin email
 const ADMIN_EMAIL = 'ccarrillodelolmo@gmail.com'
@@ -380,6 +381,12 @@ export default function DashboardPage() {
               </Link>
             )}
           </div>
+        </div>
+
+        {/* Cuenta — incluye derecho de supresión RGPD (Phase 8) */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Cuenta</h2>
+          <DeleteAccountButton />
         </div>
       </div>
     </div>
