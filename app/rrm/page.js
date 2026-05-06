@@ -44,6 +44,10 @@ const INITIAL_STATE = {
   additionalInfo: '',
   place: '',
   requestDate: '',
+  // Iteración 3 — parser/selección
+  parseResult: null,
+  selectedItemIndices: [],
+  selectedItems: [],
 }
 
 export default function RrmPage() {
@@ -72,13 +76,21 @@ export default function RrmPage() {
     )
   }
 
+  const totalItems = state.parseResult?.summary?.totalItems || 0
+  const isMultiItemSelection = step === 2 && totalItems >= 2
+
   // Validación por paso (controla habilitación del botón Siguiente)
   const canAdvance = (() => {
     if (step === 1) return !!state.caseType && !!state.requestType
-    if (step === 2) return !!state.mrn && !!state.customsOffice
+    if (step === 2) {
+      if (totalItems >= 2) return (state.selectedItemIndices?.length || 0) > 0
+      return !!state.mrn && !!state.customsOffice
+    }
     if (step === 3) return !!state.motivosText
     return true
   })()
+
+  const advance = () => setStep((s) => Math.min(4, s + 1))
 
   const restart = () => {
     setStep(1)
@@ -101,11 +113,14 @@ export default function RrmPage() {
 
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
           {step === 1 && <StepSelector state={state} setState={setState} />}
-          {step === 2 && <StepUpload state={state} setState={setState} />}
+          {step === 2 && <StepUpload state={state} setState={setState} onAdvance={advance} />}
           {step === 3 && <StepReview state={state} setState={setState} />}
           {step === 4 && <StepGenerate state={state} onRestart={restart} />}
 
-          {/* Botones de navegación */}
+          {/* Botones de navegación.
+              En multi-partida, el CTA "Continuar con N seleccionadas" vive
+              dentro de la tabla del StepUpload, así que sólo dejamos el
+              botón "Atrás" en la barra inferior. */}
           {step < 4 && (
             <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-200">
               <button
@@ -115,13 +130,15 @@ export default function RrmPage() {
               >
                 ← {t('common.back')}
               </button>
-              <button
-                onClick={() => setStep((s) => Math.min(4, s + 1))}
-                disabled={!canAdvance}
-                className="bg-[#0A3D5C] hover:bg-[#082c44] text-white font-medium px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('common.next')} →
-              </button>
+              {!isMultiItemSelection && (
+                <button
+                  onClick={advance}
+                  disabled={!canAdvance}
+                  className="bg-[#0A3D5C] hover:bg-[#082c44] text-white font-medium px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t('common.next')} →
+                </button>
+              )}
             </div>
           )}
         </div>

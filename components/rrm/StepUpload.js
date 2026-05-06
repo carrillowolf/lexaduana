@@ -24,13 +24,47 @@ function Field({ label, value, onChange, placeholder, type = 'text' }) {
   )
 }
 
-export default function StepUpload({ state, setState }) {
+function fmtMoney(n) {
+  if (n == null || Number.isNaN(Number(n))) return '—'
+  return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+}
+
+// Convierte una partida parseada (shape nuevo del parser) en una entrada
+// editable del state.selectedItems para el paso de Revisión.
+function buildSelectedItem(parsedItem) {
+  const dutiesDeclared = {}
+  if (parsedItem.duty?.amount != null) dutiesDeclared.A00 = parsedItem.duty.amount
+  if (parsedItem.vat?.amount != null) dutiesDeclared.B00 = parsedItem.vat.amount
+  return {
+    sequenceNumber: parsedItem.sequenceNumber,
+    taricCode: parsedItem.taricCode,
+    description: parsedItem.description,
+    originCountry: parsedItem.originCountry,
+    preferentialOrigin: parsedItem.preferentialOrigin,
+    preference: parsedItem.preference,
+    netMass: parsedItem.netMass,
+    grossMass: parsedItem.grossMass,
+    supplementaryUnits: parsedItem.supplementaryUnits,
+    statisticalValue: parsedItem.statisticalValue,
+    invoiceAmount: parsedItem.invoiceAmount,
+    additionsAK: parsedItem.additions?.AK ?? null,
+    dutiesDeclared,
+    dutiesCorrected: { ...dutiesDeclared },
+  }
+}
+
+export default function StepUpload({ state, setState, onAdvance }) {
   const t = useTranslation(rrmDict)
   const fileInput = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [tab, setTab] = useState('paste')
   const [pastedText, setPastedText] = useState('')
+
+  const parseResult = state.parseResult
+  const selectedIndices = state.selectedItemIndices || []
+  const totalItems = parseResult?.summary?.totalItems || 0
+  const isMultiItem = totalItems >= 2
 
   const showWarning = isCloseTo3YearLimit(state.acceptanceDate)
   const mrnInvalid = state.mrn && !MRN_REGEX.test(state.mrn)
@@ -46,6 +80,45 @@ export default function StepUpload({ state, setState }) {
     await onFile(file)
   }
 
+  // Aplica los datos del header de la declaración al state (siempre, sea cual sea el número de partidas).
+  const applyHeaderToState = (d) => {
+    setState((prev) => ({
+      ...prev,
+      mrn: d.mrn || '',
+      acceptanceDate: d.acceptanceDate || '',
+      customsOffice: d.customsOffice || prev.customsOffice,
+      requestedProcedure: d.requestedProcedure || '',
+      deliveryTerms: d.deliveryTerms || '',
+      customsValue: d.customsValue ?? prev.customsValue,
+      importer: d.importer || prev.importer,
+      representative: d.representative || prev.representative,
+    }))
+  }
+
+  // Aplica los datos de UNA partida (la indicada por idx) al state. Útil cuando hay 1 sola partida
+  // o cuando el usuario selecciona en la tabla multi-partida.
+  const applyItemToState = (d, idx) => {
+    const item0 = (d.goodsItems && d.goodsItems[idx]) || {}
+    const parsedItem = (d.items && d.items[idx]) || null
+    const dutiesDeclared = {}
+    ;(item0.duties || []).forEach((dt) => {
+      if (dt.type) dutiesDeclared[dt.type] = (dutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
+    })
+    const selectedItem = parsedItem ? buildSelectedItem(parsedItem) : null
+    setState((prev) => ({
+      ...prev,
+      commodityCode: item0.commodityCode || '',
+      goodsDescription: item0.description || '',
+      netMass: item0.netMass || '',
+      supplementaryUnits: item0.supplementaryUnits || '',
+      countryOfOrigin: item0.countryOfOrigin || '',
+      preferenceDeclared: item0.preference || '',
+      dutiesDeclared,
+      dutiesCorrected: { ...dutiesDeclared },
+      selectedItems: selectedItem ? [selectedItem] : prev.selectedItems,
+    }))
+  }
+
   const onFile = async (file) => {
     if (!file) return
     setUploading(true)
@@ -58,41 +131,84 @@ export default function StepUpload({ state, setState }) {
         body: xml,
       })
       const json = await res.json()
-      if (!res.ok || !json.success) {
+      if (!res.ok || !(json.ok || json.success)) {
         setError(json.error || t('upload.parseError'))
+        setState((prev) => ({ ...prev, parseResult: null, selectedItemIndices: [] }))
         return
       }
       const d = json.data
-      const item0 = (d.goodsItems && d.goodsItems[0]) || {}
-      // Construir liquidación inicial a partir del primer ítem
-      const dutiesDeclared = {}
-      ;(item0.duties || []).forEach((dt) => {
-        if (dt.type) dutiesDeclared[dt.type] = (dutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
-      })
-      setState({
-        ...state,
-        mrn: d.mrn || '',
-        acceptanceDate: d.acceptanceDate || '',
-        customsOffice: d.customsOffice || state.customsOffice,
-        requestedProcedure: d.requestedProcedure || '',
-        deliveryTerms: d.deliveryTerms || '',
-        customsValue: d.customsValue ?? state.customsValue,
-        importer: d.importer || state.importer,
-        representative: d.representative || state.representative,
-        commodityCode: item0.commodityCode || '',
-        goodsDescription: item0.description || '',
-        netMass: item0.netMass || '',
-        supplementaryUnits: item0.supplementaryUnits || '',
-        countryOfOrigin: item0.countryOfOrigin || '',
-        preferenceDeclared: item0.preference || '',
-        dutiesDeclared,
-        dutiesCorrected: { ...dutiesDeclared },
-      })
+      const itemCount = (d.items || d.goodsItems || []).length
+      // Guarda parseResult y resetea selección antes de aplicar campos.
+      setState((prev) => ({
+        ...prev,
+        parseResult: d,
+        selectedItemIndices: itemCount === 1 ? [0] : [],
+      }))
+      applyHeaderToState(d)
+      // Si hay 1 partida, autoseleccionar y rellenar campos del item.
+      // Si hay 2+ partidas, el usuario marca en la tabla y se aplican al pulsar Continuar.
+      if (itemCount === 1) {
+        applyItemToState(d, 0)
+      }
     } catch (e) {
       setError(t('upload.parseError'))
+      setState((prev) => ({ ...prev, parseResult: null, selectedItemIndices: [] }))
     } finally {
       setUploading(false)
     }
+  }
+
+  // Selección en la tabla multi-partida
+  const toggleItemSelection = (idx) => {
+    setState((prev) => {
+      const cur = prev.selectedItemIndices || []
+      const next = cur.includes(idx) ? cur.filter((i) => i !== idx) : [...cur, idx].sort((a, b) => a - b)
+      return { ...prev, selectedItemIndices: next }
+    })
+  }
+  const selectAllItems = () => {
+    setState((prev) => ({
+      ...prev,
+      selectedItemIndices: (prev.parseResult?.items || []).map((_, i) => i),
+    }))
+  }
+  const selectNoItems = () => {
+    setState((prev) => ({ ...prev, selectedItemIndices: [] }))
+  }
+
+  // Click en "Continuar con N partidas seleccionadas". Construye el array
+  // state.selectedItems con todas las marcadas (para que StepReview itere
+  // sobre todas) y aplica la primera al state legacy (commodityCode,
+  // dutiesDeclared, ...) por compatibilidad con flujos no-XML.
+  const continueWithSelected = () => {
+    const indices = state.selectedItemIndices || []
+    if (!parseResult || indices.length === 0) return
+
+    const items = parseResult.items || []
+    const legacyItems = parseResult.goodsItems || []
+    const selectedItems = indices.map((i) => items[i]).filter(Boolean).map(buildSelectedItem)
+
+    const firstIdx = indices[0]
+    const firstLegacy = legacyItems[firstIdx] || {}
+    const firstDutiesDeclared = {}
+    ;(firstLegacy.duties || []).forEach((dt) => {
+      if (dt.type) firstDutiesDeclared[dt.type] = (firstDutiesDeclared[dt.type] || 0) + (Number(dt.amount) || 0)
+    })
+
+    setState((prev) => ({
+      ...prev,
+      commodityCode: firstLegacy.commodityCode || '',
+      goodsDescription: firstLegacy.description || '',
+      netMass: firstLegacy.netMass || '',
+      supplementaryUnits: firstLegacy.supplementaryUnits || '',
+      countryOfOrigin: firstLegacy.countryOfOrigin || '',
+      preferenceDeclared: firstLegacy.preference || '',
+      dutiesDeclared: firstDutiesDeclared,
+      dutiesCorrected: { ...firstDutiesDeclared },
+      selectedItems,
+    }))
+
+    onAdvance?.()
   }
 
   return (
@@ -185,13 +301,154 @@ export default function StepUpload({ state, setState }) {
         </div>
       )}
 
+      {/* Resumen del header (tras parsear con éxito) */}
+      {parseResult && parseResult.header && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-4">
+          <h3 className="text-slate-900 font-semibold mb-3">{t('upload.summaryTitle')}</h3>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryMRN')}</dt>
+              <dd className="text-slate-900 font-mono text-right truncate">{parseResult.mrn || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryDate')}</dt>
+              <dd className="text-slate-900 text-right">{parseResult.header.preparationDateFormatted || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryCustoms')}</dt>
+              <dd className="text-slate-900 text-right">{parseResult.header.customsOfficeOfImport || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryImporter')}</dt>
+              <dd className="text-slate-900 text-right truncate">
+                {parseResult.header.importer?.eori || '—'}
+                {parseResult.header.importer?.name ? ` · ${parseResult.header.importer.name}` : ''}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryExporter')}</dt>
+              <dd className="text-slate-900 text-right truncate">{parseResult.header.exporter?.name || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryItems')}</dt>
+              <dd className="text-slate-900 font-semibold text-right">{parseResult.summary?.totalItems ?? 0}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryDuty')}</dt>
+              <dd className="text-slate-900 font-mono text-right">{fmtMoney(parseResult.summary?.totalDuty)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-500">{t('upload.summaryVAT')}</dt>
+              <dd className="text-slate-900 font-mono text-right">{fmtMoney(parseResult.summary?.totalVAT)}</dd>
+            </div>
+          </dl>
+
+          {/* Mensaje contextual según número de partidas */}
+          {parseResult.summary?.totalItems === 1 && (
+            <div className="mt-4 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+              ✓ {t('upload.autoFilledSingle')}
+            </div>
+          )}
+          {parseResult.summary?.totalItems >= 2 && (
+            <div className="mt-4 px-3 py-2 rounded-lg bg-[#0A3D5C]/5 border border-[#0A3D5C]/20 text-[#0A3D5C] text-sm font-medium">
+              {t('upload.multiItemsDetected').replace('{n}', parseResult.summary.totalItems)}
+            </div>
+          )}
+        </div>
+      )}
+
       {showWarning && (
         <div className="mb-4 p-3 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-sm">
           ⚠️ {t('upload.warningPlazo')}
         </div>
       )}
 
-      {/* Campos manuales / editables */}
+      {/* Tabla multi-partida (solo cuando hay 2+ partidas) */}
+      {isMultiItem && parseResult?.items && (
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mb-6">
+          <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h3 className="text-slate-900 font-semibold mb-1">{t('upload.multiItemsTitle')}</h3>
+              <p className="text-sm text-slate-600">{t('upload.multiItemsHelp')}</p>
+            </div>
+            <div className="flex gap-4 text-sm shrink-0">
+              <button type="button" onClick={selectAllItems} className="text-[#0A3D5C] hover:underline">
+                {t('upload.selectAll')}
+              </button>
+              <button type="button" onClick={selectNoItems} className="text-[#0A3D5C] hover:underline">
+                {t('upload.selectNone')}
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto -mx-2">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-slate-100">
+                  <th className="text-left font-semibold text-slate-900 px-3 py-2.5 w-10"></th>
+                  <th className="text-left font-semibold text-slate-900 px-3 py-2.5 w-12">{t('upload.thNumber')}</th>
+                  <th className="text-left font-semibold text-slate-900 px-3 py-2.5">{t('upload.thTaric')}</th>
+                  <th className="text-left font-semibold text-slate-900 px-3 py-2.5">{t('upload.thDescription')}</th>
+                  <th className="text-left font-semibold text-slate-900 px-3 py-2.5">{t('upload.thOrigin')}</th>
+                  <th className="text-left font-semibold text-slate-900 px-3 py-2.5">{t('upload.thPreference')}</th>
+                  <th className="text-right font-semibold text-slate-900 px-3 py-2.5">{t('upload.thDuty')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {parseResult.items.map((item, idx) => {
+                  const checked = selectedIndices.includes(idx)
+                  return (
+                    <tr
+                      key={idx}
+                      onClick={() => toggleItemSelection(idx)}
+                      className={[
+                        'border-b border-slate-200 cursor-pointer transition-colors',
+                        checked ? 'bg-[#0A3D5C]/5' : 'hover:bg-slate-50',
+                      ].join(' ')}
+                    >
+                      <td className="px-3 py-2.5 align-top">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleItemSelection(idx)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`${t('upload.thNumber')} ${item.sequenceNumber}`}
+                          className="accent-[#0A3D5C] w-4 h-4 cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-3 py-2.5 text-slate-700 align-top font-mono">{item.sequenceNumber || idx + 1}</td>
+                      <td className="px-3 py-2.5 text-slate-700 align-top font-mono">{item.taricCode || '—'}</td>
+                      <td className="px-3 py-2.5 text-slate-700 align-top">{item.description || '—'}</td>
+                      <td className="px-3 py-2.5 text-slate-700 align-top">{item.originCountry || '—'}</td>
+                      <td className="px-3 py-2.5 text-slate-700 align-top">{item.preference || '—'}</td>
+                      <td className="px-3 py-2.5 text-slate-700 align-top text-right font-mono">
+                        {fmtMoney(item.duty?.amount)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={continueWithSelected}
+              disabled={selectedIndices.length === 0}
+              className="bg-[#F4C542] hover:bg-[#e0b332] text-slate-900 font-semibold px-6 py-3 rounded-lg transition-colors disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+            >
+              {(selectedIndices.length === 1
+                ? t('upload.continueWithSelectedSingular')
+                : t('upload.continueWithSelected').replace('{n}', selectedIndices.length)
+              )} →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Campos manuales / editables — solo cuando NO hay multi-partida */}
+      {!isMultiItem && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Declaración */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
@@ -261,6 +518,7 @@ export default function StepUpload({ state, setState }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }

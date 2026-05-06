@@ -48,11 +48,11 @@ export async function POST(request) {
     }
 
     const data = await parseH1Xml(xml)
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, ok: true, data })
   } catch (err) {
     safeLogger.error('[parse-h1] error:', err)
     return NextResponse.json(
-      { error: 'No se pudo parsear el XML', details: err?.message || String(err) },
+      { success: false, ok: false, error: err?.message || 'No se pudo parsear el XML' },
       { status: 400 }
     )
   }
