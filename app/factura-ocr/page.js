@@ -7,7 +7,7 @@ import { validateExtractedInvoice, summarizeValidation } from '@/lib/invoiceVali
 import { exportInvoiceToExcel } from '@/lib/excelExporter'
 import { useTranslation } from '@/lib/i18n'
 import { facturaOcrDict } from '@/lib/i18n/factura-ocr'
-import QuickAIConsent from '@/components/privacy/QuickAIConsent'
+import AIProcessingConsent from '@/components/consent/AIProcessingConsent'
 
 const INCOTERMS = ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF']
 const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY', 'CHF', 'HKD', 'TRY', 'INR', 'BRL']
@@ -413,9 +413,9 @@ export default function FacturaOCRPage() {
             </div>
           )}
 
-          {/* Aviso temporal Fase 2.5 — consentimiento envío a Anthropic */}
+          {/* Phase 4: consentimiento RGPD persistido en user_consents */}
           <div className="mt-5">
-            <QuickAIConsent consentKey="ocr_invoice" onConsentChange={setAiConsent} />
+            <AIProcessingConsent consentType="ai_processing_ocr_invoice" onConsentChange={setAiConsent} />
           </div>
 
           <div className="mt-5 flex items-center justify-between flex-wrap gap-3">

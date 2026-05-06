@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { CBAMAlert } from '@/components/CBAMAlert'
-import QuickAIConsent from '@/components/privacy/QuickAIConsent'
+import AIProcessingConsent from '@/components/consent/AIProcessingConsent'
 import { trackEvent } from '@/lib/analytics'
 import { useTranslation, useLocale } from '@/lib/i18n'
 import { clasificadorDict } from '@/lib/i18n/clasificador'
@@ -246,8 +246,8 @@ export default function ClasificadorPage() {
               </div>
             </div>
 
-            {/* Aviso temporal Fase 2.5 — consentimiento envío a Anthropic */}
-            <QuickAIConsent consentKey="classifier" onConsentChange={setAiConsent} />
+            {/* Phase 4: consentimiento RGPD persistido en user_consents */}
+            <AIProcessingConsent consentType="ai_processing_classifier" onConsentChange={setAiConsent} />
 
             {/* Botón principal */}
             <button
