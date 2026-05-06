@@ -9,53 +9,95 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 )
 
+// Normaliza ambos formatos de CSP report a filas para csp_violations.
+// - Reporting API moderno: array de eventos { type, body: { blockedURL, ... } }
+// - report-uri legacy: { "csp-report": { "blocked-uri", ... } }
+// Un único POST en formato moderno puede contener varios eventos: devolvemos
+// una fila por evento, no una sola con el array entero.
+function extractFields(payload) {
+  if (Array.isArray(payload)) {
+    return payload
+      .filter((event) => event && event.type === 'csp-violation' && event.body)
+      .map((event) => ({
+        document_uri: event.body.documentURL ?? null,
+        referrer: event.body.referrer ?? null,
+        violated_directive: event.body.effectiveDirective ?? null,
+        effective_directive: event.body.effectiveDirective ?? null,
+        blocked_uri: event.body.blockedURL ?? null,
+        source_file: event.body.sourceFile ?? null,
+        line_number: event.body.lineNumber ?? null,
+        column_number: event.body.columnNumber ?? null,
+        status_code: event.body.statusCode ?? null,
+        raw_report: payload,
+      }))
+  }
+
+  if (payload && payload['csp-report']) {
+    const r = payload['csp-report']
+    return [
+      {
+        document_uri: r['document-uri'] ?? null,
+        referrer: r['referrer'] ?? null,
+        violated_directive: r['violated-directive'] ?? null,
+        effective_directive: r['effective-directive'] ?? r['violated-directive'] ?? null,
+        blocked_uri: r['blocked-uri'] ?? null,
+        source_file: r['source-file'] ?? null,
+        line_number: r['line-number'] ?? null,
+        column_number: r['column-number'] ?? null,
+        status_code: r['status-code'] ?? null,
+        raw_report: payload,
+      },
+    ]
+  }
+
+  return [
+    {
+      document_uri: null,
+      referrer: null,
+      violated_directive: null,
+      effective_directive: null,
+      blocked_uri: null,
+      source_file: null,
+      line_number: null,
+      column_number: null,
+      status_code: null,
+      raw_report: payload,
+    },
+  ]
+}
+
 export async function POST(request) {
+  // Aceptamos application/csp-report (legacy), application/reports+json
+  // (Reporting API) y application/json (fallback). request.json() no valida
+  // Content-Type, solo parsea el body.
   try {
-    // Los reports CSP llegan con Content-Type: application/csp-report
-    // Estructura legacy: { "csp-report": { ... } }
-    // Estructura Reporting API: { type: "csp-violation", body: { ... } }
     const body = await request.json().catch(() => null)
 
-    if (!body) {
-      return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
+    if (body === null || body === undefined) {
+      return new NextResponse(null, { status: 204 })
     }
 
-    // Soportar tanto el formato legacy (csp-report) como el nuevo (Reporting API)
-    const report = body['csp-report'] || body.body || body
+    const rows = extractFields(body)
 
-    if (!report || typeof report !== 'object') {
-      return NextResponse.json({ error: 'No report data' }, { status: 400 })
+    if (rows.length > 0) {
+      const { error } = await supabaseAdmin.from('csp_violations').insert(rows)
+      if (error) {
+        // Log local pero responder 204 igualmente (no bloquear el navegador).
+        // No usamos safe-logger aquí: el endpoint es safe-by-construction
+        // (solo metadata CSP, sin PII) y así lo documenta lib/safe-logger.js.
+        console.error('[CSP report insert error]', error.message)
+      }
     }
 
-    const { error } = await supabaseAdmin
-      .from('csp_violations')
-      .insert({
-        document_uri: report['document-uri'] || report.documentURL || null,
-        referrer: report.referrer || null,
-        violated_directive: report['violated-directive'] || report.effectiveDirective || null,
-        effective_directive: report['effective-directive'] || null,
-        blocked_uri: report['blocked-uri'] || report.blockedURL || null,
-        source_file: report['source-file'] || report.sourceFile || null,
-        line_number: report['line-number'] || report.lineNumber || null,
-        column_number: report['column-number'] || report.columnNumber || null,
-        status_code: report['status-code'] || null,
-        raw_report: report,
-      })
-
-    if (error) {
-      // Log local pero responder 204 igualmente (no bloquear el navegador)
-      console.error('[CSP report insert error]', error.message)
-    }
-
-    // 204 No Content es la respuesta estándar para CSP reports
+    // 204 No Content es la respuesta estándar para CSP reports.
     return new NextResponse(null, { status: 204 })
   } catch {
-    // Nunca bloquear el navegador con errores en este endpoint
+    // Nunca bloquear el navegador con errores en este endpoint.
     return new NextResponse(null, { status: 204 })
   }
 }
 
-// CSP Reports llegan como POST únicamente
+// CSP Reports llegan como POST únicamente.
 export async function GET() {
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }

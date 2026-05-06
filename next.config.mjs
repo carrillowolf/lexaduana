@@ -1,10 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
-    // CSP en modo Report-Only durante el periodo de validación.
-    // Las violaciones se reportan a /api/csp-report y se persisten en
-    // la tabla csp_violations para análisis. Tras 24-48h sin falsos
-    // positivos, conmutar a Content-Security-Policy bloqueante.
+    // CSP en modo bloqueante tras periodo de observación 5-6 mayo 2026.
+    // Producción quedó limpia (cero violaciones reales); el único ruido eran
+    // 12 reports del widget de comments de Vercel en deployments preview.
+    // Las violaciones se siguen reportando a /api/csp-report y se persisten
+    // en la tabla csp_violations para detectar rupturas futuras.
+    //
+    // Relajación condicional para preview de Vercel: en VERCEL_ENV=preview se
+    // añade vercel.live a frame-src y script-src para que el widget de
+    // comments funcione. Producción y desarrollo local mantienen CSP estricta.
     //
     // Ajustes respecto al draft original tras grep del repo (Fase 6 Bloque B):
     // - Eliminado va.vercel-scripts.com: @vercel/speed-insights no instalado.
@@ -12,14 +17,22 @@ const nextConfig = {
     //   self-hostea Inter en build, sin tráfico runtime a esos dominios.
     // - Mantenido api.anthropic.com (server-only hoy; protege futuro SDK
     //   cliente sin revisitar la CSP).
-    const cspReportOnly = [
+    const isPreview = process.env.VERCEL_ENV === 'preview'
+    const scriptSrc = isPreview
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io https://vercel.live"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io"
+    const frameSrc = isPreview
+      ? "frame-src 'self' https://vercel.live"
+      : "frame-src 'self'"
+
+    const cspBlocking = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://api.anthropic.com",
-      "frame-src 'self'",
+      frameSrc,
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",
@@ -58,11 +71,11 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()',
           },
-          // CSP en modo Report-Only: el navegador NO bloquea recursos,
-          // solo reporta violaciones a /api/csp-report.
+          // CSP bloqueante: el navegador rechaza recursos que violen la
+          // política. Se mantiene report-uri/report-to para captar rupturas.
           {
-            key: 'Content-Security-Policy-Report-Only',
-            value: cspReportOnly,
+            key: 'Content-Security-Policy',
+            value: cspBlocking,
           },
           // Reporting API moderna (Chrome 96+): mismo destino que report-uri.
           {
