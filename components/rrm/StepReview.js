@@ -296,6 +296,7 @@ export default function StepReview({ state, setState }) {
             placeholder={t('review.motivosHelp')}
           />
           <p className="text-xs text-slate-500 mt-1">{t('review.motivosHelp')}</p>
+          <p className="text-sm text-slate-500 italic mt-2">{t('motivation.placeholderHelp')}</p>
         </div>
 
         {/* Contacto */}

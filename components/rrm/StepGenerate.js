@@ -102,6 +102,17 @@ export default function StepGenerate({ state, onRestart }) {
   const today = new Date().toISOString().slice(0, 10)
 
   const generate = async () => {
+    // Validador suave: si el textarea de motivación todavía contiene
+    // placeholders {{...}} sin sustituir, avisamos al usuario antes
+    // de generar. Soft-block: cancela → no genera; aceptar → continúa.
+    const motivos = state.motivosText || ''
+    if (motivos.match(/\{\{[^}]+\}\}/)) {
+      const ok = typeof window !== 'undefined' && window.confirm
+        ? window.confirm(t('motivation.placeholdersWarning'))
+        : true
+      if (!ok) return
+    }
+
     setBusy(true)
     setError('')
     setDone(false)
