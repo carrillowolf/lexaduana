@@ -1757,6 +1757,57 @@ const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true })
 
 ---
 
+## 🛡️ Operaciones administrativas
+
+### Baja de usuarios — RGPD
+
+La baja de un usuario en LexAduana **debe pasar siempre por el endpoint** `POST /api/account/delete`, accesible desde el botón "Eliminar mi cuenta" en `/dashboard`.
+
+#### Por qué
+
+El endpoint orquesta dos pasos en orden:
+
+1. Llama a la función SQL `pseudonymize_user_data_on_delete_by_id(user_id)` que rellena `user_id_hash` con SHA-256 del `user_id` en 11 tablas operativas (`user_consents`, `classification_logs`, `invoice_extractions`, `rrm_requests`, `dispatches` ×2 columnas, `dispatch_checklist`, `dispatch_comments`, `dispatch_timeline`, `cbam_advisory_requests`, `cbam_calculator_saves`).
+2. Llama a `supabase.auth.admin.deleteUser(user_id)` que dispara el `ON DELETE SET NULL` de los FKs y borra al usuario.
+
+El resultado: las filas relacionadas conservan trazabilidad pseudonimizada (RGPD art. 17.3.b/e — defensa de reclamaciones y obligaciones legales) durante el periodo de retención fijado en `gdpr_daily_purge` antes de eliminarse definitivamente.
+
+#### Lo que NO debe hacerse nunca
+
+- ❌ Borrar usuarios desde el panel de Supabase: **Authentication → Users → Delete user**.
+- ❌ Ejecutar `DELETE FROM auth.users WHERE ...` directamente en el SQL Editor.
+- ❌ Llamar a `supabase.auth.admin.deleteUser()` desde otro script sin invocar antes `pseudonymize_user_data_on_delete_by_id()`.
+
+Cualquiera de estas acciones salta la pseudonimización. Las filas relacionadas quedan con `user_id` en NULL pero sin `user_id_hash` rellenado, perdiendo la evidencia legal pseudonimizada.
+
+> **Por qué no hay trigger automático en `auth.users`**: Supabase no permite `CREATE TRIGGER` sobre `auth.users` ni vía MCP ni vía SQL Editor en planes no-Enterprise. Por eso la pseudonimización vive en un endpoint de aplicación, no en un trigger automático.
+
+#### Si necesitas borrar un usuario manualmente (uso administrativo)
+
+Para casos administrativos sin acceso al UI del usuario (ejemplo: usuarios huérfanos de pruebas, baja por solicitud por email, etc.), usa esta secuencia en el SQL Editor:
+
+```sql
+-- 1. Pseudonimizar primero
+SELECT public.pseudonymize_user_data_on_delete_by_id('USER_UUID_AQUI');
+```
+
+```javascript
+// 2. Borrar usuario después desde un script Node con service_role.
+//    El SQL Editor de Supabase suele rechazar DELETE FROM auth.users por
+//    permisos, así que la vía oficial es el cliente admin:
+import { createClient } from '@supabase/supabase-js'
+const supabase = createClient(URL, SERVICE_ROLE_KEY)
+await supabase.auth.admin.deleteUser('USER_UUID_AQUI')
+```
+
+#### Auditoría
+
+La función `pseudonymize_user_data_on_delete_by_id` es `SECURITY DEFINER` con `GRANT EXECUTE TO service_role`. Está versionada en `supabase/migrations/`. El endpoint `app/api/account/delete/route.js` es la única vía oficial documentada de invocación.
+
+La purga programada (`gdpr_daily_purge` a las 03:00 UTC) se audita en `public.purge_audit_log`, accesible solo con `service_role`/`postgres`.
+
+---
+
 ## 📚 Documentación Adicional
 
 ### Para desarrolladores
