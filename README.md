@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.18.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.19.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -65,6 +65,136 @@ lexaduana.es
 ├── 📄 Servicio IAV             (próximamente)
 └── 🔗 Integraciones AEAT       (en desarrollo)
 ```
+
+---
+
+## 🆕 Novedades v5.19.0 (Mayo 2026)
+
+Sesión de mejoras de UX en el sidebar y la calculadora, **rediseño visual completo del wizard RRM** (de dark a estética clara coherente con el resto de la suite) e **iteración mayor del módulo RRM** (parser robusto del CC415AV1Ent, soporte multi-partida y DOCX maquetado al modelo oficial AEAT del Reglamento Delegado UE 2015/2446).
+
+### 🧭 Sidebar — CBAM padre clickeable
+
+El item "CBAM" del sidebar ahora **navega a `/cbam`** al hacer click en la etiqueta, mientras que el chevron sigue siendo toggle independiente de la lista de sub-items (patrón Notion: padre clickeable Y desplegable). El resto de grupos del sidebar (Calculadora, Despachos, etc.) mantienen su comportamiento.
+
+- Componente: `components/layout/AppSidebar.js` — `ExpandableNavItem` separa la zona del Link del botón del chevron.
+- Auto-expansión cuando `pathname.startsWith('/cbam')`.
+- Sin afectar al estado de los demás items expandibles.
+
+### 🧮 Calculadora TARIC — rediseño visual
+
+Sustitución de los **6 botones grandes con gradientes** (azul/verde/naranja/morado/fucsia/teal) por una estructura híbrida coherente con la estética del proyecto:
+
+- **Fila de chips discretos** arriba a la derecha: Dashboard · Favoritos · Calc. Masiva (100 productos), en `text-slate-600 hover:text-[#0A3D5C] underline-offset-2 hover:underline`.
+- **3 cards destacadas** (responsive: 3 cols desktop / 2 tablet / 1 móvil): Comparador, Clasificador IA, CBAM Verificador. Patrón `bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition` con icono navy `#0A3D5C` arriba-izquierda.
+- **Sidebar derecho modernizado** (5 cards unificadas): Tipos de Cambio BCE (sin header amarillo), Búsquedas Recientes, Documentación de origen (icono limpio en navy), Importante, Verifica siempre. Tabla de tipos de cambio en `font-mono tabular-nums`. Link "Ver todos →" en navy.
+- **i18n cleanup**: `"Con Claude 4.5"` → `"Detección por IA"` (ES) / `"AI-powered detection"` (EN). El producto deja de mencionar el modelo subyacente.
+
+### 📑 Solicitud RRM — rediseño visual a estética clara
+
+Migración del wizard `/rrm` de dark mode (`bg-[#060d16]`, `bg-[#0a1628]`, `bg-[#0d1f35]`, `border-[#1a2d4a]`, `bg-[#F4C542] text-black`) a la estética clara coherente con el resto de la suite (`bg-slate-50`, navy `#0A3D5C`, gold `#F4C542`, cards blancas con `border-slate-200 rounded-2xl shadow-sm`):
+
+- **Hero como bloque navy** independiente con badge `bg-amber-100 text-amber-900` (estilo `/cbam`).
+- **ProgressBar**: completado gold con tick, activo navy con texto blanco, pendientes `border-2 border-slate-300` blanco. Líneas conectoras `bg-slate-200` / completado `bg-[#F4C542]`.
+- **Sub-cards** (Declaración, Importador, Representante, Mercancía, Contacto, Banco, Ubicación): `bg-slate-50 border-slate-200 rounded-xl p-5`.
+- **Inputs**: `bg-white border-slate-300 text-slate-900 focus:border-[#0A3D5C] focus:ring-1`.
+- **Dropzone**: `border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-[#0A3D5C]` + icono SVG navy (sustituye al emoji 📤).
+- **Tabla DICE/DEBE DECIR**: tonos oscuros (`bg-red-950/30`, `bg-green-950/30`) → equivalentes claros (`bg-red-50`, `bg-emerald-50`, `text-red-700`, `text-emerald-700`).
+- **CTA "Generar documento"**: gold `bg-[#F4C542] text-slate-900` (sustituye al gold con texto negro).
+- **Botones de navegación**: "Siguiente" navy, "Atrás" blanco con borde slate.
+- **Cards seleccionables del Selector**: borde navy en lugar de gold cuando seleccionadas.
+
+### 📋 Solicitud RRM — pegar XML como texto (tabs Pegar/Subir)
+
+Para usuarios no técnicos que no saben extraer un fichero `.xml` del visor B-First u otros sistemas AEAT pero sí pueden copiar el contenido de la pantalla, se añade en el paso 2 una estructura de **dos tabs**:
+
+- **Tab 1 "Pegar mensaje XML"** (activa por defecto): textarea grande (`min-h-[300px] max-h-[500px]`, font-mono), botón gold "Procesar mensaje" (disabled si vacío), spinner inline durante upload.
+- **Tab 2 "Subir archivo XML"**: dropzone original sin cambios.
+- **Pre-procesado**: `pastedText.replace(/^-/gm, '').trim()` limpia los guiones que el visor B-First añade al inicio de cada línea (`-<CC415AV1Ent>` → `<CC415AV1Ent>`). Defensa replicada también server-side en `parseH1Xml` para clientes que llamen al endpoint directo.
+- **Validación cliente**: comprueba que el texto contiene `<CC415A` o `<GoodsShipment` (tolerante a atributos como `<CC415AV1Ent xmlns="...">`).
+- **Cero cambios al `onFile()` existente**: tras la validación se construye `new File([cleaned], 'pasted-xml.xml', { type: 'application/xml' })` y se pasa al handler. Mismo flujo que el dropzone real.
+- Errores en bloque destacado `bg-red-50 border border-red-200 text-red-700`.
+
+### 🚀 Solicitud RRM — wizard multi-partida + DOCX modelo AEAT estricto
+
+**La iteración más profunda del módulo desde v5.15.0**: parser reescrito para soportar el shape oficial CC415AV1Ent del visor AEAT, soporte real para declaraciones con varias partidas afectadas y maquetación del DOCX al formato visual del Reglamento Delegado (UE) 2015/2446.
+
+#### Parser refactorizado (`lib/rrmParser.js`)
+
+El parser anterior usaba tags de un esquema distinto (CUSDEC, `GovernmentAgencyGoodsItem`, `dutyTaxFee`, `acceptanceDateTime`) que **no existen** en los XMLs reales que la AEAT emite hoy. Reescritura completa con extracción rica:
+
+- **Header**: Message (id, fecha preparación → DD/MM/YYYY), ImportOperation (LRN, declarationType, additionalDeclarationType, languageCode), CustomsOfficeOfImport + Presentation, Importer, Declarant, Representative + status, Guarantee (type, GRN), GoodsShipment (natureOfTransaction, invoiceCurrency), Exporter completo, DeliveryTerms (incoterm, location, country), CountryOfDispatch, Destination (country, region), Consignment (modos transporte, grossMass, UCR, locationOfGoods, TransportDocument[]).
+- **Contact**: viene de `Representative.ContactPerson` si existe, si no de `Declarant.ContactPerson`. Marcado con `contact.source: 'representative' | 'declarant'`.
+- **Items** (array `GoodsShipmentItem[]`): TARIC concatenado de `harmonizedSystemSubheadingCode + combinedNomenclatureCode + taricCode`, Origin (country + preferentialOrigin), Procedure, GoodsMeasure (gross/net/supp), InvoiceLine, CalculationOfTaxes con `preference` + `DutiesAndTaxes` filtrados por `taxType=A00 → duty` / `taxType=B00 → vat` (rate, base, amount), Packaging, PreviousDocument MRN, CustomsValuation (valuationMethod + AdditionsAndDeductions con suma de códigos AK).
+- **Summary**: totalItems, totalDuty, totalVAT, totalAdditions, totalInvoiceAmount, totalStatisticalValue.
+- **Tolerancia**: namespaces (búsqueda por nombre local), guiones B-First, campos opcionales devuelven `null`, importes string `"83.000000"` → Number, ISO `2026-03-03T13:51:54` → `03/03/2026`.
+- **Compat retro**: el endpoint sigue devolviendo `{ success: true, data }` con campos planos legacy (`mrn`, `goodsItems`, `dutiesDeclared`) en paralelo al shape rico (`header`, `contact`, `items`, `summary`).
+
+#### Wizard multi-partida — integrado en paso 2 (no nuevo paso)
+
+- **Card de resumen** del header tras parsing: MRN, fecha aceptación, aduana, importador (EORI · nombre), exportador (nombre), partidas detectadas, total arancel pagado, total IVA pagado.
+- **1 partida**: autoselección, datos auto-rellenados, mensaje verde "1 partida detectada".
+- **2+ partidas**: tabla con checkboxes (selección por defecto vacía — el usuario marca activamente). Columnas `#`, `TARIC`, `Descripción`, `Origen`, `Pref.`, `Arancel`. Filas marcadas en `bg-[#0A3D5C]/5`. Atajos "Marcar todas / Desmarcar todas" en navy. CTA gold "**Continuar con N partidas seleccionadas →**" disabled cuando 0. El botón "Siguiente" global se oculta cuando hay multi-partida; el CTA gold de la tabla es el único disparador de avance.
+- **Persistencia en state**: `state.parseResult`, `state.selectedItemIndices`, `state.selectedItems` (array de partidas con sus `dutiesDeclared/dutiesCorrected` propios). Selección preservada al navegar Atrás/Adelante.
+- **Decisión cerrada**: 1 tipo de error para toda la solicitud (no por partida).
+
+#### Paso de revisión — sub-bloques colapsables
+
+`StepReview.js` refactorizado para iterar sobre `state.selectedItems` o, en flujo manual sin XML, sobre un único item virtual derivado de los campos planos:
+
+- **Datos comunes** (motivos, contacto, ubicación, banco) **fuera** de los sub-bloques — son únicos para toda la solicitud.
+- **Sub-bloque por partida**: cabecera clickeable `Partida #N — TARIC XXXXXXXXXX — descripción truncada (60c)` + chevron rotativo, diff parcial visible aunque el bloque esté colapsado, body expandible con tabla `DICE / DEBE DECIR / DIFERENCIA` por código y total partida.
+- **Expansión por defecto**: si N ≤ 4 todos abiertos; si N ≥ 5 sólo los 2 primeros. Atajos "Expandir / Colapsar todas" cuando hay 2+ partidas.
+- **Mutadores con itemIdx**: `setDeclared(itemIdx, code, v)`, `setCorrected(itemIdx, code, v)`, `addDuty(itemIdx)` escriben en `selectedItems[i].dutiesDeclared/Corrected`. Modo legacy (sin selectedItems) escribe en los planos.
+- **Total general** en bloque `bg-amber-50 border-2 border-[#F4C542]` al final de los sub-bloques.
+
+#### DOCX maquetado al modelo AEAT estricto (`lib/rrmDocxGenerator.js`)
+
+Reescritura de la maquetación para que el documento sea visualmente indistinguible del modelo oficial:
+
+- **Cabecera**: tabla 1×2 sin bordes con **bandera UE embebida** (PNG 120×80, `public/assets/eu-flag.png`, generada localmente con composición oficial: 12 estrellas amarillas `#FFCC00` en anillo concéntrico sobre fondo azul `#003399`) + título oficial en dos líneas, mayúsculas, Arial 11pt: `"SOLICITUD RELATIVA A LA DEVOLUCIÓN O CONDONACIÓN DE LOS IMPORTES DE LOS DERECHOS DE IMPORTACIÓN O DE EXPORTACIÓN"`.
+- **Macro-tablas continuas**: REQUISITOS COMUNES y REQUISITOS ESPECÍFICOS son **una única `Table` cada uno**, con cabeceras de bloque/sección como filas internas (`columnSpan: 6` sobre un grid lógico de 6 columnas, mcm de 2 y 3). Tres niveles de shading: azul `#B4D4E5` para bloques maestros, gris `#D9D9D9` para sub-secciones (Información sobre la solicitud, Documentos justificativos, Partes, Fechas y lugares, Identificación de las mercancías, Otros), lila `#D9D2E9` para cabeceras de notas. Cabecera azul, gris y casillas quedan fundidas en un mismo marco continuo, sin gaps.
+- **Layout de columnas estricto**: filas multi-columna que reproducen el modelo AEAT — `31 01 | 31 03 | 31 06` (3-col 2/2/2), `Firma | 31 07` (2-col 3/3), `33 01-02 | Identificación` y `33 03 | Identificación` (2-col 3/3), `34 01 | 34 02 | 34 06` (3-col), `35 01 info | designación | volumen` (3-col), `48 02 | 48 03` (2-col), `48 06 | 48 07 | 48 08` (3-col 1/3/2 ≈ 17/50/33%) — etc.
+- **Casilla 48 14** con `cantSplit: true` en su `TableRow` → la celda con "Nombre del titular de la cuenta:" y "Cuenta: IBAN/Banco-BIC:" no se divide entre páginas. Verificado en el XML emitido (`<w:cantSplit/>` puro, sin `val="false"`).
+- **Casilla 48 10**: rellena por defecto con `"Acondicionada para la venta"` — constante exportable `DEFAULT_USO_DESTINO` para futura edición o promoción a campo del wizard.
+- **Casillas 48 11 y 48 12** vacías por diseño (las completa la AEAT).
+- **Página dedicada de notas al pie**: tras los REQUISITOS ESPECÍFICOS, página nueva con cabecera lila + tabla 2-col (marker bold, texto Arial 9pt). Notas (1)–(16) y (*) con texto literal del modelo oficial AEAT.
+- **Anexo I — multi-partida**: si hay `data.selectedItems`, mini-tabla DICE/DEBE DECIR por partida con cabecera `Partida #N — TARIC XXX — descripción truncada` + subtítulo `Origen: XX · Preferencia: YYY`, fila final `Total partida #N`. Si no, tabla consolidada legacy.
+- **Bloque "TOTAL GENERAL A REGULARIZAR"** al final del Anexo I, **siempre con separación legal A00 / B00** (también en modo 1 partida o legacy):
+  - `A00 — Arancel: X €` *(devolución directa)*
+  - `B00 — IVA: Y €` *(regularización en próxima declaración periódica de IVA)*
+  - Otros tributos *(según naturaleza tributaria)*
+  - Separador + totales agrupados: `Total a devolver (A00)`, `Total a regularizar IVA (B00)`, `Total otros tributos`.
+- **Etiquetas y notas SIEMPRE en castellano** (documento legal dirigido a la AEAT, alineado con el modelo oficial). No se traducen al inglés aunque el wizard tenga UI bilingüe.
+
+#### Validador suave de placeholders en wizard
+
+La plantilla del textarea de motivación contiene marcadores tipo `{{tipo_error}}`, `{{documento_origen}}` que el usuario debe sustituir por información concreta. Se añade:
+
+- **Texto de ayuda permanente** bajo el textarea (italic, slate-500): *"Sustituye los textos entre llaves `{{...}}` por la información concreta de tu caso antes de continuar."*
+- **Soft-block en `StepGenerate.generate()`**: antes del fetch, si `motivosText.match(/\{\{[^}]+\}\}/)`, lanza `window.confirm` con la advertencia *"El texto de motivación todavía contiene plantillas sin completar. ¿Quieres generar el documento de todos modos?"*. Cancelar → no genera. Aceptar → continúa (testing y exportación parcial podrían querer generar con placeholders).
+
+#### Resumen del paso 4 (StepGenerate)
+
+El resumen visual antes de descargar el DOCX se actualiza para reflejar el desglose multi-partida cuando aplica:
+
+- En multi: desglose por partida con TARIC, origen, preferencia, sus códigos y total partida.
+- Total general agrupado por naturaleza tributaria con leyendas legales (mismo formato que el Anexo I del DOCX).
+- En multi se ocultan `Mercancía` y `Valor en aduana` planos (representan solo la primera partida) y se sustituyen por `Partidas seleccionadas: N`.
+
+#### i18n y cleanup
+
+- **Claves nuevas** (parity ES/EN 126/126): `summaryTitle`, `summaryMRN`, `summaryDate`, `summaryCustoms`, `summaryImporter`, `summaryExporter`, `summaryItems`, `summaryDuty`, `summaryVAT`, `autoFilledSingle`, `multiItemsDetected`, `multiItemsTitle`, `multiItemsHelp`, `thNumber`, `thTaric`, `thDescription`, `thOrigin`, `thPreference`, `thDuty`, `selectAll`, `selectNone`, `continueWithSelected`, `continueWithSelectedSingular`, `itemBlockTitle`, `itemTotalDiff`, `generalTotal`, `itemsLiquidation`, `expandAll`, `collapseAll`, `totalGeneralTitle`, `arancelLegend`, `ivaLegend`, `otrosLegend`, `totalA00`, `totalB00`, `totalOtros`, `dutyKindArancel`, `dutyKindIVA`, `dutyKindOtros`, `partidaTotalLabel`, `tabPaste`, `tabFile`, `pastePlaceholder`, `pasteSubmit`, `pasteHelp`, `pasteInvalid`, `motivation.placeholderHelp`, `motivation.placeholdersWarning`.
+- **Claves huérfanas eliminadas**: `common.cancel`, `common.save`, `common.required`, `common.loginCta`, `common.loginRequired`, `upload.manualToggle`, `upload.preferentialOrigin`, `upload.sectionLiquidation`, `review.itemSubtitleOrigin`, `review.itemSubtitleOriginPref`. Verificado que no se referencian en componentes activos (`selector.remTitle/repTitle/remDesc/repDesc` preservadas porque se interpolan dinámicamente).
+
+#### Cambios técnicos (v5.19.0 — sección RRM iteración 3)
+
+- 1 asset nuevo: `public/assets/eu-flag.png` (529 bytes).
+- `lib/rrmParser.js` reescrito (524 líneas, soporte CC415AV1Ent + compat legacy).
+- `lib/rrmDocxGenerator.js` refactor profundo (~1000 líneas tras evolución completa).
+- 5 componentes del wizard tocados: `StepUpload.js` (tabs + tabla multi), `StepReview.js` (sub-bloques colapsables), `StepGenerate.js` (consolidación selectedItems + validador placeholders + resumen multi), `StepSelector.js` y `RRMProgressBar.js` (estética clara).
+- `app/rrm/page.js`: `state.parseResult/selectedItemIndices/selectedItems` añadidos a `INITIAL_STATE`, `canAdvance` valida selección en multi, callback `onAdvance` inyectado a StepUpload.
+- 0 dependencias npm nuevas.
+- Build limpio. PR #13 mergeado a `main`.
 
 ---
 
@@ -229,6 +359,8 @@ Nueva sección en la calculadora que interpreta las condiciones TARIC de cada pa
 ---
 
 ### Novedades v5.15.0 (Abril 2026)
+
+> **Nota histórica**: esta sección documenta el lanzamiento inicial del módulo RRM. La implementación actual ha evolucionado significativamente — ver **Novedades v5.19.0** arriba para la versión vigente (parser CC415AV1Ent rico, multi-partida, DOCX al modelo AEAT estricto).
 
 ### 📑 Solicitud RRM (`/rrm`) — Nueva herramienta
 
