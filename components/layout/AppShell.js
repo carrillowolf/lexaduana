@@ -5,6 +5,7 @@ import { SidebarProvider } from './SidebarContext'
 import { LocaleProvider } from '@/lib/i18n'
 import AppSidebar from './AppSidebar'
 import AppTopbar from './AppTopbar'
+import Footer from '@/components/Footer'
 
 // Rutas que NO llevan sidebar (marketing, auth, legal)
 const BARE_ROUTES = [
@@ -30,10 +31,16 @@ export default function AppShell({ children }) {
 
   // Páginas sin sidebar: render directo
   if (!shouldShowShell(pathname)) {
-    return <LocaleProvider>{children}</LocaleProvider>
+    return (
+      <LocaleProvider>
+        {children}
+        <Footer />
+      </LocaleProvider>
+    )
   }
 
-  // Páginas con sidebar: app-like layout
+  // Páginas con sidebar: app-like layout. El Footer va dentro del <main>
+  // scrollable para no consumir altura fija ni romper el layout flex.
   return (
     <LocaleProvider>
     <SidebarProvider>
@@ -43,6 +50,7 @@ export default function AppShell({ children }) {
           <AppTopbar />
           <main className="flex-1 overflow-y-auto overflow-x-hidden md:pl-4">
             {children}
+            <Footer />
           </main>
         </div>
       </div>
