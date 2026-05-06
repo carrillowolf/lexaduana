@@ -8,7 +8,7 @@ import fs from 'fs'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY // Service key con permisos admin
+  process.env.SUPABASE_SERVICE_ROLE_KEY // Service key con permisos admin
 )
 
 async function downloadLatestTariff() {

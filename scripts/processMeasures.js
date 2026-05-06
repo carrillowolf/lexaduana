@@ -22,10 +22,10 @@ if (result.error) {
 
 // DEBUG: Verificar que las variables se cargaron
 console.log('🔑 URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌')
-console.log('🔑 KEY:', process.env.SUPABASE_SERVICE_KEY ? '✅' : '❌')
+console.log('🔑 KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅' : '❌')
 console.log('')
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ Faltan variables de entorno')
   process.exit(1)
 }
@@ -33,7 +33,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) 
 // Configurar Supabase desde .env.local
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 // Mapeo de códigos de certificados a descripciones cortas

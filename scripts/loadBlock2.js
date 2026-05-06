@@ -28,14 +28,14 @@ const __dirname = path.dirname(__filename)
 const envPath = path.resolve(__dirname, '..', '.env.local')
 dotenv.config({ path: envPath })
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-  console.error('❌ Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_KEY en .env.local')
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local')
   process.exit(1)
 }
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 const args = process.argv.slice(2)
@@ -416,7 +416,7 @@ async function main() {
   console.log('')
   console.log(`📂 Excel path: ${EXCEL_PATH}`)
   console.log(`🔑 Supabase: ${process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌'}`)
-  console.log(`🔑 Service Key: ${process.env.SUPABASE_SERVICE_KEY ? '✅' : '❌'}`)
+  console.log(`🔑 Service Key: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅' : '❌'}`)
   if (DRY_RUN) console.log('🧪 MODO DRY RUN — no se escribirá en Supabase')
   if (ONLY) console.log(`🎯 Solo ejecutando: ${ONLY}`)
   console.log('')
