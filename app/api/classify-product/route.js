@@ -1,12 +1,18 @@
 /**
  * API de Clasificación de Productos con IA
  * Ruta: /api/classify-product
- * 
+ *
  * SEGURIDAD IMPLEMENTADA:
  * - Rate limiting por IP: 20 peticiones/hora
  * - Límite diario por usuario: 50 clasificaciones/día
  * - Validación de entrada completa
  * - Solo usuarios autenticados
+ *
+ * ESTRATEGIA DE CLASIFICACIÓN (Phase 8 deuda técnica):
+ * - Sin pre-restricción del catálogo en el prompt: la búsqueda anterior por
+ *   keywords ES vs descriptions EN devolvía 0 y forzaba ERROR_CLASIFICACION.
+ * - Validación posterior contra declarable_codes/tariffs y, si el primaryCode
+ *   no existe en BD, fallback a hermanos del mismo HS6.
  */
 
 import { NextResponse } from 'next/server'
@@ -14,7 +20,6 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
-// Importar sistema de seguridad
 import {
   checkRateLimit,
   aiClassifierLimiter,
@@ -28,6 +33,8 @@ import { safeLogger } from '@/lib/safe-logger'
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
+
+const MAX_ALTERNATIVES = 10
 
 export async function POST(request) {
   try {
@@ -115,80 +122,10 @@ export async function POST(request) {
       )
     }
 
-    // Usar datos sanitizados
     const { description, countryCode, cifValue } = validation.sanitized
 
     // =========================================
-    // 5. BUSCAR CÓDIGOS RELACIONADOS EN BD
-    // =========================================
-    const keywords = description.toLowerCase().split(' ').filter(w => w.length > 3).slice(0, 5)
-
-    // Fase 1: Búsqueda por palabras clave en descripciones (columnas correctas)
-    const { data: relatedCodes } = await supabase
-      .from('descriptions')
-      .select('goods_code, description')
-      .or(keywords.map(k => `description.ilike.%${k}%`).join(','))
-      .limit(50)
-
-    // Fase 2: Identificar capítulos relevantes y cargar TODOS los códigos declarables
-    let declarableCodesContext = ''
-    let chapterContext = ''
-    if (relatedCodes && relatedCodes.length > 0) {
-      const chapters = [...new Set(relatedCodes.map(c => c.goods_code.substring(0, 2)))]
-      chapterContext = `\nCapítulos relevantes detectados: ${chapters.join(', ')}`
-
-      // Cargar todos los códigos declarables (is_leaf=true) de esos capítulos
-      const chapterFilters = chapters.map(ch => `goods_code.like.${ch}%`).join(',')
-      const { data: declarableCodes } = await supabase
-        .from('declarable_codes')
-        .select('goods_code')
-        .eq('is_leaf', true)
-        .or(chapterFilters)
-        .order('goods_code')
-
-      if (declarableCodes && declarableCodes.length > 0) {
-        // Obtener descripciones para los códigos declarables
-        const declCodes = declarableCodes.map(d => d.goods_code)
-        const { data: declDescs } = await supabase
-          .from('descriptions')
-          .select('goods_code, description')
-          .in('goods_code', declCodes)
-
-        const descMap = new Map((declDescs || []).map(d => [d.goods_code, d.description]))
-
-        declarableCodesContext = `\nCÓDIGOS DECLARABLES VÁLIDOS EN NUESTRA BASE DE DATOS (${declCodes.length} códigos en capítulos ${chapters.join(', ')}):
-${declCodes.map(code => `- ${code}: ${descMap.get(code) || '(sin descripción)'}`).join('\n')}`
-      }
-    }
-
-    // BUSCAR EJEMPLOS DE CLASIFICACIÓN VERIFICADOS
-    let verifiedExamplesContext = ''
-    if (keywords.length > 0) {
-      const { data: examples } = await supabase
-        .from('classification_examples')
-        .select('keywords, correct_code, correct_description, incorrect_codes, explanation')
-        .eq('active', true)
-        .or(keywords.map(k => `keywords.ilike.%${k}%`).join(','))
-        .limit(5)
-
-      if (examples && examples.length > 0) {
-        verifiedExamplesContext = `\nEJEMPLOS DE CLASIFICACIÓN VERIFICADOS POR EXPERTOS:
-${examples.map(ex => `- Producto similar: "${ex.keywords}"
-  → Código CORRECTO: ${ex.correct_code} (${ex.correct_description || ''})
-  ${ex.incorrect_codes && ex.incorrect_codes.length > 0 ? `→ Códigos INCORRECTOS a evitar: ${ex.incorrect_codes.join(', ')}` : ''}
-  → Razón: ${ex.explanation || 'Clasificación verificada por experto aduanero'}`).join('\n')}
-
-IMPORTANTE: Si el producto a clasificar es similar a estos ejemplos, usar el código correcto indicado.\n`
-      }
-    }
-
-    // Crear contexto con códigos relacionados por keyword
-    const hsContext = relatedCodes?.slice(0, 15).map(h =>
-      `- ${h.goods_code}: ${h.description}`
-    ).join('\n') || 'No se encontraron códigos similares en búsqueda inicial.'
-
-    // =========================================
-    // 6. PROMPT PARA CLAUDE
+    // 5. PROMPT PARA CLAUDE (sin pre-restricción de catálogo BD)
     // =========================================
     const prompt = `Eres un agente de aduanas experto en clasificación arancelaria TARIC de la Unión Europea con 20 años de experiencia.
 
@@ -205,13 +142,7 @@ PRODUCTO A CLASIFICAR:
 
 DATOS ADICIONALES:
 ${countryCode ? `- País de origen: ${countryCode}` : '- País de origen: No especificado'}
-${cifValue ? `- Valor estimado: ${cifValue}€` : '- Valor: No especificado'}${chapterContext}
-${verifiedExamplesContext}
-CÓDIGOS HS RELACIONADOS (búsqueda por palabras clave):
-${hsContext}
-${declarableCodesContext}
-
-⚠️ RESTRICCIÓN CRÍTICA: Solo puedes sugerir códigos que aparezcan en la lista de "CÓDIGOS DECLARABLES VÁLIDOS" de arriba. Si ningún código encaja perfectamente, elige el más cercano de la lista y explica las limitaciones. NUNCA inventes códigos que no estén en la lista.
+${cifValue ? `- Valor estimado: ${cifValue}€` : '- Valor: No especificado'}
 
 METODOLOGÍA DE CLASIFICACIÓN:
 1. **Identificar función principal**: ¿Cuál es el uso/propósito primario?
@@ -236,7 +167,7 @@ ANÁLISIS REQUERIDO:
 - Sugerir información adicional que ayudaría a confirmar
 
 IMPORTANTE:
-- Solo códigos existentes en nomenclatura TARIC
+- Sugerir SOLO códigos del catálogo TARIC de la Unión Europea (10 dígitos, formato XXXX.XX.XX.XX sin puntos). NUNCA códigos HTSUS de Estados Unidos, ni del Reino Unido post-Brexit, ni de cualquier otra jurisdicción no-EU.
 - Si confianza < 70%: explicar claramente las dudas
 - Mencionar posibles alertas TARIC (certificados, restricciones)
 - Si producto puede clasificarse de múltiples formas: explicar contextos
@@ -270,7 +201,7 @@ FORMATO DE RESPUESTA (JSON):
 Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
 
     // =========================================
-    // 7. LLAMAR A CLAUDE API
+    // 6. LLAMAR A CLAUDE API
     // =========================================
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
@@ -283,7 +214,7 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
     })
 
     // =========================================
-    // 8. PARSEAR RESPUESTA
+    // 7. PARSEAR RESPUESTA
     // =========================================
     const responseText = message.content[0].text
     let classification
@@ -304,9 +235,10 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
     }
 
     // =========================================
-    // 9. VALIDAR CÓDIGO EN BASE DE DATOS
+    // 8. VALIDAR CÓDIGO EN BD + FALLBACK HS6
     // =========================================
-    // Validar código principal contra declarable_codes (is_leaf=true)
+
+    // 8.1 Validar primaryCode contra declarable_codes y tariffs
     const { data: validDeclarable } = await supabase
       .from('declarable_codes')
       .select('goods_code, is_leaf')
@@ -314,19 +246,100 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
       .eq('is_leaf', true)
       .maybeSingle()
 
-    // También obtener arancel si existe
     const { data: validTariff } = await supabase
       .from('tariffs')
       .select('goods_code, duty')
       .eq('goods_code', classification.primaryCode)
       .maybeSingle()
 
-    const validCode = validDeclarable || validTariff
+    const primaryExistsInBd = !!(validDeclarable || validTariff)
 
-    // Verificar códigos alternativos
-    const validatedAlternatives = []
-    if (classification.alternativeCodes) {
-      for (const alt of classification.alternativeCodes) {
+    // 8.2 Si primaryCode NO existe en BD, fallback HS6
+    let finalPrimaryCode = classification.primaryCode
+    let primaryInferredFromHs6 = false
+    let hs6SubgroupCodes = []
+
+    if (!primaryExistsInBd) {
+      const hs6 = classification.primaryCode?.substring(0, 6)
+
+      if (hs6 && hs6.length === 6) {
+        const { data: hs6Subgroup } = await supabase
+          .from('declarable_codes')
+          .select('goods_code')
+          .like('goods_code', `${hs6}%`)
+          .eq('is_leaf', true)
+          .order('goods_code')
+
+        hs6SubgroupCodes = hs6Subgroup || []
+
+        if (hs6SubgroupCodes.length > 0) {
+          // Heurística: si Claude propuso alternativas que SÍ existen, usar la primera;
+          // si no, primero del subgrupo HS6 por orden alfanumérico.
+          const claudeAlternativesInBd = (classification.alternativeCodes || [])
+            .filter(alt => hs6SubgroupCodes.some(c => c.goods_code === alt.code))
+
+          if (claudeAlternativesInBd.length > 0) {
+            finalPrimaryCode = claudeAlternativesInBd[0].code
+          } else {
+            finalPrimaryCode = hs6SubgroupCodes[0].goods_code
+          }
+
+          primaryInferredFromHs6 = true
+        }
+        // Si hs6SubgroupCodes está vacío: finalPrimaryCode se queda con el original
+        // de Claude. La UI mostrará primaryCodeExists=false (badge "Verificar manualmente").
+      }
+    }
+
+    // 8.3 Recomprobar tariff del finalPrimaryCode si hubo fallback
+    let finalDutyRate = validTariff?.duty
+    if (primaryInferredFromHs6) {
+      const { data: newTariff } = await supabase
+        .from('tariffs')
+        .select('goods_code, duty')
+        .eq('goods_code', finalPrimaryCode)
+        .maybeSingle()
+      finalDutyRate = newTariff?.duty
+    }
+
+    // 8.4 Construir alternativeCodes finales
+    let validatedAlternatives = []
+
+    if (primaryInferredFromHs6) {
+      // Hermanos del subgrupo HS6 menos el primaryCode final, hasta MAX_ALTERNATIVES.
+      const siblingCodes = hs6SubgroupCodes
+        .filter(c => c.goods_code !== finalPrimaryCode)
+        .slice(0, MAX_ALTERNATIVES)
+        .map(c => c.goods_code)
+
+      if (siblingCodes.length > 0) {
+        const { data: siblingDescs } = await supabase
+          .from('descriptions')
+          .select('goods_code, description')
+          .in('goods_code', siblingCodes)
+
+        const { data: siblingTariffs } = await supabase
+          .from('tariffs')
+          .select('goods_code, duty')
+          .in('goods_code', siblingCodes)
+
+        const descMap = new Map((siblingDescs || []).map(d => [d.goods_code, d.description]))
+        const tariffMap = new Map((siblingTariffs || []).map(t => [t.goods_code, t.duty]))
+
+        validatedAlternatives = siblingCodes.map(code => ({
+          code,
+          reason: `Código alternativo del mismo subgrupo HS6 (${classification.primaryCode?.substring(0, 6)})`,
+          confidence: null,
+          dutyRate: tariffMap.get(code),
+          description: descMap.get(code),
+          validated: true,
+          siblingFromHs6: true,
+        }))
+      }
+    } else {
+      // Validar las alternativas que devolvió Claude. Solo se incluyen las que
+      // existen realmente en BD (filtrado más estricto que el flujo previo).
+      for (const alt of (classification.alternativeCodes || []).slice(0, MAX_ALTERNATIVES)) {
         const { data: altDeclarable } = await supabase
           .from('declarable_codes')
           .select('goods_code, is_leaf')
@@ -344,26 +357,26 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
           validatedAlternatives.push({
             ...alt,
             dutyRate: altTariff?.duty,
-            validated: true
-          })
-        } else {
-          validatedAlternatives.push({
-            ...alt,
-            validated: false
+            validated: true,
           })
         }
       }
     }
 
     // =========================================
-    // 10. REGISTRAR USO PARA ESTADÍSTICAS
+    // 9. REGISTRAR USO PARA ESTADÍSTICAS
     // =========================================
+    // suggested_code es VARCHAR(10). Tras el fallback HS6, finalPrimaryCode
+    // siempre es un goods_code de declarable_codes (10 dígitos exactos), por
+    // lo que el INSERT no se desborda. En el caso límite HS6 vacío, queda el
+    // primaryCode original de Claude — que también debería ser de 10 dígitos
+    // si respeta el formato del prompt.
     await supabase
       .from('classification_logs')
       .insert({
         user_id: user.id,
         description: description.substring(0, 500),
-        suggested_code: classification.primaryCode,
+        suggested_code: finalPrimaryCode,
         confidence: classification.confidence,
         model_used: 'claude-sonnet-4-5'
       })
@@ -371,25 +384,28 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
       .single()
 
     // =========================================
-    // 11. RESPUESTA EXITOSA
+    // 10. RESPUESTA EXITOSA
     // =========================================
+    const finalPrimaryExists = primaryExistsInBd || primaryInferredFromHs6
+
     return NextResponse.json({
       success: true,
       classification: {
         ...classification,
-        primaryCodeExists: !!validCode,
-        primaryCodeDutyRate: validTariff?.duty,
+        primaryCode: finalPrimaryCode,
+        primaryCodeExists: finalPrimaryExists,
+        primaryCodeDutyRate: finalDutyRate,
+        primaryInferredFromHs6,
+        originalSuggestedCode: primaryInferredFromHs6 ? classification.primaryCode : null,
         alternativeCodes: validatedAlternatives,
         recommendedOrigins: classification.recommendedOrigins || [],
-        additionalInfo: classification.additionalInfo || null
+        additionalInfo: classification.additionalInfo || null,
       },
       metadata: {
         model: 'claude-sonnet-4-5-20250929',
         timestamp: new Date().toISOString(),
         tokensUsed: message.usage.input_tokens + message.usage.output_tokens,
-        relatedCodesFound: relatedCodes?.length || 0
       },
-      // Información de uso para mostrar al usuario
       usage: {
         daily: {
           used: dailyLimit.used,
@@ -404,7 +420,6 @@ Responde ÚNICAMENTE con el JSON válido, sin markdown ni texto adicional.`
   } catch (error) {
     safeLogger.error('Error en clasificación:', error)
 
-    // No exponer detalles internos en producción
     return NextResponse.json(
       { error: 'Error al clasificar producto. Inténtalo de nuevo.' },
       { status: 500 }
