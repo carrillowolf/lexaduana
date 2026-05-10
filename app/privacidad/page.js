@@ -104,19 +104,20 @@ export default function PoliticaPrivacidadPage() {
         </thead>
         <tbody>
           <tr><td>Cuenta de usuario activa</td><td>Mientras el usuario mantenga su cuenta</td></tr>
-          <tr><td>Cuenta tras baja</td><td>30 días de gracia, después borrado</td></tr>
+          <tr><td>Cuenta tras baja</td><td>Eliminación inmediata e irreversible de los datos personales directamente identificativos. Conservación pseudonimizada (sin PII) de los registros operativos según los plazos de cada categoría indicados a continuación.</td></tr>
           <tr><td>Historial de clasificaciones IA</td><td>12 meses desde la clasificación</td></tr>
           <tr><td>Extracciones OCR de facturas</td><td>90 días desde la extracción</td></tr>
           <tr><td>Despachos aduaneros</td><td>4 años tras cierre (art. 51 CAU)</td></tr>
           <tr><td>Registros CBAM (calculadora)</td><td>4 años</td></tr>
           <tr><td>Registros CBAM advisory</td><td>4 años (obligación legal específica del Reglamento (UE) 2023/956)</td></tr>
           <tr><td>Registros de consentimiento</td><td>Vida de la cuenta + 3 años tras baja, conservados de forma pseudonimizada (sin PII directa) como evidencia legal del consentimiento prestado</td></tr>
+          <tr><td>Logs CSP (violaciones de seguridad)</td><td>90 días desde el evento</td></tr>
           <tr><td>Logs técnicos</td><td>Entre 1 y 3 días según plan de hosting</td></tr>
           <tr><td>Datos de facturación propia</td><td>6 años (art. 30 Código de Comercio)</td></tr>
         </tbody>
       </table>
       <p>
-        Tras los plazos indicados, los datos son eliminados o anonimizados de forma irreversible, salvo obligación legal que imponga plazo superior.
+        Tras los plazos indicados, los datos son eliminados de forma irreversible o pseudonimizados (eliminando la vinculación con la persona identificada) cuando sea necesario conservar evidencia legal, salvo obligación legal que imponga plazo superior. La purga se ejecuta automáticamente con periodicidad diaria.
       </p>
 
       <h2>6. Destinatarios de los datos</h2>
@@ -175,8 +176,21 @@ export default function PoliticaPrivacidadPage() {
         <strong>Por email</strong>: escribiendo a <a href="mailto:privacidad@lexaduana.es">privacidad@lexaduana.es</a> con copia de documento identificativo. El responsable contestará en el plazo máximo de un mes desde la recepción de la solicitud.
       </p>
       <blockquote>
-        Está previsto habilitar próximamente un panel de autoservicio en el área &quot;Mi cuenta&quot; que permitirá descargar los datos personales en formato JSON, gestionar consentimientos y solicitar la baja de la cuenta directamente. Hasta entonces, el ejercicio de derechos se gestiona vía email.
+        La baja de la cuenta puede ejecutarse directamente desde el panel &quot;Mi cuenta&quot; (ver detalle más abajo). El resto de derechos (acceso, rectificación, portabilidad en JSON, limitación, oposición y revocación granular de consentimientos) está previsto habilitarlos como autoservicio en el panel de usuario; hasta entonces, su ejercicio se gestiona vía email a <a href="mailto:privacidad@lexaduana.es">privacidad@lexaduana.es</a>.
       </blockquote>
+
+      <h3>Baja de la cuenta desde el panel de usuario</h3>
+      <p>
+        El usuario registrado puede solicitar la baja de su cuenta directamente desde su área &quot;Mi cuenta&quot;, sección &quot;Zona peligrosa&quot;, botón &quot;Eliminar mi cuenta&quot;. Esta acción:
+      </p>
+      <ul>
+        <li>Elimina de forma inmediata e irreversible los datos personales directamente identificativos (email, nombre, contraseña, perfil de empresa).</li>
+        <li>Pseudonimiza los registros operativos asociados (clasificaciones, extracciones OCR, despachos, consentimientos) sustituyendo el identificador de usuario por un hash criptográfico irreversible. Esto permite conservar la evidencia legal exigida por el art. 17.3.b y 17.3.e RGPD durante los plazos legalmente aplicables, sin que dichos registros puedan ya vincularse a la persona.</li>
+        <li>Es una acción irreversible. La cuenta no puede recuperarse una vez ejecutada.</li>
+      </ul>
+      <p>
+        Para revocar consentimientos específicos sin eliminar la cuenta (por ejemplo, revocar el consentimiento al tratamiento mediante IA), el usuario puede contactar con <a href="mailto:privacidad@lexaduana.es">privacidad@lexaduana.es</a>. Está prevista la habilitación de esta funcionalidad directamente en el panel de usuario.
+      </p>
 
       <h3>Reclamación ante la autoridad de control</h3>
       <p>
@@ -196,6 +210,9 @@ export default function PoliticaPrivacidadPage() {
         <li>Registro de consentimientos con timestamp, IP y versión, conservados de forma pseudonimizada tras la baja del usuario.</li>
         <li>Principio de mínimos privilegios en accesos a infraestructura.</li>
         <li>Headers de seguridad HTTP (CSP, HSTS, X-Frame-Options, Referrer-Policy).</li>
+        <li>Pseudonimización irreversible de registros operativos tras la baja del usuario, mediante hash criptográfico (función pgcrypto sobre el identificador de usuario), conservando únicamente la evidencia legal exigible.</li>
+        <li>Purga automatizada y auditable de datos según los plazos de retención, ejecutada con periodicidad diaria y registrada en log de auditoría interno.</li>
+        <li>Política de Content Security Policy (CSP) en modo bloqueante, con reporte automatizado de intentos de violación.</li>
       </ul>
       <p>
         En caso de brecha de seguridad que afecte a datos personales, se notificará a la AEPD en el plazo de 72 horas y a los usuarios afectados cuando proceda, conforme a los artículos 33 y 34 RGPD.
