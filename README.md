@@ -68,6 +68,15 @@ lexaduana.es
 
 ---
 
+> **Nota sobre versionado**: los identificadores `vX.Y.Z` que aparecen a
+> continuación son etiquetas internas de changelog para marcar cada sesión
+> de desarrollo significativa, no versiones públicas del paquete. El campo
+> `version` de `package.json` se mantiene en `0.1.0` hasta que LexAduana
+> publique una v1.0 formal como producto. Esta política puede revisarse
+> más adelante.
+
+---
+
 ## 🆕 Novedades v5.20.0 (Mayo 2026)
 
 Sesión cerrando **Phase 7 del plan GDPR**: panel ARSULIPO en `/dashboard/privacidad` para ejercer los 6 derechos del usuario (Acceso, Rectificación, Supresión, Limitación, Portabilidad, Oposición). Completa el ciclo iniciado en Phase 4 (consentimientos IA) y Phase 8 (baja de cuenta con pseudonimización).
