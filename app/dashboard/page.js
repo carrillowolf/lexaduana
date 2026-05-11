@@ -345,6 +345,19 @@ export default function DashboardPage() {
               </div>
             </Link>
 
+            <Link
+              href="/dashboard/privacidad"
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-200 hover:border-[#0A3D5C]/30 hover:shadow-lg transition-all group"
+            >
+              <div className="p-3 bg-[#0A3D5C]/10 rounded-xl group-hover:bg-[#0A3D5C]/15 transition">
+                <span className="text-2xl">🔒</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Privacidad y derechos</h3>
+                <p className="text-sm text-gray-500">Accede a tus datos, gestiona consentimientos y ejerce tus derechos RGPD.</p>
+              </div>
+            </Link>
+
             {calculations.length > 0 && (
               <button
                 onClick={() => exportBulkToExcel(calculations, user.email)}
