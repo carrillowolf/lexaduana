@@ -68,6 +68,101 @@ lexaduana.es
 
 ---
 
+> **Nota sobre versionado**: los identificadores `vX.Y.Z` que aparecen a
+> continuación son etiquetas internas de changelog para marcar cada sesión
+> de desarrollo significativa, no versiones públicas del paquete. El campo
+> `version` de `package.json` se mantiene en `0.1.0` hasta que LexAduana
+> publique una v1.0 formal como producto. Esta política puede revisarse
+> más adelante.
+
+---
+
+## 🆕 Novedades v5.20.0 (Mayo 2026)
+
+Sesión cerrando **Phase 7 del plan GDPR**: panel ARSULIPO en `/dashboard/privacidad` para ejercer los 6 derechos del usuario (Acceso, Rectificación, Supresión, Limitación, Portabilidad, Oposición). Completa el ciclo iniciado en Phase 4 (consentimientos IA) y Phase 8 (baja de cuenta con pseudonimización).
+
+### 🛡️ Panel `/dashboard/privacidad` — 5 cards
+
+Primera subruta nueva del dashboard, columna única (`max-w-3xl`), patrón visual coherente con el resto de la suite (`bg-white border-slate-200 rounded-2xl shadow-sm`). Auth gate redirige a `/auth/login` si no hay sesión.
+
+- **Card 1 — Acceso y portabilidad** (art. 15 y 20 RGPD): botón "Descargar mis datos (JSON)" con `loading` state y manejo de error. Filename leído desde `Content-Disposition` del response. Descarga vía `fetch` + `blob` + click sintético en `<a download>`.
+- **Card 2 — Rectificación**: informativa. Los datos personales editables (email, contraseña, `company_name`) se modifican vía `privacidad@lexaduana.es` previa verificación de identidad. Otros campos (`plan_type`, `max_monitors`) son metadatos contractuales gestionados por el sistema. Edición directa diferida a futuras versiones.
+- **Card 3 — Limitación**: fetch a `/api/consent/check` por cada tipo IA (`ai_processing_classifier`, `ai_processing_ocr_invoice`) en paralelo. Lista los activos con fecha y versión de política, botón "Revocar" por cada uno (`POST /api/consent/revoke`). Refresca la lista tras revocación. Si no hay activos, mensaje informativo. Tras revocar, el modal de consent reaparece la próxima vez que se use el clasificador o el OCR.
+- **Card 4 — Oposición**: informativa. LexAduana no realiza tratamientos basados en interés legítimo del responsable ni en consentimiento revocable selectivamente; no envía comunicaciones comerciales propias. Redirige a Limitación (IA) y Supresión (derecho al olvido) según el caso.
+- **Card 5 — Supresión**: reutiliza el componente `<DeleteAccountButton/>` de Phase 8 (cero duplicación de lógica). Doble `confirm()` + `POST /api/account/delete`. Botón presente también en zona peligrosa de `/dashboard`.
+
+### 📤 Endpoint `/api/account/export` — JSON único
+
+Implementa los derechos de **Acceso (art. 15)** y **Portabilidad (art. 20)** con un solo endpoint y un solo formato (decisión cerrada: JSON único, no ZIP+CSV).
+
+- **Auth**: `createRouteHandlerClient({ cookies })` + `getUser()`. `401` si no hay sesión.
+- **Perfil**: solo `email`, `company_name`, `created_at`. `plan_type` y `max_monitors` quedan fuera (metadatos contractuales, no PII).
+- **Tablas planas en paralelo (`Promise.all`)**: `user_consents`, `classification_logs`, `invoice_extractions`, `rrm_requests`, `cbam_calculator_saves`, `monitored_codes` → `alerts`, `user_favorites` → `favorites`, `user_calculations`.
+- **Dispatches en 2 secciones**:
+  - `created_by_me`: todos los campos de los dispatches donde `created_by = user.id`.
+  - `assigned_to_me_only`: campos mínimos (`id`, `created_at`, `status`, `assigned_to`, `created_by`) de dispatches donde `assigned_to = user.id AND created_by != user.id`, con `_note` explicando por qué se restringe el contenido (privacidad del creador).
+- **Texto libre con doble filtro**: `dispatch_comments` y `dispatch_timeline` se restringen a `(user_id|created_by = user.id) AND dispatch_id IN (dispatches propios)` para no exfiltrar texto libre escrito por el user sobre dispatches de terceros (campos `description`, `old_value`, `new_value`, `comment_text`).
+- **CBAM advisory anidado**: `cbam_advisory_requests` del user con sus `documents`, `products`, `reports`, `report_downloads` mergeados como arrays por `request_id` (dos pasadas + merge en JS).
+- **`stripInternal`**: regex `/_hash$/` y `/^_deprecated_/` aplicado a todas las filas — excluye `user_id_hash`, `created_by_hash`, `assigned_to_hash` y cualquier columna marcada como deprecated. `user_id` y `created_by` en claro se conservan (son SUS datos).
+- **`safeQuery` wrapper**: cada query envuelta en try/catch + log con `safe-logger`. Si una tabla falla, su sección queda como `[]` y el resto del export se entrega. Política: export parcial preferible a export bloqueado por una tabla.
+- **Response**: `200`, `Content-Type: application/json; charset=utf-8`, `Content-Disposition: attachment; filename="lexaduana-export-{user_id}-{YYYYMMDD}.json"` (fecha UTC), `Cache-Control: no-store`. Body con `JSON.stringify(..., null, 2)` para legibilidad.
+
+### 🔒 Enlace en `/dashboard`
+
+Nueva card en el grid de "Accesos rápidos" tras `/bulk` y antes del condicional de Export Excel:
+
+```
+┌─────────────────────────────────┐
+│ 🔒  Privacidad y derechos       │
+│     Accede a tus datos,         │
+│     gestiona consentimientos    │
+│     y ejerce tus derechos RGPD. │
+└─────────────────────────────────┘
+```
+
+Estilo idéntico al patrón de cards "tipo navy" del grid (border navy `#0A3D5C` en hover, mismo padding, mismo wrapper de icono). Texto en castellano hardcoded (sin `t(...)`) por la restricción acordada de no tocar `lib/i18n/*` en esta tarea — deuda técnica anotada.
+
+### 🧪 Verificación end-to-end
+
+Flujo Revocar → re-aceptar validado en preview de Vercel con la cuenta admin contra el Supabase de producción:
+
+1. Aceptar consent IA del clasificador → fila activa en `user_consents` con `policy_version='2026-05-10'`.
+2. Revocar desde `/dashboard/privacidad` → la fila pasa a `revoked_at != null`.
+3. El endpoint `/api/consent/revoke` marca todas las filas activas de ese `consent_type` para el user (defense in depth contra duplicados, aunque `unique_active_consent` debería garantizar siempre una sola).
+4. Visitar `/clasificador` → reaparece el modal de consent.
+5. Aceptar de nuevo → nueva fila activa con `policy_version` actual.
+6. Card 3 vuelve a listar el consent con la nueva fecha.
+
+Query de auditoría sobre `user_consents` confirma el rastro completo (4 filas para el flujo del clasificador: original `2026-05-06` revocada, re-aceptación `2026-05-10` revocada por el botón Revocar, re-re-aceptación `2026-05-10` activa).
+
+### Decisiones cerradas
+
+- **Formato del export**: JSON único (cumple art. 20 — "estructurado, de uso común y lectura mecánica"). No se ofrece ZIP+CSV en esta phase.
+- **Rectificación informativa**: en esta phase no hay edición directa en UI; el alcance acordado era "perfil mínimo" y aunque el schema reveló `company_name` editable, mantenemos la rectificación vía `privacidad@` previa verificación de identidad.
+- **Oposición sin botones**: no hay marketing, analytics opt-out, ni tratamientos basados en interés legítimo. El texto explica el porqué y redirige a Limitación / Supresión.
+- **Supresión sin duplicar lógica**: el botón vive en `/dashboard` (Zona peligrosa) y en `/dashboard/privacidad` (Card 5) reutilizando el mismo `<DeleteAccountButton/>`. Quien busca "dar de baja" lo encuentra en ambos sitios; el handler es único.
+- **Texto libre con doble filtro**: `dispatch_comments` y `dispatch_timeline` filtrados por dispatches propios para evitar que un usuario que escribió en un dispatch ajeno se lleve en su export texto que cita a terceros.
+
+### Cambios técnicos
+
+- **2 archivos nuevos**: `app/api/account/export/route.js` (~270 líneas), `app/dashboard/privacidad/page.js` (~326 líneas).
+- **1 archivo tocado**: `app/dashboard/page.js` (+13 líneas — card del grid).
+- **0 migraciones SQL** (Phase 7 es UI + endpoint puro; el schema RGPD ya estaba completo tras Phase 8).
+- **0 dependencias npm nuevas**.
+- **Build limpio**. PR #14 mergeado a `main`.
+
+### Plan GDPR — estado
+
+| Phase | Tema | Estado |
+|---|---|---|
+| 4 | Consentimientos IA (`user_consents`, modal, `check/record/revoke`) | ✅ |
+| 8 | Baja de cuenta + pseudonimización + pg_cron | ✅ |
+| Punto 1 | Política de privacidad alineada con Phase 8 + bump policy_version | ✅ |
+| **7** | **Panel ARSULIPO `/dashboard/privacidad` + endpoint export** | **✅ (esta sesión)** |
+| 9 | Post LinkedIn anunciando cumplimiento RGPD | ⏳ Pendiente |
+
+---
+
 ## 🆕 Novedades v5.19.0 (Mayo 2026)
 
 Sesión de mejoras de UX en el sidebar y la calculadora, **rediseño visual completo del wizard RRM** (de dark a estética clara coherente con el resto de la suite) e **iteración mayor del módulo RRM** (parser robusto del CC415AV1Ent, soporte multi-partida y DOCX maquetado al modelo oficial AEAT del Reglamento Delegado UE 2015/2446).
