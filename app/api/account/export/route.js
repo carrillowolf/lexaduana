@@ -86,7 +86,6 @@ export async function GET() {
     monitoredCodes,
     favorites,
     userCalculations,
-    dispatchComments,
   ] = await Promise.all([
     safeQuery('user_consents', () =>
       supabase.from('user_consents').select('*').eq('user_id', userId)
@@ -112,9 +111,6 @@ export async function GET() {
     safeQuery('user_calculations', () =>
       supabase.from('user_calculations').select('*').eq('user_id', userId)
     ),
-    safeQuery('dispatch_comments', () =>
-      supabase.from('dispatch_comments').select('*').eq('user_id', userId)
-    ),
   ])
 
   // --- Dispatches: dos secciones (created_by_me / assigned_to_me_only).
@@ -130,10 +126,37 @@ export async function GET() {
       .neq('created_by', userId)
   )
 
-  // --- dispatch_timeline filtrado por created_by = userId (eventos del propio user).
-  const dispatchTimeline = await safeQuery('dispatch_timeline', () =>
-    supabase.from('dispatch_timeline').select('*').eq('created_by', userId)
-  )
+  // --- IDs de dispatches "propios" del user (creador o asignado): se usan para
+  // restringir timeline y comments a estos dispatches y evitar exfiltrar texto
+  // libre (description/old_value/new_value/comment_text) de dispatches de
+  // terceros aunque la fila la haya creado el propio user.
+  const ownedDispatchIds = Array.from(
+    new Set([
+      ...dispatchesCreatedByMe.map((d) => d.id),
+      ...dispatchesAssignedRaw.map((d) => d.id),
+    ])
+  ).filter(Boolean)
+
+  // --- dispatch_timeline + dispatch_comments: ambos restringidos a sus
+  // dispatches Y autoría del user, en paralelo.
+  const [dispatchTimeline, dispatchComments] = ownedDispatchIds.length === 0
+    ? [[], []]
+    : await Promise.all([
+        safeQuery('dispatch_timeline', () =>
+          supabase
+            .from('dispatch_timeline')
+            .select('*')
+            .eq('created_by', userId)
+            .in('dispatch_id', ownedDispatchIds)
+        ),
+        safeQuery('dispatch_comments', () =>
+          supabase
+            .from('dispatch_comments')
+            .select('*')
+            .eq('user_id', userId)
+            .in('dispatch_id', ownedDispatchIds)
+        ),
+      ])
 
   // --- CBAM advisory: requests + children anidados por request_id.
   const advisoryRequests = await safeQuery('cbam_advisory_requests', () =>
