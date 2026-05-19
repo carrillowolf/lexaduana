@@ -34,10 +34,13 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 // ============================================================
 // PARÁMETROS REGULATORIOS 2026
 // ============================================================
+// Réplica standalone (no importa de lib/ para evitar mezclar el resolver de
+// supabase del script con el del runtime de Next). MANTENER SINCRONIZADO
+// con CBAM_CERTIFICATE_PRICE_FALLBACK en lib/cbamRegulatoryParams.js.
 const REG = {
   cbamFactor: 0.975,
   fci: 1.0,
-  cbamPrice: 74.76,
+  cbamPrice: 75.36, // €/tCO₂e — Q1 2026 oficial (publicado 2026-04-08)
 }
 
 // ============================================================
