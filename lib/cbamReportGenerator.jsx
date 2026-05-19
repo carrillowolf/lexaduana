@@ -783,10 +783,14 @@ function CertificatesSection({ snapshot }) {
       <Text style={styles.h3}>Fórmula aplicada</Text>
       <View style={styles.legalBox}>
         <Text style={styles.legalText}>
-          Certificados = Σ Toneladas × max(0, FE − F_CBAM × FCI × BM)
+          Por línea: Certs. (tCO₂e) = Tn × max(0, FE − F_CBAM × FCI × BM)
         </Text>
         <Text style={styles.legalText}>
-          Coste = Certificados × Precio certificado CBAM
+          Certs. a entregar (uds.) = ⌈Certs. (tCO₂e)⌉ por línea — Art. 20 Reg. (UE) 2023/956
+          (cada certificado representa exactamente 1 tCO₂e; el redondeo se aplica por línea, NO al total).
+        </Text>
+        <Text style={styles.legalText}>
+          Coste = Σ (Certs. a entregar × Precio certificado CBAM) por línea
         </Text>
         <Text style={styles.legalText}>
           FE = factor de emisión aplicado (real o default + markup) · BM = benchmark EU del
@@ -805,7 +809,7 @@ function CertificatesSection({ snapshot }) {
           <Text style={[styles.tableHeaderCell, { width: '10%' }]}>BM_eff</Text>
           <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Emis. incorp.</Text>
           <Text style={[styles.tableHeaderCell, { width: '12%' }]}>AGIE</Text>
-          <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Certificados</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Certs.{'\n'}tCO₂e / uds.</Text>
           <Text style={[styles.tableHeaderCell, { width: '14%' }]}>Coste</Text>
         </View>
         {snapshot.products.map((p, i) => (
@@ -821,7 +825,13 @@ function CertificatesSection({ snapshot }) {
             <Text style={[styles.tableCellRight, { width: '10%' }]}>{fmtNum(p.effectiveBenchmark, 4)}</Text>
             <Text style={[styles.tableCellRight, { width: '12%' }]}>{fmtNum(p.incorporatedEmissions, 2)}</Text>
             <Text style={[styles.tableCellRight, { width: '12%' }]}>{fmtNum(p.freeAllocationImplicit, 2)}</Text>
-            <Text style={[styles.tableCellRight, { width: '12%' }]}>{fmtNum(p.certificatesAfterAdjustment, 2)}</Text>
+            <Text style={[styles.tableCellRight, { width: '12%' }]}>
+              {fmtNum(p.certificatesPhysical ?? p.certificatesAfterAdjustment, 2)}
+              {'\n'}
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+                {p.certificatesToSurrender != null ? `${fmtNum(p.certificatesToSurrender, 0)} uds.` : '— uds.'}
+              </Text>
+            </Text>
             <Text style={[styles.tableCellRight, { width: '14%', fontFamily: 'Helvetica-Bold' }]}>{fmtEUR(p.totalCost)}</Text>
           </View>
         ))}
@@ -833,7 +843,13 @@ function CertificatesSection({ snapshot }) {
           <Text style={[styles.tableHeaderCell, { width: '10%' }]} />
           <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalIncorporatedEmissions, 2)}</Text>
           <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalFreeAllocation, 2)}</Text>
-          <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalCertificates, 2)}</Text>
+          <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>
+            {fmtNum(totals.totalCertificatesPhysical ?? totals.totalCertificates, 2)}
+            {'\n'}
+            {totals.totalCertificatesToSurrender != null
+              ? `${fmtNum(totals.totalCertificatesToSurrender, 0)} uds.`
+              : '— uds.'}
+          </Text>
           <Text style={[styles.tableHeaderCell, { width: '14%', textAlign: 'right' }]}>{fmtEUR(totals.totalCostReal)}</Text>
         </View>
       </View>
@@ -863,13 +879,23 @@ function CertificatesSection({ snapshot }) {
         </View>
         <View style={styles.tableRow}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            (=) Certificados CBAM a entregar
+            (=) Emisiones a certificar (tCO₂e)
           </Text>
           <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Helvetica-Bold' }]}>
-            {fmtNum(totals.totalCertificates, 2)} tCO₂e
+            {fmtNum(totals.totalCertificatesPhysical ?? totals.totalCertificates, 2)} tCO₂e
           </Text>
         </View>
         <View style={styles.tableRowAlt}>
+          <Text style={[styles.tableCell, { width: widths[0] }]}>
+            (⌈·⌉) Certificados a entregar — Math.ceil() por línea (Art. 20 Reg. (UE) 2023/956)
+          </Text>
+          <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Helvetica-Bold' }]}>
+            {totals.totalCertificatesToSurrender != null
+              ? `${fmtNum(totals.totalCertificatesToSurrender, 0)} uds.`
+              : 'n/d'}
+          </Text>
+        </View>
+        <View style={styles.tableRow}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
             (×) Precio certificado CBAM{priceDate ? ` (${priceDate})` : ''}
           </Text>
@@ -879,10 +905,27 @@ function CertificatesSection({ snapshot }) {
         </View>
       </View>
 
+      {!totals.hasCertificatesToSurrender && (
+        <Text style={[styles.body, { fontSize: 8, color: COLORS.gray600, marginTop: 4 }]}>
+          [Informe v3.0 pre-redondeo] Este informe se generó antes de la introducción del
+          redondeo de certificados a unidades enteras por línea. Las cifras de coste reflejan
+          la magnitud física decimal. Para un informe revisado con la entrega oficial al
+          registro CBAM, regenerar desde el panel de asesoría.
+        </Text>
+      )}
+
       <View style={styles.kpiRow}>
         <View style={styles.kpiCard}>
-          <Text style={styles.kpiNum}>{fmtNum(totals.totalCertificates, 1)}</Text>
-          <Text style={styles.kpiLabel}>Certificados a entregar</Text>
+          <Text style={styles.kpiNum}>
+            {totals.totalCertificatesToSurrender != null
+              ? fmtNum(totals.totalCertificatesToSurrender, 0)
+              : fmtNum(totals.totalCertificates, 1)}
+          </Text>
+          <Text style={styles.kpiLabel}>
+            {totals.totalCertificatesToSurrender != null
+              ? 'Certificados a entregar (uds.)'
+              : 'Certificados a entregar (tCO₂e)'}
+          </Text>
         </View>
         <View style={styles.kpiCardEmerald}>
           <Text style={styles.kpiNumGreen}>{fmtEUR(totals.totalCostReal)}</Text>
@@ -1015,6 +1058,17 @@ function LegalSection({ snapshot }) {
               </Text>
               <Text style={[styles.tableCell, { width: methWidths[2] }]}>
                 {sources.DEFAULT_VALUES?.title || 'Reg. Ejecución (UE) 2025/2621'}
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, { width: methWidths[0] }]}>
+                Redondeo certificados
+              </Text>
+              <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
+                Math.ceil() por línea
+              </Text>
+              <Text style={[styles.tableCell, { width: methWidths[2] }]}>
+                Art. 20 Reg. (UE) 2023/956
               </Text>
             </View>
           </View>
