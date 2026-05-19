@@ -414,6 +414,17 @@ function fmtEUR(n) {
   return `${fmtNum(n)} EUR`
 }
 
+// Traduce el lookup source del precio del certificado a una etiqueta
+// presentable para el PDF (sección "Metodología y marco legal"). Cubre
+// snapshots legacy donde el campo puede llegar como undefined.
+const PRICE_LOOKUP_SOURCE_LABELS = {
+  database: 'Tabla cbam_ets_prices (precio oficial publicado por la Comisión)',
+  fallback: 'Constante de respaldo (BD no disponible)',
+}
+function priceLookupSourceLabel(value) {
+  return PRICE_LOOKUP_SOURCE_LABELS[value] || 'Desconocido'
+}
+
 // ============================================================
 // HEADER / FOOTER (en cada página excepto portada)
 // ============================================================
@@ -988,7 +999,11 @@ function LegalSection({ snapshot }) {
                 {fmtNum(reg.certificatePrice, 2)} €/tCO₂e{'\n'}({reg.certificatePriceDate})
               </Text>
               <Text style={[styles.tableCell, { width: methWidths[2] }]}>
-                {reg.certificatePriceSource}
+                {reg.certificatePriceRegulatoryRef}
+                {'\n'}
+                <Text style={{ fontSize: 7, color: COLORS.gray600 }}>
+                  Origen: {priceLookupSourceLabel(reg.certificatePriceLookupSource)}
+                </Text>
               </Text>
             </View>
             <View style={styles.tableRowAlt}>
