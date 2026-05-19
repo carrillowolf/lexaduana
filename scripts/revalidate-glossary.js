@@ -11,7 +11,8 @@
  *   GLOSSARY_REVALIDATE_SECRET El mismo valor configurado en Vercel.
  */
 
-import 'dotenv/config'
+import { config } from 'dotenv'
+config({ path: '.env.local' })
 
 const url = process.env.GLOSSARY_REVALIDATE_URL
 const secret = process.env.GLOSSARY_REVALIDATE_SECRET
