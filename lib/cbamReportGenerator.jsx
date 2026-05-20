@@ -11,6 +11,7 @@
  *   const buffer = await renderReportPdf(snapshot)
  */
 
+import path from 'node:path'
 import React from 'react'
 import {
   Document,
@@ -18,8 +19,34 @@ import {
   Text,
   View,
   StyleSheet,
+  Font,
   pdf,
 } from '@react-pdf/renderer'
+
+// ============================================================
+// FUENTE TIPOGRÁFICA
+// ============================================================
+// Las fuentes Type 1 estándar de @react-pdf/renderer (Helvetica et al.) usan
+// codificación WinAnsi y no traen glifos para subíndices (₂), Σ ni el signo
+// matemático − (U+2212). Registramos Roboto (4 variantes hinted) desde
+// public/fonts/roboto/ para tener cobertura completa de los caracteres
+// usados en el informe. Licencia: Apache 2.0 — ver public/fonts/roboto/LICENSE.txt.
+//
+// `runtime = 'nodejs'` está fijado en el route que invoca esta función, así
+// que process.cwd() y la lectura de filesystem funcionan en Vercel.
+const ROBOTO_DIR = path.join(process.cwd(), 'public', 'fonts', 'roboto')
+Font.register({
+  family: 'Roboto',
+  fonts: [
+    { src: path.join(ROBOTO_DIR, 'Roboto-Regular.ttf'), fontWeight: 'normal', fontStyle: 'normal' },
+    { src: path.join(ROBOTO_DIR, 'Roboto-Bold.ttf'), fontWeight: 'bold', fontStyle: 'normal' },
+    { src: path.join(ROBOTO_DIR, 'Roboto-Italic.ttf'), fontWeight: 'normal', fontStyle: 'italic' },
+    { src: path.join(ROBOTO_DIR, 'Roboto-BoldItalic.ttf'), fontWeight: 'bold', fontStyle: 'italic' },
+  ],
+})
+// Desactiva la división por guiones automática de @react-pdf, que corta
+// palabras técnicas (códigos CN, referencias regulatorias) en sitios raros.
+Font.registerHyphenationCallback((word) => [word])
 
 // ============================================================
 // DESIGN TOKENS (replican el prototipo Python)
@@ -49,7 +76,7 @@ const styles = StyleSheet.create({
     paddingTop: 65,
     paddingBottom: 50,
     paddingHorizontal: 50,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Roboto',
     fontSize: 9.5,
     color: COLORS.text,
     lineHeight: 1.4,
@@ -58,11 +85,11 @@ const styles = StyleSheet.create({
   coverPage: {
     backgroundColor: COLORS.navy,
     padding: 50,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Roboto',
   },
   coverTitle: {
     fontSize: 28,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.white,
     marginTop: 90,
     lineHeight: 1.2,
@@ -97,7 +124,7 @@ const styles = StyleSheet.create({
   },
   coverClient: {
     fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.white,
     marginBottom: 6,
   },
@@ -113,14 +140,14 @@ const styles = StyleSheet.create({
   },
   coverConfidential: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.red,
     marginTop: 8,
   },
   // ----- Headings -----
   h1: {
     fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.navy,
     marginTop: 18,
     marginBottom: 10,
@@ -132,14 +159,14 @@ const styles = StyleSheet.create({
   },
   h2: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.navyLight,
     marginTop: 14,
     marginBottom: 8,
   },
   h3: {
     fontSize: 11,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.gray700,
     marginTop: 10,
     marginBottom: 6,
@@ -154,7 +181,7 @@ const styles = StyleSheet.create({
   },
   bodyEn: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Oblique',
+    fontFamily: 'Roboto', fontStyle: 'italic',
     color: COLORS.gray600,
     marginBottom: 8,
     lineHeight: 1.45,
@@ -174,7 +201,7 @@ const styles = StyleSheet.create({
   tocNum: {
     width: 30,
     fontSize: 11,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.emerald,
   },
   tocTitle: {
@@ -193,7 +220,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: COLORS.gray200,
     borderRadius: 4,
-    padding: 12,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -203,27 +230,44 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: COLORS.emerald,
     borderRadius: 4,
-    padding: 12,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   kpiNum: {
     fontSize: 22,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.navy,
     textAlign: 'center',
+    // Cortamos el lineHeight heredado de page (1.4) para que el dígito no
+    // arrastre ~8pt de leading vacío que come la separación visual con el
+    // label. Roboto tiene ascent/descent más altos por em que Helvetica
+    // (0.928/0.244 vs 0.718/0.207), así que el aire vertical hay que
+    // controlarlo aquí explícitamente.
+    lineHeight: 1.1,
   },
   kpiNumGreen: {
-    fontSize: 20,
-    fontFamily: 'Helvetica-Bold',
+    // Menos cuerpo que kpiNum (22) porque el contenido es una cantidad en EUR
+    // con separadores de miles + sufijo "EUR", siempre más ancha que un entero
+    // suelto. A 20 se solapaba en costes de 7 cifras dentro de la card flex:1.
+    fontSize: 16,
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.emerald,
     textAlign: 'center',
+    lineHeight: 1.1,
+    // Compensa el delta de altura visual con kpiNum (22pt × 1.1 ≈ 24.2pt
+    // vs 16pt × 1.1 ≈ 17.6pt). Sin esto, justifyContent:center centra un
+    // bloque más bajo dentro de la misma altura de fila → el label emerald
+    // queda 3.3pt por encima de los navy. Con +6pt de padding vertical el
+    // text-box emerald iguala al navy y los 4 labels quedan al pixel.
+    paddingVertical: 3,
   },
   kpiLabel: {
     fontSize: 8,
     color: COLORS.gray600,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 1.25,
   },
   // ----- Savings box -----
   savingsBox: {
@@ -240,7 +284,7 @@ const styles = StyleSheet.create({
   },
   savingsTextEn: {
     fontSize: 8.5,
-    fontFamily: 'Helvetica-Oblique',
+    fontFamily: 'Roboto', fontStyle: 'italic',
     color: COLORS.emeraldDark,
     marginTop: 4,
     lineHeight: 1.45,
@@ -259,7 +303,7 @@ const styles = StyleSheet.create({
   tableHeaderCell: {
     color: COLORS.white,
     fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     padding: 5,
     borderRightWidth: 0.5,
     borderRightColor: COLORS.navyLight,
@@ -292,8 +336,24 @@ const styles = StyleSheet.create({
   },
   tableCellBold: {
     fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     padding: 5,
+  },
+  // Celda "Certs. tCO₂e / uds." de la fila TOTAL: dos líneas predecibles en
+  // lugar de un \n literal dentro de un <Text>, para que la altura de fila
+  // sea estable y el contenido no quede pegado al borde inferior.
+  totalCertsCell: {
+    padding: 5,
+    borderRightWidth: 0.5,
+    borderRightColor: COLORS.navyLight,
+  },
+  totalCertsValue: {
+    color: COLORS.white,
+    fontSize: 7.5,
+    fontFamily: 'Roboto',
+    fontWeight: 'bold',
+    textAlign: 'right',
+    lineHeight: 1.3,
   },
   // ----- Recommendations -----
   recCard: {
@@ -335,13 +395,13 @@ const styles = StyleSheet.create({
   },
   recTitle: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.navy,
     marginBottom: 2,
   },
   recTitleEn: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Oblique',
+    fontFamily: 'Roboto', fontStyle: 'italic',
     color: COLORS.gray600,
     marginBottom: 6,
   },
@@ -353,7 +413,7 @@ const styles = StyleSheet.create({
   },
   recBodyEn: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Oblique',
+    fontFamily: 'Roboto', fontStyle: 'italic',
     color: COLORS.gray600,
     lineHeight: 1.4,
   },
@@ -441,6 +501,36 @@ function priceNoteText(value) {
   return PRICE_NOTE_TEXTS[value] || null
 }
 
+// Etiqueta principal del trimestre de aplicación del precio CBAM.
+// Convierte 'YYYY-QN' (lo que persistimos) a 'QN YYYY' para lectura natural.
+// NO se infiere desde la fecha de publicación: el valor llega ya como
+// trimestre desde la BD/snapshot (cbam_ets_prices.application_quarter →
+// advisory.co2_price_application_quarter → snapshot.regulatoryParams).
+function formatApplicationQuarter(value) {
+  if (!value) return null
+  const m = String(value).match(/^(\d{4})-Q([1-4])$/i)
+  if (m) return `Q${m[2]} ${m[1]}`
+  return String(value)
+}
+
+// Etiqueta secundaria opcional con la fecha de publicación oficial del precio,
+// en español. Solo se renderiza si el valor parece una ISO `YYYY-MM-DD`; si
+// llega ya como trimestre (snapshots antiguos) devolvemos null para no
+// duplicar la etiqueta principal.
+const MONTHS_ES_SHORT = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+]
+function formatPublicationDateLabel(value) {
+  if (!value) return null
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return null
+  const [, year, mm, dd] = m
+  const monthIdx = parseInt(mm, 10) - 1
+  if (monthIdx < 0 || monthIdx > 11) return null
+  return `${parseInt(dd, 10)} ${MONTHS_ES_SHORT[monthIdx]} ${year}`
+}
+
 // ============================================================
 // HEADER / FOOTER (en cada página excepto portada)
 // ============================================================
@@ -479,7 +569,7 @@ function CoverPage({ snapshot }) {
     <Page size="A4" style={styles.coverPage}>
       <Text style={styles.coverTitle}>INFORME DE EXPOSICIÓN CBAM</Text>
       <Text style={styles.coverYear}>
-        Año fiscal: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{meta.reportYear}</Text>
+        Año fiscal: <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>{meta.reportYear}</Text>
       </Text>
       <Text style={styles.coverRef}>Referencia: {meta.reportRef}</Text>
 
@@ -557,7 +647,7 @@ function ExecutiveSummary({ snapshot }) {
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalEmissions, 1)}</Text>
-          <Text style={styles.kpiLabel}>tCO₂e emisiones totales</Text>
+          <Text style={styles.kpiLabel}>Emisiones (tCO₂e)</Text>
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalCertificates, 1)}</Text>
@@ -572,13 +662,13 @@ function ExecutiveSummary({ snapshot }) {
       {totals.totalSavings > 0 && (
         <View style={styles.savingsBox}>
           <Text style={styles.savingsText}>
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>Ahorro por uso de datos reales: </Text>
+            <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>Ahorro por uso de datos reales: </Text>
             Al disponer de datos reales en {totals.linesWithRealData} de sus {totals.linesCount} líneas,
             el coste CBAM estimado se reduce en{' '}
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtEUR(totals.totalSavings)}</Text>{' '}
+            <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>{fmtEUR(totals.totalSavings)}</Text>{' '}
             respecto al escenario con valores por defecto UE ({fmtEUR(totals.totalCostDefault)}).
             Esto representa un ahorro del{' '}
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{fmtNum(totals.savingsPct, 1)}%</Text>.
+            <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>{fmtNum(totals.savingsPct, 1)}%</Text>.
           </Text>
         </View>
       )}
@@ -586,27 +676,30 @@ function ExecutiveSummary({ snapshot }) {
       <Text style={styles.h2}>Parámetros de cálculo</Text>
       <Text style={styles.body}>
         Año fiscal:{' '}
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{snapshot.meta.reportYear}</Text>
+        <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>{snapshot.meta.reportYear}</Text>
         {'   '}|{'   '}
         Líneas analizadas:{' '}
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{totals.linesCount}</Text>
+        <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>{totals.linesCount}</Text>
       </Text>
       {snapshot.meta.regulatoryParams && (
         <Text style={styles.body}>
           Precio certificado CBAM:{' '}
-          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+          <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>
             {fmtNum(snapshot.meta.regulatoryParams.certificatePrice, 2)} EUR/tCO₂e
           </Text>{' '}
-          ({snapshot.meta.regulatoryParams.certificatePriceDate})
+          ({formatApplicationQuarter(
+            snapshot.meta.regulatoryParams.certificatePriceApplicationQuarter ||
+              snapshot.meta.regulatoryParams.certificatePriceDate,
+          )})
           {'   '}|{'   '}
           F_CBAM:{' '}
-          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+          <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>
             {fmtNum(snapshot.meta.regulatoryParams.cbamFactor, 3)}
           </Text>{' '}
           ({fmtNum(snapshot.meta.regulatoryParams.cbamFactorPct, 1)}% obligación)
           {'   '}|{'   '}
           FCI:{' '}
-          <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+          <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>
             {fmtNum(snapshot.meta.regulatoryParams.fci, 3)}
           </Text>
         </Text>
@@ -614,7 +707,7 @@ function ExecutiveSummary({ snapshot }) {
 
       {totals.exceedsDeMinimis ? (
         <Text style={styles.body}>
-          Su volumen total ({fmtNum(totals.totalTonnes)} t) <Text style={{ fontFamily: 'Helvetica-Bold' }}>supera el umbral de de minimis</Text> de 50 toneladas, por lo que está sujeto a obligaciones CBAM.
+          Su volumen total ({fmtNum(totals.totalTonnes)} t) <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>supera el umbral de de minimis</Text> de 50 toneladas, por lo que está sujeto a obligaciones CBAM.
         </Text>
       ) : (
         <Text style={styles.body}>
@@ -763,7 +856,7 @@ function DualScenarioSection({ snapshot }) {
       {totals.totalSavings > 0 && (
         <View style={styles.savingsBox}>
           <Text style={styles.savingsText}>
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+            <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>
               Diferencial de ahorro: {fmtEUR(totals.totalSavings)} ({fmtNum(totals.savingsPct, 1)}%)
             </Text>
           </Text>
@@ -780,7 +873,12 @@ function CertificatesSection({ snapshot }) {
   const { totals, meta } = snapshot
   const reg = meta.regulatoryParams
   const price = reg?.certificatePrice ?? meta.co2Price
-  const priceDate = reg?.certificatePriceDate
+  // Etiqueta principal: trimestre de aplicación (Q1 2026), no fecha de publicación.
+  // Fallback a certificatePriceDate por compatibilidad con snapshots anteriores
+  // a la columna application_quarter (donde "date" ya guardaba un trimestre).
+  const priceQuarterLabel = formatApplicationQuarter(
+    reg?.certificatePriceApplicationQuarter || reg?.certificatePriceDate,
+  )
 
   const widths = ['55%', '45%']
 
@@ -799,14 +897,15 @@ function CertificatesSection({ snapshot }) {
       <Text style={styles.h3}>Fórmula aplicada</Text>
       <View style={styles.legalBox}>
         <Text style={styles.legalText}>
-          Por línea: Certs. (tCO₂e) = Tn × max(0, FE − F_CBAM × FCI × BM)
+          Por línea: Certs. (tCO₂e) = Tn × max(0; FE − F_CBAM × FCI × BM)
         </Text>
         <Text style={styles.legalText}>
-          Certs. a entregar (uds.) = ⌈Certs. (tCO₂e)⌉ por línea — Art. 20 Reg. (UE) 2023/956
-          (cada certificado representa exactamente 1 tCO₂e; el redondeo se aplica por línea, NO al total).
+          Certs. a entregar (uds.) = redondeo al alza de Certs. (tCO₂e), aplicado
+          por línea — Art. 20 Reg. (UE) 2023/956 (cada certificado representa
+          exactamente 1 tCO₂e; el redondeo se aplica por línea, NO al total).
         </Text>
         <Text style={styles.legalText}>
-          Coste = Σ (Certs. a entregar × Precio certificado CBAM) por línea
+          Coste total = suma por línea de (Certs. a entregar × Precio certificado CBAM)
         </Text>
         <Text style={styles.legalText}>
           FE = factor de emisión aplicado (real o default + markup) · BM = benchmark EU del
@@ -844,11 +943,11 @@ function CertificatesSection({ snapshot }) {
             <Text style={[styles.tableCellRight, { width: '12%' }]}>
               {fmtNum(p.certificatesPhysical ?? p.certificatesAfterAdjustment, 2)}
               {'\n'}
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>
+              <Text style={{ fontFamily: 'Roboto', fontWeight: 'bold' }}>
                 {p.certificatesToSurrender != null ? `${fmtNum(p.certificatesToSurrender, 0)} uds.` : '— uds.'}
               </Text>
             </Text>
-            <Text style={[styles.tableCellRight, { width: '14%', fontFamily: 'Helvetica-Bold' }]}>{fmtEUR(p.totalCost)}</Text>
+            <Text style={[styles.tableCellRight, { width: '14%', fontFamily: 'Roboto', fontWeight: 'bold' }]}>{fmtEUR(p.totalCost)}</Text>
           </View>
         ))}
         {/* Fila de totales */}
@@ -859,13 +958,16 @@ function CertificatesSection({ snapshot }) {
           <Text style={[styles.tableHeaderCell, { width: '10%' }]} />
           <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalIncorporatedEmissions, 2)}</Text>
           <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>{fmtNum(totals.totalFreeAllocation, 2)}</Text>
-          <Text style={[styles.tableHeaderCell, { width: '12%', textAlign: 'right' }]}>
-            {fmtNum(totals.totalCertificatesPhysical ?? totals.totalCertificates, 2)}
-            {'\n'}
-            {totals.totalCertificatesToSurrender != null
-              ? `${fmtNum(totals.totalCertificatesToSurrender, 0)} uds.`
-              : '— uds.'}
-          </Text>
+          <View style={[styles.totalCertsCell, { width: '12%' }]}>
+            <Text style={styles.totalCertsValue}>
+              {fmtNum(totals.totalCertificatesPhysical ?? totals.totalCertificates, 2)}
+            </Text>
+            <Text style={styles.totalCertsValue}>
+              {totals.totalCertificatesToSurrender != null
+                ? `${fmtNum(totals.totalCertificatesToSurrender, 0)} uds.`
+                : '— uds.'}
+            </Text>
+          </View>
           <Text style={[styles.tableHeaderCell, { width: '14%', textAlign: 'right' }]}>{fmtEUR(totals.totalCostReal)}</Text>
         </View>
       </View>
@@ -897,15 +999,15 @@ function CertificatesSection({ snapshot }) {
           <Text style={[styles.tableCell, { width: widths[0] }]}>
             (=) Emisiones a certificar (tCO₂e)
           </Text>
-          <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Helvetica-Bold' }]}>
+          <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Roboto', fontWeight: 'bold' }]}>
             {fmtNum(totals.totalCertificatesPhysical ?? totals.totalCertificates, 2)} tCO₂e
           </Text>
         </View>
         <View style={styles.tableRowAlt}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            (⌈·⌉) Certificados a entregar — Math.ceil() por línea (Art. 20 Reg. (UE) 2023/956)
+            Certificados a entregar — redondeo al alza por línea (Art. 20 Reg. (UE) 2023/956)
           </Text>
-          <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Helvetica-Bold' }]}>
+          <Text style={[styles.tableCellRight, { width: widths[1], fontFamily: 'Roboto', fontWeight: 'bold' }]}>
             {totals.totalCertificatesToSurrender != null
               ? `${fmtNum(totals.totalCertificatesToSurrender, 0)} uds.`
               : 'n/d'}
@@ -913,7 +1015,7 @@ function CertificatesSection({ snapshot }) {
         </View>
         <View style={styles.tableRow}>
           <Text style={[styles.tableCell, { width: widths[0] }]}>
-            (×) Precio certificado CBAM{priceDate ? ` (${priceDate})` : ''}
+            (×) Precio certificado CBAM{priceQuarterLabel ? ` (${priceQuarterLabel})` : ''}
           </Text>
           <Text style={[styles.tableCellRight, { width: widths[1] }]}>
             {fmtNum(price, 2)} EUR/tCO₂e
@@ -1055,7 +1157,15 @@ function LegalSection({ snapshot }) {
                 Precio certificado CBAM
               </Text>
               <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
-                {fmtNum(reg.certificatePrice, 2)} €/tCO₂e{'\n'}({reg.certificatePriceDate})
+                {fmtNum(reg.certificatePrice, 2)} €/tCO₂e{'\n'}
+                ({formatApplicationQuarter(
+                  reg.certificatePriceApplicationQuarter || reg.certificatePriceDate,
+                )})
+                {formatPublicationDateLabel(reg.certificatePricePublicationDate) && (
+                  <Text style={{ fontSize: 6.5, color: COLORS.gray500 }}>
+                    {'\n'}publicado {formatPublicationDateLabel(reg.certificatePricePublicationDate)}
+                  </Text>
+                )}
               </Text>
               <Text style={[styles.tableCell, { width: methWidths[2] }]}>
                 {reg.certificatePriceRegulatoryRef}
@@ -1081,7 +1191,7 @@ function LegalSection({ snapshot }) {
                 Redondeo certificados
               </Text>
               <Text style={[styles.tableCellRight, { width: methWidths[1] }]}>
-                Math.ceil() por línea
+                Redondeo al alza por línea
               </Text>
               <Text style={[styles.tableCell, { width: methWidths[2] }]}>
                 Art. 20 Reg. (UE) 2023/956
@@ -1131,26 +1241,29 @@ function LegalSection({ snapshot }) {
         </>
       )}
 
-      <Text style={styles.h3}>Aviso legal</Text>
-      <View style={styles.legalBox}>
-        <Text style={styles.legalText}>
-          Este informe ha sido elaborado por LexAduana como servicio profesional de asesoría
-          basado en los datos facilitados por el cliente y los valores oficiales publicados
-          por la Comisión Europea. Las cifras son estimaciones a partir de la mejor
-          información disponible en el momento de su emisión y NO constituyen una
-          declaración oficial CBAM.
-        </Text>
-        <Text style={styles.legalText}>
-          La obligación legal de presentar declaraciones CBAM recae exclusivamente sobre el
-          declarante autorizado conforme al Reglamento (UE) 2023/956. LexAduana no asume
-          responsabilidad alguna por decisiones tomadas en base a este informe sin
-          asesoramiento jurídico individualizado.
+      {/* Bloque de aviso legal + pie de cierre: nunca se parte entre páginas. */}
+      <View wrap={false}>
+        <Text style={styles.h3}>Aviso legal</Text>
+        <View style={styles.legalBox}>
+          <Text style={styles.legalText}>
+            Este informe ha sido elaborado por LexAduana como servicio profesional de asesoría
+            basado en los datos facilitados por el cliente y los valores oficiales publicados
+            por la Comisión Europea. Las cifras son estimaciones a partir de la mejor
+            información disponible en el momento de su emisión y NO constituyen una
+            declaración oficial CBAM.
+          </Text>
+          <Text style={styles.legalText}>
+            La obligación legal de presentar declaraciones CBAM recae exclusivamente sobre el
+            declarante autorizado conforme al Reglamento (UE) 2023/956. LexAduana no asume
+            responsabilidad alguna por decisiones tomadas en base a este informe sin
+            asesoramiento jurídico individualizado.
+          </Text>
+        </View>
+
+        <Text style={[styles.body, { marginTop: 16, textAlign: 'center', color: COLORS.gray500 }]}>
+          © LexAduana — info@lexaduana.es — lexaduana.es
         </Text>
       </View>
-
-      <Text style={[styles.body, { marginTop: 16, textAlign: 'center', color: COLORS.gray500 }]}>
-        © LexAduana — info@lexaduana.es — lexaduana.es
-      </Text>
     </>
   )
 }
