@@ -255,6 +255,12 @@ const styles = StyleSheet.create({
     color: COLORS.emerald,
     textAlign: 'center',
     lineHeight: 1.1,
+    // Compensa el delta de altura visual con kpiNum (22pt × 1.1 ≈ 24.2pt
+    // vs 16pt × 1.1 ≈ 17.6pt). Sin esto, justifyContent:center centra un
+    // bloque más bajo dentro de la misma altura de fila → el label emerald
+    // queda 3.3pt por encima de los navy. Con +6pt de padding vertical el
+    // text-box emerald iguala al navy y los 4 labels quedan al pixel.
+    paddingVertical: 3,
   },
   kpiLabel: {
     fontSize: 8,
