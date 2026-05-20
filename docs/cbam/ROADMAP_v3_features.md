@@ -186,3 +186,39 @@ ejecución del Art. 9 (esperados 2026-2027).
   inputs (CN, país, tonnes, FE real, BM, ruta) estén disponibles y
   documentar el delta vs el valor histórico (cambia por dos motivos:
   precio 74,76 → 75,36 y redondeo `Math.ceil` por línea).
+
+- **Refactor de `toSnake` para que no falle en silencio** (hallazgo del
+  fix post-Bloque 3, mayo 2026): `lib/cbamAdvisoryService.js:192-198`
+  implementa la conversión camelCase → snake_case con un patrón
+  `const snakeKey = map[key] || key`. Si una clave no está registrada
+  en `map`, pasa el camelCase literal a Supabase y solo se descubre el
+  problema en runtime con un 500. Fue el modo en que escaparon los dos
+  totales nuevos (`totalCertificatesPhysical`, `totalCertificatesToSurrender`)
+  del Bloque 3 hasta la validación manual. Dos caminos posibles:
+  1. Conversión automática por regla (regex `[A-Z]` → `_[a-z]`) que cubre
+     el 100% de los casos sin tabla de mapping. Cierra esta clase de
+     bug por completo.
+  2. Mantener el mapping pero lanzar error explícito ante claves
+     desconocidas (`throw new Error('toSnake: clave no mapeada: ' + key)`),
+     en vez del fallback `|| key`. Esto convierte el fallo runtime en
+     fallo de test en CI.
+  Recomendación: la opción 1 si no hay claves que requieran nombre snake
+  no-canónico (no parece haberlas).
+
+- **Test de integración de la capa de persistencia** (hallazgo del mismo
+  fix): los 9 tests de `__tests__/cbamAdvisoryCalculator.test.js`
+  cubren exclusivamente `lib/cbamLineMath.js` (función matemática pura
+  por línea). Quedaron fuera de cobertura el wrapper
+  `calculateAdvisoryRequest`, el spread de `totals`, `toSnake` y el
+  contrato con las columnas reales de BD. Por eso los tests estaban
+  verdes mientras el endpoint `/calculate` devolvía 500.
+  Plan futuro: añadir un test que valide que el set de claves que el
+  wrapper pasa a `updateAdvisoryRequest` y `updateAdvisoryProduct` está
+  contenido en las columnas reales de `information_schema.columns`.
+  No requiere mocks elaborados — solo:
+  1. Una query a Supabase (o un fixture cacheado en CI) que lista las
+     columnas de `cbam_advisory_requests` y `cbam_advisory_products`.
+  2. Un `Object.keys(payload)` sobre el resultado del calculator + lo
+     que el wrapper compone, todo tras pasar por `toSnake`.
+  3. Assert que cada clave del payload pertenece al set de columnas.
+  Esto habría cazado este bug en CI antes del merge.
