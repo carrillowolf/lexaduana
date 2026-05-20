@@ -222,3 +222,73 @@ ejecución del Art. 9 (esperados 2026-2027).
      que el wrapper compone, todo tras pasar por `toSnake`.
   3. Assert que cada clave del payload pertenece al set de columnas.
   Esto habría cazado este bug en CI antes del merge.
+
+- **🔴 PRIORIDAD ALTA — Deduplicar mappers `cbamAdvisoryAdminService.js`**
+  (hallazgo del fix del bug de lectura admin, mayo 2026):
+  `lib/cbamAdvisoryAdminService.js` mantiene su propio `mapRequest`,
+  `mapProduct` y `toSnake` por una razón histórica (evitar dependencia
+  circular con `cbamAdvisoryService.js` que usa el cliente anon, ver
+  comentario líneas 18-19). El resultado operativo: **cada campo nuevo
+  hay que registrarlo dos veces**, y los Bloques 1/2/3 lo hicieron solo
+  en la copia no-admin. Esta sesión ha encadenado **cuatro bugs de
+  persistencia** seguidos, todos con la misma raíz estructural:
+
+  1. Columnas BD faltantes para totales (`total_certificates_*`, fix `569db04`).
+  2. `toSnake` no-admin sin mapping para esos mismos totales (mismo commit).
+  3. `mapProduct` admin sin lectura de los 3 campos de línea Bloque 1/3
+     (este fix).
+  4. `mapRequest` admin sin lectura de los 4 campos de cabecera Bloque
+     2/3 (este fix).
+
+  Más el `toSnake` admin con los mismos 7 huecos que abre la quinta
+  versión potencial del mismo bug en cuanto alguien haga PATCH admin
+  de uno de esos campos.
+
+  La causa de fondo es **doble**:
+  a) Código duplicado paralelo que hay que mantener a mano.
+  b) Patrón `map[key] || key` que traga errores en silencio.
+
+  Solución propuesta — combina dos cambios que se refuerzan mutuamente:
+
+  - Un único `cbamAdvisoryService.js` parametrizado por cliente Supabase
+    (anon o admin/service_role). El cliente lo elige cada caller
+    (`resolveClient` ya hace algo parecido); eliminar
+    `cbamAdvisoryAdminService.js` y consolidar todo en el mismo módulo.
+    Los mappers viven en un solo sitio.
+  - Sustituir el mapping manual por conversión automática
+    camelCase ↔ snake_case por regla (regex). Cierra esta familia de
+    bugs por completo: cualquier campo nuevo funciona sin tocar `map`.
+
+  No es "nice to have": es la causa estructural de la cadena de bugs
+  de esta sesión. Mientras siga viva, cada feature que añada un campo
+  persistido es un campo de minas hasta que alguien recuerde tocar las
+  dos copias. Plan de attaque: medio día de trabajo, principalmente
+  releyendo callers admin para asegurarse de que pasan `supabaseAdmin`
+  explícitamente. Tras hacerlo, los tres ítems anteriores (refactor
+  `toSnake`, test de integración, auditoría 4 capas) pierden la mitad
+  de su carga.
+
+- **Auditoría de 4 capas ante feature con campos persistidos** (hallazgo
+  meta de la cadena de bugs, mayo 2026): institucionalizar como
+  checklist obligatorio cuando una feature añade campos a una tabla de
+  Advisory. Auditar las cuatro capas del round-trip, no solo la que
+  petó primero:
+
+  1. **Columnas en BD**: ¿existe la columna? ¿con el tipo correcto?
+     ¿nullable para retrocompat?
+  2. **Escritura no-admin** (`cbamAdvisoryService.js → toSnake`):
+     ¿el `map` tiene la entrada camelCase → snake_case?
+  3. **Escritura admin** (`cbamAdvisoryAdminService.js → toSnake`):
+     misma pregunta en la copia paralela.
+  4. **Lectura no-admin y admin** (`mapRequest` y `mapProduct` en ambas
+     copias): ¿se expone el campo al cliente?
+
+  Y un quinto opcional cuando aplique:
+
+  5. **Consumidores downstream**: snapshot del PDF, payload público,
+     diagnóstico cualitativo. ¿Dependen del nuevo campo o de algún
+     derivado? Si sí, ¿se construyen desde un origen que ya lo expone?
+
+  La auditoría debería ser parte del *Definition of Done* de cualquier
+  feature que toque Advisory hasta que la deduplicación de mappers (ver
+  ítem anterior) la haga innecesaria.
