@@ -8,6 +8,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test '__tests__/**/*.test.js'",
     "e2e": "playwright test --config=playwright.config.cjs"
   },
   "dependencies": {

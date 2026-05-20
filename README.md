@@ -674,7 +674,7 @@ Tras revisión crítica del documento de referencia externo (Noatum) se detectar
 **Nuevo módulo `lib/cbamRegulatoryParams.js` (199 líneas)** — fuente única de verdad con:
 - **F_CBAM por año** (Art. 36(2)(b) Reg. (UE) 2023/956): 2026=0,975 · 2027=0,95 · 2028=0,90 · 2029=0,775 · 2030=0,515 · 2031=0,39 · 2032=0,265 · 2033=0,14 · 2034=0,0
 - **FCI** (Reg. Ejecución (UE) 2025/2620): 1,0 provisional 2026 pendiente de publicación CE
-- **Precio certificado CBAM**: 74,76 €/tCO₂e (Q1 2026), Reg. Ejecución (UE) 2025/2548 — ya no usa precio EU ETS spot
+- **Precio certificado CBAM**: 75,36 €/tCO₂e (Q1 2026 oficial, publicado 2026-04-08), Reg. Ejecución (UE) 2025/2548 — lectura híbrida: `cbam_ets_prices.is_current` con fallback a constante `CBAM_CERTIFICATE_PRICE_FALLBACK`
 - **`REGULATORY_SOURCES`** con título, URL oficial BOE/EUR-Lex e ID de cada reglamento para citación dinámica
 - **`getRegulatoryParamsForYear(year)`** — devuelve objeto completo con valores + fuentes listo para incrustar en snapshots
 
@@ -1137,7 +1137,7 @@ Mecanismo de Ajuste en Frontera por Carbono - **Obligatorio desde 01/01/2026**
 
 #### Simulador de Coste de Certificados
 - **Valores por defecto UE**: Factores de emisión oficiales (tCO2/t)
-- **Precio certificado CBAM**: 74,76 €/tCO₂e (Q1 2026, Reg. 2025/2548)
+- **Precio certificado CBAM**: 75,36 €/tCO₂e (Q1 2026 oficial, Reg. 2025/2548)
 - **Cálculo instantáneo**: Toneladas × Factor × Precio
 - **Ajuste FAA (Free Allocation Adjustment)**: Phase-in progresivo 2026-2034 aplicado al cálculo
 - **Selector de año visual**: 9 botones (2026-2034) con % phase-in y markup
@@ -1157,7 +1157,7 @@ Según Reglamento C(2025) 8560:
 Panel integrado en la calculadora que muestra los precios oficiales de certificados CBAM publicados por la Comisión Europea:
 | Trimestre | Fecha de publicación | Estado |
 |-----------|---------------------|--------|
-| Q1 2026 | 7 abril 2026 | ✅ 74,76 €/tCO₂e |
+| Q1 2026 | 7 abril 2026 | ✅ 75,36 €/tCO₂e |
 | Q2 2026 | 6 julio 2026 | Pendiente |
 | Q3 2026 | 5 octubre 2026 | Pendiente |
 | Q4 2026 | 4 enero 2027 | Pendiente |
