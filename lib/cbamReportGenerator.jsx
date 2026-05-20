@@ -414,15 +414,31 @@ function fmtEUR(n) {
   return `${fmtNum(n)} EUR`
 }
 
-// Traduce el lookup source del precio del certificado a una etiqueta
-// presentable para el PDF (sección "Metodología y marco legal"). Cubre
-// snapshots legacy donde el campo puede llegar como undefined.
+// Etiqueta corta del origen del precio del certificado para la columna
+// "Fuente" de la tabla de metodología (sección 7). Pensada para que un
+// cliente final pueda leerla sin jerga: nada de nombres de tabla,
+// función o variable. Snapshots legacy sin el campo → "Desconocido".
 const PRICE_LOOKUP_SOURCE_LABELS = {
-  database: 'Tabla cbam_ets_prices (precio oficial publicado por la Comisión)',
-  fallback: 'Constante de respaldo (BD no disponible)',
+  database: 'Comisión Europea (precio oficial del trimestre)',
+  fallback: 'Precio de referencia (valor oficial no disponible en emisión)',
 }
 function priceLookupSourceLabel(value) {
   return PRICE_LOOKUP_SOURCE_LABELS[value] || 'Desconocido'
+}
+
+// Texto explicativo ampliado del origen del precio, renderizado debajo
+// de la tabla de metodología. Misma regla: solo lenguaje de cliente.
+const PRICE_NOTE_TEXTS = {
+  database:
+    'Precio oficial del certificado CBAM publicado por la Comisión Europea ' +
+    'para el trimestre de referencia.',
+  fallback:
+    'Precio de referencia. El valor oficial no pudo recuperarse en el momento ' +
+    'de emisión del informe; se ha aplicado el último precio conocido. ' +
+    'Consúltenos para una actualización.',
+}
+function priceNoteText(value) {
+  return PRICE_NOTE_TEXTS[value] || null
 }
 
 // ============================================================
@@ -1073,9 +1089,9 @@ function LegalSection({ snapshot }) {
             </View>
           </View>
 
-          {reg.certificatePriceNote && (
+          {priceNoteText(reg.certificatePriceLookupSource) && (
             <Text style={[styles.body, { fontSize: 8, color: COLORS.gray600, marginTop: 4 }]}>
-              Nota: {reg.certificatePriceNote}
+              Nota precio: {priceNoteText(reg.certificatePriceLookupSource)}
             </Text>
           )}
           {reg.fciNote && (

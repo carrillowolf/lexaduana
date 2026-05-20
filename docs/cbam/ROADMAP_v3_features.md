@@ -292,3 +292,26 @@ ejecución del Art. 9 (esperados 2026-2027).
   La auditoría debería ser parte del *Definition of Done* de cualquier
   feature que toque Advisory hasta que la deduplicación de mappers (ver
   ítem anterior) la haga innecesaria.
+
+- **Pulido cosmético del PDF Advisory** (validación visual del PR #17,
+  mayo 2026): no bloquea el merge pero conviene resolverlo en una pasada
+  de UI dedicada. Cuatro ítems detectados:
+
+  1. **Encoding de símbolos**: `tCO₂e` se renderiza como `tCO‚e` y
+     algunas fórmulas muestran `£` / `·` mal. Es problema de la fuente
+     embebida (la Helvetica por defecto de `@react-pdf/renderer` no
+     cubre todos los caracteres Unicode usados). Solución típica:
+     registrar una fuente con soporte ampliado (p. ej. DejaVu Sans o
+     Inter) vía `Font.register()` y usarla en `styles`.
+  2. **Bloque "TOTAL" / "Coste total estimado" descuadrado** en sección
+     5/6. Ajuste de widths o alineación.
+  3. **"Aviso legal" partido entre páginas 7-8**. Aplicar
+     `break={false}` o `wrap={false}` al bloque para forzar que se
+     mantenga unido.
+  4. **Etiqueta del precio**: hoy muestra `(2026-04-08)` (fecha exacta
+     de la fila vigente en BD). Valorar volver a `(2026-Q1)` o mostrar
+     un formato más legible para cliente (p. ej. "Q1 2026 · precio
+     publicado el 8 abr 2026"). Decisión de UX.
+
+  Todos contenidos en `lib/cbamReportGenerator.jsx`. Ninguno afecta a
+  los números — solo a la presentación.
