@@ -1587,6 +1587,13 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 SUPABASE_SERVICE_ROLE_KEY=xxx
 
+# Allowlist de administradores (obligatorio para endpoints admin)
+# Lista de emails separados por comas. Configurar en Vercel para
+# Production + Preview + Development. Si falta, los endpoints
+# /api/admin/cbam/* devuelven 403 incluso al owner — ver
+# docs/inventario/BACKLOG_AUTH_ADMIN.md para contexto.
+ADMIN_EMAILS=admin@example.com
+
 # Anthropic (Clasificador IA)
 ANTHROPIC_API_KEY=sk-ant-api03-xxx
 
