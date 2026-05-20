@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: COLORS.gray200,
     borderRadius: 4,
-    padding: 12,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: COLORS.emerald,
     borderRadius: 4,
-    padding: 12,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -239,6 +239,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.navy,
     textAlign: 'center',
+    // Cortamos el lineHeight heredado de page (1.4) para que el dígito no
+    // arrastre ~8pt de leading vacío que come la separación visual con el
+    // label. Roboto tiene ascent/descent más altos por em que Helvetica
+    // (0.928/0.244 vs 0.718/0.207), así que el aire vertical hay que
+    // controlarlo aquí explícitamente.
+    lineHeight: 1.1,
   },
   kpiNumGreen: {
     // Menos cuerpo que kpiNum (22) porque el contenido es una cantidad en EUR
@@ -248,12 +254,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto', fontWeight: 'bold',
     color: COLORS.emerald,
     textAlign: 'center',
+    lineHeight: 1.1,
   },
   kpiLabel: {
     fontSize: 8,
     color: COLORS.gray600,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 1.25,
   },
   // ----- Savings box -----
   savingsBox: {
@@ -633,7 +641,7 @@ function ExecutiveSummary({ snapshot }) {
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalEmissions, 1)}</Text>
-          <Text style={styles.kpiLabel}>tCO₂e emisiones totales</Text>
+          <Text style={styles.kpiLabel}>Emisiones (tCO₂e)</Text>
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiNum}>{fmtNum(totals.totalCertificates, 1)}</Text>
