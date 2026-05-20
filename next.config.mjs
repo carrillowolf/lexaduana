@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // lib/cbamReportGenerator.jsx lee las TTF de Roboto desde public/fonts/
+  // en tiempo de ejecución para registrarlas en @react-pdf/renderer. Next.js
+  // traza dependencias estáticas, pero `path.join(process.cwd(), ...)` no se
+  // detecta — hay que declarar explícitamente las rutas a incluir en el
+  // bundle del route handler. Sin esto, el PDF falla en Vercel con
+  // ENOENT al registrar la fuente.
+  outputFileTracingIncludes: {
+    '/api/admin/cbam/asesoria/[id]/generate-report': ['./public/fonts/roboto/*.ttf'],
+  },
   async headers() {
     // CSP en modo bloqueante tras periodo de observación 5-6 mayo 2026.
     // Producción quedó limpia (cero violaciones reales); el único ruido eran
