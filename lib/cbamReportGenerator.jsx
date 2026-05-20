@@ -934,10 +934,10 @@ function CertificatesSection({ snapshot }) {
       </View>
 
       <Text style={styles.body}>
-        El precio del certificado CBAM se calcula y publica semanalmente por la Comisión Europea
-        como media de los precios de cierre EUA de la semana anterior, conforme al Reglamento
-        de Ejecución (UE) 2025/2548. El coste final podrá variar según el precio vigente en
-        el trimestre de declaración.
+        El precio del certificado CBAM se calcula y publica trimestralmente por la Comisión
+        Europea como media de los precios de cierre EUA del trimestre anterior, conforme al
+        Reglamento de Ejecución (UE) 2025/2548. El coste final podrá variar según el precio
+        vigente en el trimestre de declaración.
       </Text>
     </>
   )
@@ -1083,6 +1083,15 @@ function LegalSection({ snapshot }) {
               Nota FCI: {reg.fciNote}
             </Text>
           )}
+          <Text style={[styles.body, { fontSize: 8, color: COLORS.gray600, marginTop: 4 }]}>
+            Nota Art. 9: el cálculo no incluye la deducción del Art. 9 Reg. (UE) 2023/956
+            (precio del carbono pagado efectivamente en el país de origen). Es una deducción
+            opcional, sujeta a prueba documental certificada por tercero independiente; para
+            emisiones determinadas con valores por defecto no resulta aplicable en 2026, ya
+            que los precios por defecto del carbono solo los determinará la Comisión a partir
+            de 2027. Si su proveedor ha pagado un precio de carbono efectivo y verificable,
+            consúltenos.
+          </Text>
         </>
       )}
 
