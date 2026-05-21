@@ -87,9 +87,17 @@ export async function POST(request, { params }) {
       generatedBy: auth.user.email,
     })
 
-    // 7. Actualizar status del request
+    // 7. Actualizar status del request — solo degradar a 'report_ready' si la
+    // solicitud aún no ha sido entregada. Si ya está entregada (o en cualquier
+    // estado posterior a la entrega que pueda añadirse en el futuro), conservar
+    // el estado actual: regenerar el informe sustituye el PDF (el current_report
+    // pasa a apuntar al nuevo) pero no debe retroceder la máquina de estados.
+    const POST_DELIVERY_STATUSES = new Set(['delivered'])
+    const nextStatus = POST_DELIVERY_STATUSES.has(advisory.status)
+      ? advisory.status
+      : 'report_ready'
     const updated = await updateAdvisoryRequestAsAdmin(id, {
-      status: 'report_ready',
+      status: nextStatus,
     })
 
     return NextResponse.json({
