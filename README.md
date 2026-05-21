@@ -103,7 +103,7 @@ Sesión de saneamiento del **motor de cálculo CBAM** y del **informe PDF** de l
 ### 🗄️ Esquema de BD — columnas añadidas
 
 - **`cbam_advisory_products`**: `certificates_physical` (NUMERIC), `certificates_to_surrender` (INTEGER, entero post-`ceil`), `free_allocation_implicit` (NUMERIC).
-- **`cbam_advisory_requests`**: `total_certificates_physical` (NUMERIC), `total_certificates_to_surrender` (INTEGER), `co2_price_lookup_source` (TEXT — `'db'`/`'fallback'`), `co2_price_date` (TIMESTAMPTZ), `co2_price_application_quarter` (TEXT).
+- **`cbam_advisory_requests`**: `total_certificates_physical` (NUMERIC), `total_certificates_to_surrender` (INTEGER), `co2_price_lookup_source` (TEXT — `'db'`/`'fallback'`), `co2_price_date` (TEXT — fecha asociada al precio tal como viene de `cbam_ets_prices.price_date`), `co2_price_application_quarter` (TEXT).
 - **`cbam_ets_prices`**: `application_quarter` (TEXT) — el sistema asume que la fila `is_current` la trae poblada para los precios trimestrales 2026.
 
 ### ⚙️ Configuración
@@ -1207,9 +1207,10 @@ Panel integrado en la calculadora que muestra los precios oficiales de certifica
 | Q4 2026 | 4 enero 2027 | Pendiente |
 
 - **Visible solo en año 2026**: Se oculta automáticamente si se selecciona otro año
-- **Actualización manual**: Cambiar `null` por precio en `CBAM_QUARTERLY_PRICES_2026` en `CBAMCostSimulator.js`
+- **Fuente de los precios**: tabla `cbam_ets_prices` en Supabase. Cada precio trimestral oficial se carga como una fila con `application_quarter` (p. ej. `'Q1-2026'`), `price`, `price_date` y `source`. La fila vigente se marca con `is_current=true`; el motor de cálculo y el panel leen de ahí.
+- **Actualización trimestral**: cuando la Comisión Europea publica un precio nuevo, insertar la fila en `cbam_ets_prices` (script de migración o SQL directo), marcarla `is_current=true` y desmarcar la anterior. El precio queda inmediatamente disponible en calculadora, simulador y motor de asesoría sin cambios de código.
 - **Botón "Usar este precio"**: Aplica el precio oficial al campo de precio EUA de la calculadora
-- **Sin API externa**: No requiere fetch ni scraping — los precios se actualizan en el código
+- **Sin API externa**: No requiere fetch ni scraping — la BD es la fuente de verdad y `lib/cbamRegulatoryParams.js` expone `CBAM_CERTIFICATE_PRICE_FALLBACK` como respaldo si la consulta a BD falla.
 
 #### 🆕 Penalización Valores por Defecto (Dic 2025)
 Markup progresivo según C(2025) 8552 si no se aportan emisiones reales verificadas:
