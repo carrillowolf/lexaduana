@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de herramientas aduaneras para importaciones a España y la Unión Europea: calculadora de aranceles, clasificador IA, verificador CBAM, simulador de costes y más.
 
-[![Versión](https://img.shields.io/badge/versión-5.19.0-blue.svg)](https://lexaduana.es)
+[![Versión](https://img.shields.io/badge/versión-5.21.0-blue.svg)](https://lexaduana.es)
 [![Estado](https://img.shields.io/badge/estado-producción-brightgreen.svg)](https://lexaduana.es)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-enabled-green.svg)](https://supabase.com)
@@ -74,6 +74,48 @@ lexaduana.es
 > `version` de `package.json` se mantiene en `0.1.0` hasta que LexAduana
 > publique una v1.0 formal como producto. Esta política puede revisarse
 > más adelante.
+
+---
+
+## 🆕 Novedades v5.21.0 (Mayo 2026)
+
+Sesión de saneamiento del **motor de cálculo CBAM** y del **informe PDF** de la asesoría premium. El motor ahora aplica el Art. 20 del Reg. (UE) 2023/956 de forma estricta, el trimestre de aplicación del precio del certificado viaja explícito de extremo a extremo, la lectura del precio es híbrida (BD viva + respaldo en código) y la fuente Roboto del informe va empaquetada con la app.
+
+### 🧮 Motor de cálculo
+
+- **Redondeo de certificados por línea (Art. 20 Reg. 2023/956)**: `Math.ceil` aplicado al número entero de certificados de **cada línea de producto**, no al total agregado. El total `certificatesToSurrender` de la solicitud es la suma de los enteros por línea. Coincide con la práctica del importador, que liquida certificados línea a línea, y con la redacción literal del Art. 20.
+- **Lectura híbrida del precio del certificado**: la calculadora y la asesoría consultan primero `cbam_ets_prices` (fila marcada `is_current`) y caen a la constante `CBAM_CERTIFICATE_PRICE_FALLBACK` (`lib/cbamRegulatoryParams.js`) si la tabla no devuelve resultado. La fuente usada queda registrada en `co2_price_lookup_source` (`'db'` / `'fallback'`) de la solicitud para auditoría.
+- **Trimestre de aplicación explícito**: nueva columna `application_quarter` en `cbam_ets_prices` (p. ej. `'Q1-2026'`). El motor de asesoría la propaga a `cbam_advisory_requests.co2_price_application_quarter` y la fija en el snapshot del informe (`meta.regulatoryParams`). El PDF la imprime en la sección de parámetros regulatorios — el cliente sabe exactamente a qué trimestre corresponde el precio usado.
+- **Precio Q1 2026 oficial**: `75,36 €/tCO₂e` (Reg. Ejecución (UE) 2025/2548, publicado 2026-04-08). Cargado en `cbam_ets_prices` como `is_current=true` y sincronizado con el fallback en código.
+
+### 📄 Informe PDF
+
+- **Fuente Roboto bundleada**: las cuatro variantes (`Regular`, `Italic`, `Bold`, `BoldItalic`) viven en `public/fonts/roboto/` y `@react-pdf/renderer` las registra desde disco. La generación del informe no requiere acceder a Google Fonts ni a ningún CDN — el contenedor de Vercel renderiza el PDF sin red saliente para tipografía. LICENSE incluido (Apache 2.0).
+- **Sección 7 "Metodología y Marco Legal"**: la tabla muestra ahora `application_quarter` explícito junto al precio del certificado y a su fuente jurídica (Reg. Ejecución (UE) 2025/2548). Ajustes finos de KPI cards (espaciado vertical Roboto, alineación de labels) para tipografía bundleada.
+- **Sección 7 — nota condicional sobre el precio**: si el snapshot lleva `co2_price_lookup_source='fallback'`, se imprime aviso al cliente indicando que el precio se tomó de respaldo en código (el caso normal es BD).
+
+### 🔒 Máquina de estados Advisory
+
+- **Guarda anti-degradación en la PATCH del admin**: `app/api/admin/cbam/asesoria/[id]` rechaza con **409 Conflict** cualquier intento de mover una solicitud desde un estado post-entrega (`delivered`) a un estado anterior. Cubre los dos llamadores cliente (`ClientTab.handleSave` y `updatePayment`) y futuras vías sin pasar por la UI.
+- **Regeneración del informe preserva `delivered`**: regenerar el PDF de una solicitud ya entregada actualiza `current_report` (el cliente descarga el PDF nuevo) sin retroceder el `status`. El cliente sigue viendo el botón "Descargar informe" en `/cbam/asesoria/mis-solicitudes`.
+- **Módulo compartido `lib/cbamAdvisoryStatus.js`**: fuente única de `POST_DELIVERY_STATUSES` + helper `isPostDelivery(status)`. Embrión del refactor centralizado de transiciones de estado (ver `docs/cbam/ROADMAP_v3_features.md` — bloque "Saneamiento Advisory").
+
+### 🗄️ Esquema de BD — columnas añadidas
+
+- **`cbam_advisory_products`**: `certificates_physical` (NUMERIC), `certificates_to_surrender` (INTEGER, entero post-`ceil`), `free_allocation_implicit` (NUMERIC).
+- **`cbam_advisory_requests`**: `total_certificates_physical` (NUMERIC), `total_certificates_to_surrender` (INTEGER), `co2_price_lookup_source` (TEXT — `'db'`/`'fallback'`), `co2_price_date` (TEXT — fecha asociada al precio tal como viene de `cbam_ets_prices.price_date`), `co2_price_application_quarter` (TEXT).
+- **`cbam_ets_prices`**: `application_quarter` (TEXT) — el sistema asume que la fila `is_current` la trae poblada para los precios trimestrales 2026.
+
+### ⚙️ Configuración
+
+- **`ADMIN_EMAILS`** documentada en `.env.example` como variable obligatoria. Sin allowlist los endpoints `/api/admin/cbam/*` devuelven 403 incluso al owner — contexto en `docs/inventario/BACKLOG_AUTH_ADMIN.md`.
+
+### Cambios técnicos
+
+- 4 PRs mergeados a `main` (#17 motor + parámetros, #18 docs auth admin, #19 PDF polish + Roboto + `application_quarter`, #20 guarda de estado post-entrega).
+- Snapshot v2 retrocompatible: informes antiguos siguen renderizando correctamente.
+- 0 dependencias nuevas.
+- `docs/cbam/ROADMAP_v3_features.md` ampliado con un bloque de "Saneamiento Advisory" de prioridad alta (transiciones centralizadas, deduplicación de mappers, refactor de `toSnake`, optimistic-write pattern, tests de integración).
 
 ---
 
@@ -1137,8 +1179,10 @@ Mecanismo de Ajuste en Frontera por Carbono - **Obligatorio desde 01/01/2026**
 
 #### Simulador de Coste de Certificados
 - **Valores por defecto UE**: Factores de emisión oficiales (tCO2/t)
-- **Precio certificado CBAM**: 75,36 €/tCO₂e (Q1 2026 oficial, Reg. 2025/2548)
+- **Precio certificado CBAM**: 75,36 €/tCO₂e (Q1 2026 oficial, Reg. Ejecución (UE) 2025/2548). Lectura híbrida: `cbam_ets_prices.is_current` con fallback a `CBAM_CERTIFICATE_PRICE_FALLBACK` en `lib/cbamRegulatoryParams.js`. La fuente efectiva (`db` / `fallback`) queda registrada en el snapshot del informe.
+- **Trimestre de aplicación explícito**: el motor lee `application_quarter` de `cbam_ets_prices` y lo propaga al snapshot y al PDF como dato independiente del precio.
 - **Cálculo instantáneo**: Toneladas × Factor × Precio
+- **Redondeo de certificados por línea**: `Math.ceil` aplicado al número entero de certificados de cada línea (Art. 20 Reg. (UE) 2023/956), no al total agregado.
 - **Ajuste FAA (Free Allocation Adjustment)**: Phase-in progresivo 2026-2034 aplicado al cálculo
 - **Selector de año visual**: 9 botones (2026-2034) con % phase-in y markup
 - **Desglose bruto/efectivo**: Coste bruto, ajuste FAA y coste efectivo
@@ -1163,9 +1207,10 @@ Panel integrado en la calculadora que muestra los precios oficiales de certifica
 | Q4 2026 | 4 enero 2027 | Pendiente |
 
 - **Visible solo en año 2026**: Se oculta automáticamente si se selecciona otro año
-- **Actualización manual**: Cambiar `null` por precio en `CBAM_QUARTERLY_PRICES_2026` en `CBAMCostSimulator.js`
+- **Fuente de los precios**: tabla `cbam_ets_prices` en Supabase. Cada precio trimestral oficial se carga como una fila con `application_quarter` (p. ej. `'Q1-2026'`), `price`, `price_date` y `source`. La fila vigente se marca con `is_current=true`; el motor de cálculo y el panel leen de ahí.
+- **Actualización trimestral**: cuando la Comisión Europea publica un precio nuevo, insertar la fila en `cbam_ets_prices` (script de migración o SQL directo), marcarla `is_current=true` y desmarcar la anterior. El precio queda inmediatamente disponible en calculadora, simulador y motor de asesoría sin cambios de código.
 - **Botón "Usar este precio"**: Aplica el precio oficial al campo de precio EUA de la calculadora
-- **Sin API externa**: No requiere fetch ni scraping — los precios se actualizan en el código
+- **Sin API externa**: No requiere fetch ni scraping — la BD es la fuente de verdad y `lib/cbamRegulatoryParams.js` expone `CBAM_CERTIFICATE_PRICE_FALLBACK` como respaldo si la consulta a BD falla.
 
 #### 🆕 Penalización Valores por Defecto (Dic 2025)
 Markup progresivo según C(2025) 8552 si no se aportan emisiones reales verificadas:
@@ -1481,17 +1526,30 @@ cbam_timeline                   -- Eventos y plazos CBAM
 cbam_certificates               -- Certificados DUA (Y128, Y134...)
 cbam_default_value_markup       -- Markup progresivo 2026-2028
 cbam_config                     -- Configuración clave-valor
-cbam_ets_prices                 -- Precios EU ETS
+cbam_ets_prices                 -- Precios EU ETS (price, price_date,
+                                --   application_quarter, source, is_current)
 cbam_countries                  -- 246 países con estado CBAM
 cbam_calculator_saves           -- Historial cálculos calculadora (multi-producto)
 
 -- ══════════════════════════════════════════════
 -- 🆕 CBAM Phase 2: Asesoría Premium (3 tablas)
 -- ══════════════════════════════════════════════
-cbam_advisory_requests          -- Solicitudes de asesoría (empresa, estado, totales)
-cbam_advisory_products          -- Líneas de producto por solicitud
+cbam_advisory_requests          -- Solicitudes de asesoría (empresa, estado, totales).
+                                --   Totales: total_emissions, total_estimated_cost,
+                                --   total_certificates_physical, total_certificates_to_surrender.
+                                --   Precio CO₂ snapshot: co2_price_used, co2_price_date,
+                                --   co2_price_lookup_source ('db'|'fallback'),
+                                --   co2_price_application_quarter.
+                                --   Entrega: report_ref, report_generated_at, delivered_at.
+cbam_advisory_products          -- Líneas de producto por solicitud.
+                                --   Por línea: emissions_subject_to_cbam, total_cost,
+                                --   certificates_physical, certificates_to_surrender
+                                --   (entero post-Math.ceil, Art. 20 Reg. 2023/956),
+                                --   free_allocation_implicit (AGIE).
 cbam_advisory_documents         -- Documentos subidos (DUAs, facturas)
+cbam_advisory_reports           -- Versionado del PDF (current_report por solicitud)
 -- + bucket Storage: cbam-advisory-docs (privado, RLS por usuario)
+-- + bucket Storage: cbam-advisory-reports (privado, RLS por owner del request)
 ```
 
 ### Actualización mensual de datos TARIC
