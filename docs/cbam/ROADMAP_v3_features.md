@@ -116,6 +116,95 @@ ejecución del Art. 9 (esperados 2026-2027).
 
 ---
 
+## Saneamiento Advisory — prioridad ALTA (destapado por bug Noatum 2026-05-21)
+
+**Origen:** investigación del bug "botón de descarga ausente en vista cliente"
+(PR #20). El fix tapó el agujero más agudo (regeneración + PATCH del admin
+podían retroceder `status='delivered'` a estados anteriores), pero el episodio
+destapó deuda estructural en el módulo Advisory que debería atacarse en una
+sesión dedicada antes de añadir features nuevas encima.
+
+Cinco bloques de trabajo, en orden de impacto:
+
+### 1. Centralizar transiciones de estado (la deuda más cara)
+
+Hoy cada endpoint setea `status` a mano (`submit/`, `release/`,
+`generate-report/`, PATCH `/admin/.../[id]`, `updatePayment` del cliente
+admin…). Cada uno con su propia lógica y sus propios olvidos. El bug Noatum
+existió porque `generate-report` ponía `status='report_ready'` sin mirar
+el estado actual; el "revert" durante el backfill ocurrió porque la PATCH
+escribía `body.status` sin validar transición legal.
+
+`lib/cbamAdvisoryStatus.js` (creado en este PR) es el embrión. Trabajo:
+
+- Definir tabla de transiciones legales `STATUS_TRANSITIONS: Map<from, Set<to>>`.
+- Exportar `transitionStatus(requestId, from, to, { reason, byUser })` que
+  valida la transición, ejecuta el UPDATE en BD con guard `.eq('status', from)`
+  (compare-and-set transaccional, evita race conditions entre admins) y registra
+  un log de auditoría en una nueva tabla `cbam_advisory_status_log`.
+- Refactor de los ~5 sitios que escriben `status` para que pasen por la
+  función única. Eliminar `body.status` arbitrario en la PATCH del admin —
+  los cambios de estado deben ir por endpoints específicos
+  (`/release`, `/return-to-review`, etc.), no por un PATCH genérico.
+
+### 2. Deduplicar mappers (`cbamAdvisoryAdminService.js`)
+
+`mapRequest`, `mapProduct`, `mapDocument` y `toSnake` están duplicados
+entre `cbamAdvisoryService.js` (cliente) y `cbamAdvisoryAdminService.js`
+(admin). Cualquier campo nuevo de BD tiene que añadirse en dos sitios; ya
+hemos perdido descargas/datos en el pasado por mappers que no exponían
+columnas persistidas (mismo patrón mencionado en CLAUDE.md).
+
+Trabajo: extraer a `lib/cbamAdvisoryMappers.js` y reescribir
+ambos servicios para importar de ahí. Reducir `toSnake` a una conversión
+genérica (camel→snake) y eliminar el `map` manual.
+
+### 3. Refactor de `toSnake` — el `map[key] || key` que falla en silencio
+
+`toSnake` (`cbamAdvisoryService.js:129`) usa un diccionario manual y, si
+una key no está mapeada, devuelve la key tal cual. Esto significa que si
+alguien añade un campo camelCase nuevo sin actualizar el `map`, el UPDATE
+escribe `someNewField` en BD y Postgres rechaza la columna (o peor, la
+ignora si el cliente fuese laxo). Falla en silencio o de forma confusa.
+
+Trabajo: reemplazar por una función pura camel→snake automática, o por un
+mapper generado a partir del schema. Asegurar que campos no permitidos
+(p. ej. `id`, `userId`, `createdAt`) se filtran explícitamente.
+
+### 4. Patrón optimistic-write sin re-fetch en handlers admin
+
+El bug del "revert" del backfill — la fila volvió a `paid` segundos después
+del UPDATE — se explica porque `handleSave` y `updatePayment` en
+`app/admin/cbam/asesoria/[id]/page.js` leen `advisory.status` del estado
+React (`useState` inicializado en mount) y lo envían al PATCH. Si BD
+cambia mientras el admin tiene la página abierta, el guardar reescribe con
+un valor obsoleto.
+
+La guarda servidor del PR #20 cierra el caso de degradación de `delivered`,
+pero el patrón sigue: cualquier campo que el admin no haya tocado se
+sobrescribe con el snapshot del momento de la apertura. Trabajo:
+
+- Re-fetch antes del save, o
+- Enviar sólo los campos que el usuario ha modificado (form dirty
+  tracking), o
+- Optimistic concurrency con `If-Match` sobre `updated_at`.
+
+### 5. Tests de integración del round-trip BD ↔ schema
+
+No hay tests que cojan una solicitud, la pasen por los endpoints del flujo
+completo (submit → review → calculate → generate → release → download) y
+verifiquen que los campos persistidos coinciden con los expuestos al
+cliente. Cualquier divergencia mapper/schema/endpoint pasa desapercibida
+hasta que un cliente lo nota.
+
+Trabajo: suite Playwright o Vitest+supabase-test contra una BD efímera
+(branch de Supabase) que valide cada transición de estado y cada campo
+expuesto. Mínimo: tests que reproduzcan los bugs históricos (mapper que
+ocultaba campos, regeneración que regresaba status, PATCH que aceptaba
+status arbitrario).
+
+---
+
 ## Notas de futuras iteraciones (no priorizadas)
 
 - **Precio trimestral por fecha de llegada de línea** (diapo 9/15 webinar):

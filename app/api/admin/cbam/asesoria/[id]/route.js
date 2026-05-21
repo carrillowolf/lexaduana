@@ -5,6 +5,7 @@ import {
   updateAdvisoryRequestAsAdmin,
 } from '@/lib/cbamAdvisoryAdminService'
 import { sendPendingPaymentEmail } from '@/lib/cbamAdvisoryEmails'
+import { isPostDelivery } from '@/lib/cbamAdvisoryStatus'
 import { safeLogger } from '@/lib/safe-logger'
 
 /**
@@ -46,6 +47,32 @@ export async function PATCH(request, { params }) {
   try {
     const { id } = await params
     const body = await request.json()
+
+    // Guarda anti-degradación de estado:
+    // El status real de la solicitud se lee de BD (no del body) y se compara
+    // contra `body.status`. Si la solicitud está en un estado post-entrega y
+    // el body intenta moverla a un estado pre-entrega, se rechaza con 409.
+    //
+    // Motivo: los handlers del admin (ClientTab.handleSave, updatePayment) envían
+    // `status` desde un estado React que puede estar desactualizado respecto a BD.
+    // Sin esta guarda, un admin con el form abierto puede revertir una entrega
+    // al pulsar Guardar — invalidando la descarga del cliente.
+    if (body.status !== undefined) {
+      const current = await getAdvisoryRequestAsAdmin(id)
+      if (!current) {
+        return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
+      }
+      if (isPostDelivery(current.status) && !isPostDelivery(body.status)) {
+        return NextResponse.json(
+          {
+            error: `No se puede degradar el estado desde '${current.status}' a '${body.status}'. Recarga la página para ver el estado actual.`,
+            code: 'STATUS_DEGRADE_BLOCKED',
+            currentStatus: current.status,
+          },
+          { status: 409 }
+        )
+      }
+    }
 
     // Validar transiciones de pago coherentes
     if (body.paymentStatus === 'paid' && !body.paymentDate) {

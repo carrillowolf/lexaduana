@@ -9,6 +9,7 @@ import {
 } from '@/lib/cbamAdvisoryAdminService'
 import { buildReportSnapshot } from '@/lib/cbamReportSnapshot'
 import { renderReportPdf } from '@/lib/cbamReportGenerator'
+import { isPostDelivery } from '@/lib/cbamAdvisoryStatus'
 import { safeLogger } from '@/lib/safe-logger'
 
 // React-PDF requiere Node runtime (no edge)
@@ -87,9 +88,15 @@ export async function POST(request, { params }) {
       generatedBy: auth.user.email,
     })
 
-    // 7. Actualizar status del request
+    // 7. Actualizar status del request — solo degradar a 'report_ready' si la
+    // solicitud aún no ha sido entregada. Si ya está entregada, conservar el
+    // estado actual: regenerar el informe sustituye el PDF (el current_report
+    // pasa a apuntar al nuevo) pero no debe retroceder la máquina de estados.
+    const nextStatus = isPostDelivery(advisory.status)
+      ? advisory.status
+      : 'report_ready'
     const updated = await updateAdvisoryRequestAsAdmin(id, {
-      status: 'report_ready',
+      status: nextStatus,
     })
 
     return NextResponse.json({
