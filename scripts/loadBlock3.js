@@ -90,6 +90,16 @@ function clean(val) {
   return String(val).trim() || null
 }
 
+function dedupeByKey(rows, keyFn) {
+  const seen = new Set()
+  return rows.filter(r => {
+    const k = keyFn(r)
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+}
+
 async function batchInsert(table, rows, label, { onConflict } = {}) {
   if (DRY_RUN) {
     console.log(`  🧪 DRY RUN: ${rows.length} filas para ${table}`)
@@ -157,8 +167,12 @@ async function loadCertificates() {
     end_date: parseDate(r['End date'])
   })).filter(r => r.certificate_code)
 
-  console.log(`  🔧 Procesadas ${rows.length} filas válidas`)
-  return await batchInsert('certificate_types', rows, 'Certificate Types', { onConflict: 'certificate_code,language' })
+  const unique = dedupeByKey(rows, r => `${r.certificate_code}\t${r.language}`)
+  const dupes = rows.length - unique.length
+  if (dupes > 0) console.log(`  ⚠️  ${dupes} duplicados eliminados`)
+  console.log(`  🔧 Procesadas ${unique.length} filas únicas`)
+
+  return await batchInsert('certificate_types', unique, 'Certificate Types', { onConflict: 'certificate_code,language' })
 }
 
 // ── 2. FOOTNOTE DESCRIPTIONS ────────────────────────────────
@@ -257,13 +271,7 @@ async function loadLegalBases() {
     publication_date: parseDate(r['Publ. date'])
   })).filter(r => r.legal_base)
 
-  // Deduplicar por legal_base (puede haber duplicados)
-  const seen = new Set()
-  const unique = rows.filter(r => {
-    if (seen.has(r.legal_base)) return false
-    seen.add(r.legal_base)
-    return true
-  })
+  const unique = dedupeByKey(rows, r => r.legal_base)
 
   const dupes = rows.length - unique.length
   if (dupes > 0) console.log(`  ⚠️  ${dupes} duplicados eliminados`)
