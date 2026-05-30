@@ -90,7 +90,7 @@ function clean(val) {
   return String(val).trim() || null
 }
 
-async function batchInsert(table, rows, label) {
+async function batchInsert(table, rows, label, { onConflict } = {}) {
   if (DRY_RUN) {
     console.log(`  🧪 DRY RUN: ${rows.length} filas para ${table}`)
     if (rows.length > 0) console.log(`     Sample:`, JSON.stringify(rows[0], null, 2))
@@ -99,17 +99,22 @@ async function batchInsert(table, rows, label) {
 
   let inserted = 0
   const total = rows.length
+  const op = onConflict ? 'upsert' : 'insert'
 
   for (let i = 0; i < total; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE)
-    const { error } = await supabase.from(table).insert(batch)
+    const { error } = onConflict
+      ? await supabase.from(table).upsert(batch, { onConflict })
+      : await supabase.from(table).insert(batch)
 
     if (error) {
       console.error(`\n  ❌ Error en lote ${Math.floor(i / BATCH_SIZE) + 1} de ${table}:`, error.message)
       const subSize = 50
       for (let j = 0; j < batch.length; j += subSize) {
         const sub = batch.slice(j, j + subSize)
-        const { error: subErr } = await supabase.from(table).insert(sub)
+        const { error: subErr } = onConflict
+          ? await supabase.from(table).upsert(sub, { onConflict })
+          : await supabase.from(table).insert(sub)
         if (subErr) {
           console.error(`     Sub-lote ${j / subSize + 1} falló:`, subErr.message)
         } else {
@@ -126,7 +131,7 @@ async function batchInsert(table, rows, label) {
     }
   }
 
-  console.log(`\n  ✅ ${label}: ${inserted} filas insertadas`)
+  console.log(`\n  ✅ ${label}: ${inserted} filas ${op === 'upsert' ? 'upserted' : 'insertadas'}`)
   return inserted
 }
 
@@ -153,7 +158,7 @@ async function loadCertificates() {
   })).filter(r => r.certificate_code)
 
   console.log(`  🔧 Procesadas ${rows.length} filas válidas`)
-  return await batchInsert('certificate_types', rows, 'Certificate Types')
+  return await batchInsert('certificate_types', rows, 'Certificate Types', { onConflict: 'certificate_code,language' })
 }
 
 // ── 2. FOOTNOTE DESCRIPTIONS ────────────────────────────────
@@ -179,7 +184,7 @@ async function loadFootnoteDescriptions() {
   })).filter(r => r.footnote_code)
 
   console.log(`  🔧 Procesadas ${rows.length} filas válidas`)
-  return await batchInsert('footnote_descriptions', rows, 'Footnote Descriptions')
+  return await batchInsert('footnote_descriptions', rows, 'Footnote Descriptions', { onConflict: 'footnote_code,language' })
 }
 
 // ── 3. ADDITIONAL CODES ─────────────────────────────────────
@@ -205,7 +210,7 @@ async function loadAdditionalCodes() {
   })).filter(r => r.add_code)
 
   console.log(`  🔧 Procesadas ${rows.length} filas válidas`)
-  return await batchInsert('additional_codes', rows, 'Additional Codes')
+  return await batchInsert('additional_codes', rows, 'Additional Codes', { onConflict: 'add_code,language' })
 }
 
 // ── 4. EXCHANGE RATES ───────────────────────────────────────
@@ -264,7 +269,7 @@ async function loadLegalBases() {
   if (dupes > 0) console.log(`  ⚠️  ${dupes} duplicados eliminados`)
   console.log(`  🔧 Procesadas ${unique.length} filas únicas`)
 
-  return await batchInsert('legal_bases', unique, 'Legal Bases')
+  return await batchInsert('legal_bases', unique, 'Legal Bases', { onConflict: 'legal_base' })
 }
 
 // ── MAIN ────────────────────────────────────────────────────
