@@ -7,8 +7,8 @@
  * Carga:
  *   1. geographical_areas_composition  (2.621 filas)
  *   2. geographical_areas              (~311 filas EN)
- *   3. descriptions_new                (25.691 filas)
- *   4. measure_types_new               (78 tipos)
+ *   3. descriptions                    (25.691 filas)
+ *   4. measure_types                   (78 tipos)
  *   5. declarable_codes                (25.697 filas)
  *
  * Uso:
@@ -120,18 +120,49 @@ async function batchInsert(table, rows, label) {
   return inserted
 }
 
-async function truncateTable(table) {
+async function deleteAll(table) {
   if (DRY_RUN) {
-    console.log(`  🧪 DRY RUN: truncaría ${table}`)
+    console.log(`  🧪 DRY RUN: borraría todo de ${table}`)
     return
   }
-  const { error } = await supabase.from(table).delete().neq('id', -1) // Delete all
-  if (error) {
-    console.error(`  ⚠️ Error limpiando ${table}:`, error.message)
-    // Intentar con RPC si delete falla
-    const { error: rpcErr } = await supabase.rpc('truncate_table', { table_name: table })
-    if (rpcErr) console.error(`  ⚠️ RPC truncate también falló:`, rpcErr.message)
+
+  console.log(`  🗑️  Borrando datos actuales de ${table}...`)
+
+  let deleted = 0
+  let hasMore = true
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('id')
+      .limit(5000)
+
+    if (error) {
+      console.error(`  ❌ Error leyendo ids de ${table}:`, error.message)
+      break
+    }
+
+    if (!data || data.length === 0) {
+      hasMore = false
+      break
+    }
+
+    const ids = data.map(r => r.id)
+    const { error: delErr } = await supabase
+      .from(table)
+      .delete()
+      .in('id', ids)
+
+    if (delErr) {
+      console.error(`  ❌ Error borrando de ${table}:`, delErr.message)
+      break
+    }
+
+    deleted += ids.length
+    process.stdout.write(`\r  🗑️  Borradas ${deleted} filas de ${table}...`)
   }
+
+  console.log(`\n  ✅ ${table} limpia (${deleted} filas eliminadas)`)
 }
 
 // ── 1. Geographical Areas Composition ───────────────────────
@@ -161,7 +192,7 @@ async function loadGeoComposition() {
   console.log(`     Grupos únicos: ${new Set(rows.map(r => r.country_group)).size}`)
   console.log(`     Países miembros únicos: ${new Set(rows.map(r => r.member_country)).size}`)
 
-  await truncateTable('geographical_areas_composition')
+  await deleteAll('geographical_areas_composition')
   return await batchInsert('geographical_areas_composition', rows, 'Geo Composition')
 }
 
@@ -195,7 +226,7 @@ async function loadGeoAreas() {
 
   console.log(`  📊 ${rows.filter(r => r.is_country).length} países, ${rows.filter(r => !r.is_country).length} grupos`)
 
-  await truncateTable('geographical_areas')
+  await deleteAll('geographical_areas')
   return await batchInsert('geographical_areas', rows, 'Geo Areas')
 }
 
@@ -225,6 +256,11 @@ async function loadDescriptions() {
     }
   }).filter(r => r.goods_code && r.description)
 
+  if (rows.length === 0) {
+    console.error('  ❌ 0 filas válidas en Nomenclature EN.xlsx — abortando sin borrar descriptions')
+    throw new Error('descriptions: 0 filas válidas, recarga abortada')
+  }
+
   console.log(`  🔧 Procesadas ${rows.length} filas válidas`)
 
   // Stats por nivel jerárquico
@@ -238,8 +274,8 @@ async function loadDescriptions() {
     console.log(`     Hier ${hier} (${label}): ${count}`)
   })
 
-  await truncateTable('descriptions_new')
-  return await batchInsert('descriptions_new', rows, 'Descriptions')
+  await deleteAll('descriptions')
+  return await batchInsert('descriptions', rows, 'Descriptions')
 }
 
 // ── 4. Measure Types (78 tipos completos) ───────────────────
@@ -329,6 +365,11 @@ async function loadMeasureTypes() {
   // Ordenar por code
   rows.sort((a, b) => a.type_code - b.type_code)
 
+  if (rows.length === 0) {
+    console.error('  ❌ 0 tipos de medida válidos en Duties Import — abortando sin borrar measure_types')
+    throw new Error('measure_types: 0 filas válidas, recarga abortada')
+  }
+
   console.log(`  📊 Categorías:`)
   const byCat = {}
   rows.forEach(r => { byCat[r.category] = (byCat[r.category] || 0) + 1 })
@@ -336,8 +377,8 @@ async function loadMeasureTypes() {
     console.log(`     ${cat}: ${count} tipos`)
   })
 
-  await truncateTable('measure_types_new')
-  return await batchInsert('measure_types_new', rows, 'Measure Types')
+  await deleteAll('measure_types')
+  return await batchInsert('measure_types', rows, 'Measure Types')
 }
 
 // ── 5. Declarable Codes ─────────────────────────────────────
@@ -367,7 +408,7 @@ async function loadDeclarableCodes() {
   const leafCount = rows.filter(r => r.is_leaf).length
   console.log(`  🔧 Procesadas ${rows.length} filas (${leafCount} declarables / ${rows.length - leafCount} no-hoja)`)
 
-  await truncateTable('declarable_codes')
+  await deleteAll('declarable_codes')
   return await batchInsert('declarable_codes', rows, 'Declarable Codes')
 }
 
@@ -444,12 +485,7 @@ async function main() {
 
   console.log('\n📋 PRÓXIMOS PASOS:')
   console.log('   1. Verificar conteos en Supabase (query en bloque1-schema.sql)')
-  console.log('   2. Si OK, renombrar tablas:')
-  console.log('      ALTER TABLE descriptions RENAME TO descriptions_old;')
-  console.log('      ALTER TABLE descriptions_new RENAME TO descriptions;')
-  console.log('      ALTER TABLE measure_types RENAME TO measure_types_old;')
-  console.log('      ALTER TABLE measure_types_new RENAME TO measure_types;')
-  console.log('   3. Ejecutar Bloque 2 (recarga de datos core)')
+  console.log('   2. Ejecutar Bloque 2 (recarga de datos core)')
 }
 
 main().catch(err => {
