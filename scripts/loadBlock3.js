@@ -354,7 +354,6 @@ async function main() {
   console.log('      DROP TABLE IF EXISTS certificate_types_old;')
   console.log('      DROP TABLE IF EXISTS footnote_descriptions_old;')
   console.log('      DROP TABLE IF EXISTS exchange_rates_old;')
-  console.log('   3. Actualizar calculateTariff.js para usar las nuevas lookup tables')
 }
 
 main().catch(err => {
