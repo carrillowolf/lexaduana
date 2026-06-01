@@ -1,6 +1,7 @@
 'use client'
 
-import { FileCheck, FileText, Brain } from 'lucide-react'
+import { FileCheck, FileText, Brain, Shield } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { origenDict } from '@/lib/i18n/origen'
 
@@ -10,14 +11,22 @@ const PROOF_ICONS = {
   sin_documento: Brain,
 }
 
+const PROOF_TYPE_ICONS = {
+  atr: Shield,
+  estatuto_union: Shield,
+}
+
 const PROOF_TYPE_KEYS = {
   eur1: 'origen.proof.eur1',
   eurmed: 'origen.proof.eurmed',
   declaracion_factura: 'origen.proof.declaracion_factura',
   declaracion_origen: 'origen.proof.declaracion_origen',
   atr: 'origen.proof.atr',
+  estatuto_union: 'origen.proof.estatuto_union',
   conocimiento_importador: 'origen.proof.conocimiento_importador',
 }
+
+const LIBRE_PRACTICA_PROOF_TYPES = new Set(['atr', 'estatuto_union'])
 
 const STATIC_EXAMPLE_VALUES = {
   num_autorizacion: 'ES/0123/2024',
@@ -69,9 +78,10 @@ function renderFilledExample(template, countryName, areaCode) {
 
 export default function ProofCard({ proof, countryName, areaCode }) {
   const t = useTranslation(origenDict)
-  const Icon = PROOF_ICONS[proof.proofFormat] || FileText
+  const Icon = PROOF_TYPE_ICONS[proof.proofType] || PROOF_ICONS[proof.proofFormat] || FileText
   const proofName = t(PROOF_TYPE_KEYS[proof.proofType] || `origen.proof.${proof.proofType}`)
   const casilla = proof.casilla44Codes?.join(', ')
+  const isLibrePractica = LIBRE_PRACTICA_PROOF_TYPES.has(proof.proofType)
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-[18px_20px] mb-3">
@@ -86,6 +96,15 @@ export default function ProofCard({ proof, countryName, areaCode }) {
           </span>
         )}
       </div>
+
+      {isLibrePractica && (
+        <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg px-3 py-2 mt-2 mb-2">
+          <p className="text-[13px] font-semibold text-amber-900 flex items-center gap-1.5 m-0">
+            <AlertTriangle className="w-3.5 h-3.5 flex-none" />
+            {t('origen.libre_practica_aviso')}
+          </p>
+        </div>
+      )}
 
       {proof.noteEs && (
         <p className="text-[13.5px] text-slate-500 m-0">

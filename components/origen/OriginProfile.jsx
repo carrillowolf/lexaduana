@@ -21,6 +21,8 @@ export default function OriginProfile({ data, countries = [] }) {
     .sort()
     .pop()
 
+  const isCustomsUnion = agreements.some((a) => a.type === 'union_aduanera')
+
   return (
     <div className="max-w-3xl mx-auto px-5 pt-7 pb-12">
       <h1 className="text-sm font-semibold text-slate-500 tracking-wide mb-3.5">
@@ -30,7 +32,7 @@ export default function OriginProfile({ data, countries = [] }) {
       <CountrySelect countries={countries} />
 
       <div className="mt-5">
-        <VerdictBanner hasPreference={hasPreference} />
+        <VerdictBanner hasPreference={hasPreference} isCustomsUnion={isCustomsUnion} />
       </div>
 
       {agreements.map((agreement, i) => (
