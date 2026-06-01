@@ -19,11 +19,11 @@ const PROOF_TYPE_KEYS = {
   conocimiento_importador: 'origen.proof.conocimiento_importador',
 }
 
-const EXAMPLE_VALUES = {
+const STATIC_EXAMPLE_VALUES = {
   num_autorizacion: 'ES/0123/2024',
-  num_referencia: 'REX-XX-000000',
   periodo_desde: '01/01/2025',
   periodo_hasta: '31/12/2025',
+  criterio_origen: 'P',
 }
 
 function renderTemplate(template, highlight) {
@@ -46,8 +46,12 @@ function renderTemplate(template, highlight) {
   })
 }
 
-function renderFilledExample(template, countryName) {
-  const replacements = { ...EXAMPLE_VALUES, pais_origen: countryName }
+function renderFilledExample(template, countryName, areaCode) {
+  const replacements = {
+    ...STATIC_EXAMPLE_VALUES,
+    pais_origen: countryName,
+    num_referencia: `${areaCode}REX0000000000XX`,
+  }
   const parts = template.split(/(\{[^}]+\})/)
   return parts.map((part, i) => {
     if (part.startsWith('{') && part.endsWith('}')) {
@@ -63,7 +67,7 @@ function renderFilledExample(template, countryName) {
   })
 }
 
-export default function ProofCard({ proof, countryName }) {
+export default function ProofCard({ proof, countryName, areaCode }) {
   const t = useTranslation(origenDict)
   const Icon = PROOF_ICONS[proof.proofFormat] || FileText
   const proofName = t(PROOF_TYPE_KEYS[proof.proofType] || `origen.proof.${proof.proofType}`)
@@ -115,7 +119,7 @@ export default function ProofCard({ proof, countryName }) {
             {t('origen.ejemplo')}
           </p>
           <div className="bg-slate-50 border border-slate-200 rounded-[10px] px-3.5 py-2.5 text-[13.5px] leading-relaxed text-slate-500">
-            {renderFilledExample(proof.declarationTemplateEs, countryName)}
+            {renderFilledExample(proof.declarationTemplateEs, countryName, areaCode)}
           </div>
         </div>
       )}
