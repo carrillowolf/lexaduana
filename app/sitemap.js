@@ -1,4 +1,5 @@
 import { listGlossarySlugsForSitemap } from '@/lib/glossary'
+import { getAgreementCountries } from '@/lib/origen/getOriginProfile'
 
 export default async function sitemap() {
   const baseUrl = 'https://lexaduana.es'
@@ -22,6 +23,7 @@ export default async function sitemap() {
 
     { url: '/incoterms', priority: 0.9, changeFrequency: 'monthly' },
     { url: '/valor-en-aduana', priority: 0.9, changeFrequency: 'monthly' },
+    { url: '/origen', priority: 0.8, changeFrequency: 'monthly' },
     { url: '/glosario', priority: 0.8, changeFrequency: 'weekly' },
     { url: '/tipos-cambio', priority: 0.6, changeFrequency: 'daily' },
 
@@ -51,5 +53,18 @@ export default async function sitemap() {
     console.error('sitemap: error cargando glosario', err.message)
   }
 
-  return [...base, ...glossaryUrls]
+  let origenUrls = []
+  try {
+    const countries = await getAgreementCountries()
+    origenUrls = countries.map((c) => ({
+      url: `${baseUrl}/origen/${c.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    }))
+  } catch (err) {
+    console.error('sitemap: error cargando origen', err.message)
+  }
+
+  return [...base, ...glossaryUrls, ...origenUrls]
 }

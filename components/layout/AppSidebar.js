@@ -53,6 +53,7 @@ function useNavSections() {
       {
         label: t('nav.resources'),
         items: [
+          { href: '/origen', icon: '🌍', label: t('nav.origin') },
           { href: '/glosario', icon: '📖', label: t('nav.glossary') },
           { href: '/incoterms', icon: '📦', label: t('nav.incoterms') },
           { href: '/valor-en-aduana', icon: '⚖️', label: t('nav.customsValue') },
