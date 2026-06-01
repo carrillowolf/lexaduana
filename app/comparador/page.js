@@ -29,13 +29,19 @@ export default function ComparadorPage() {
     async function loadCountries() {
         setLoadingCountries(true);
         try {
-            const response = await fetch('/api/calculate');
-            const data = await response.json();
+            const [apiRes, prefRes] = await Promise.all([
+                fetch('/api/calculate').then(r => r.json()),
+                supabase.from('v_country_preference_status').select('area_code, has_preference, is_sanctioned'),
+            ]);
 
-            if (data.success && data.countries) {
-                const mappedCountries = data.countries
+            const prefMap = new Map();
+            if (prefRes.data) {
+                prefRes.data.forEach(r => prefMap.set(r.area_code, r));
+            }
+
+            if (apiRes.success && apiRes.countries) {
+                const mappedCountries = apiRes.countries
                     .filter(c => {
-                        // Filtrar "Terceros países" o códigos genéricos
                         const code = c.country_code || c.code;
                         const name = (c.country_name || c.name || '').toLowerCase();
                         return code &&
@@ -44,37 +50,25 @@ export default function ComparadorPage() {
                                !name.includes('erga omnes');
                     })
                     .map(c => {
-                        const reductionRate = parseFloat(c.reduction_rate) || 0;
-                        const hasSanctions = reductionRate < 0;
+                        const code = c.country_code || c.code;
+                        const pref = prefMap.get(code);
                         const agreementType = c.agreement_type || '';
 
-                        // Solo es acuerdo real si:
-                        // - Tiene agreement_type válido
-                        // - NO es "Sin acuerdo"
-                        // - NO tiene sanciones
-                        const hasRealAgreement = agreementType &&
-                                                  agreementType !== 'Sin acuerdo' &&
-                                                  !hasSanctions;
-
                         return {
-                            code: c.country_code || c.code,
+                            code,
                             name: c.country_name || c.name,
-                            has_agreement: hasRealAgreement,
-                            has_sanctions: hasSanctions,
+                            has_agreement: pref ? pref.has_preference : false,
+                            has_sanctions: pref ? pref.is_sanctioned : false,
                             agreement_type: agreementType,
-                            reduction_rate: reductionRate
+                            reduction_rate: parseFloat(c.reduction_rate) || 0
                         };
                     });
 
-                // Ordenar: primero con acuerdo, luego normales, al final sanciones
                 mappedCountries.sort((a, b) => {
-                    // Sanciones al final
                     if (a.has_sanctions && !b.has_sanctions) return 1;
                     if (!a.has_sanctions && b.has_sanctions) return -1;
-                    // Acuerdos primero
                     if (a.has_agreement && !b.has_agreement) return -1;
                     if (!a.has_agreement && b.has_agreement) return 1;
-                    // Alfabético
                     return a.name.localeCompare(b.name);
                 });
                 setCountries(mappedCountries);
