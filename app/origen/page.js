@@ -1,5 +1,5 @@
 import { getAgreementCountries } from '@/lib/origen/getOriginProfile'
-import CountrySelect from '@/components/origen/CountrySelect'
+import OrigenIndex from '@/components/origen/OrigenIndex'
 
 export const revalidate = 86400
 
@@ -43,18 +43,7 @@ export default async function OrigenIndexPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="max-w-3xl mx-auto px-5 pt-7 pb-12">
-        <h1 className="text-sm font-semibold text-slate-500 tracking-wide mb-3.5">
-          Ficha de origen
-        </h1>
-
-        <CountrySelect countries={countries} />
-
-        <p className="text-sm text-slate-500 mt-6">
-          Selecciona un país para ver si tiene acuerdo preferencial con la UE y
-          cómo acreditar el origen.
-        </p>
-      </div>
+      <OrigenIndex countries={countries} countryCount={countries.length} />
     </>
   )
 }
