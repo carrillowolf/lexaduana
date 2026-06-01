@@ -43,7 +43,7 @@ export default function OriginProfile({ data, countries = [] }) {
                 {t('origen.como_acreditar')}
               </h2>
               {agreement.proofsCurrent.map((proof, j) => (
-                <ProofCard key={j} proof={proof} countryName={country.name} />
+                <ProofCard key={j} proof={proof} countryName={country.nameEs} />
               ))}
             </>
           )}

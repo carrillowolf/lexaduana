@@ -26,7 +26,7 @@ export default function CountrySelect({ countries }) {
         <option value="">—</option>
         {countries.map((c) => (
           <option key={c.areaCode} value={c.slug}>
-            {c.name}
+            {c.nameEs}
           </option>
         ))}
       </select>

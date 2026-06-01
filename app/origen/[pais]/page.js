@@ -16,8 +16,8 @@ export async function generateMetadata({ params }) {
 
   const { country, agreements } = profile
   const agreementName = agreements[0]?.title || ''
-  const title = `Origen ${country.name} — ${agreementName} | LexAduana`
-  const description = `Acuerdo preferencial de ${country.name} con la UE: cómo acreditar el origen, documentos necesarios y condiciones.`
+  const title = `Origen ${country.nameEsEs} — ${agreementName} | LexAduana`
+  const description = `Acuerdo preferencial de ${country.nameEsEs} con la UE: cómo acreditar el origen, documentos necesarios y condiciones.`
   const canonical = `https://lexaduana.es/origen/${country.slug}`
 
   return {
@@ -56,7 +56,7 @@ export default async function OrigenPaisPage({ params }) {
       {
         '@type': 'ListItem',
         position: 3,
-        name: country.name,
+        name: country.nameEs,
         item: `https://lexaduana.es/origen/${country.slug}`,
       },
     ],
@@ -65,8 +65,8 @@ export default async function OrigenPaisPage({ params }) {
   const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `Origen preferencial: ${country.name} — ${agreementName}`,
-    description: `Cómo acreditar el origen de mercancías de ${country.name} para beneficiarse de aranceles preferenciales en la UE.`,
+    headline: `Origen preferencial: ${country.nameEs} — ${agreementName}`,
+    description: `Cómo acreditar el origen de mercancías de ${country.nameEs} para beneficiarse de aranceles preferenciales en la UE.`,
     url: `https://lexaduana.es/origen/${country.slug}`,
     publisher: {
       '@type': 'Organization',
