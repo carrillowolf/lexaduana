@@ -16,6 +16,8 @@ const TYPE_LABELS = {
   union_aduanera: 'Unión aduanera',
   eee: 'EEE',
   spg: 'SPG',
+  spg_plus: 'SPG+',
+  eba: 'EBA',
 }
 
 export default function AgreementCard({ agreement }) {

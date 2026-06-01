@@ -21,7 +21,7 @@ const PROOF_TYPE_KEYS = {
 
 const EXAMPLE_VALUES = {
   num_autorizacion: 'ES/0123/2024',
-  num_referencia: 'ESREX2024001234',
+  num_referencia: 'REX-XX-000000',
   periodo_desde: '01/01/2025',
   periodo_hasta: '31/12/2025',
 }
