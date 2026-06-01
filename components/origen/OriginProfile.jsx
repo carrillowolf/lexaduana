@@ -5,6 +5,7 @@ import { FileText } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { origenDict } from '@/lib/i18n/origen'
 import CountrySelect from './CountrySelect'
+import TradeStatusBanner from './TradeStatusBanner'
 import VerdictBanner from './VerdictBanner'
 import AgreementCard from './AgreementCard'
 import ProofCard from './ProofCard'
@@ -32,6 +33,7 @@ export default function OriginProfile({ data, countries = [] }) {
       <CountrySelect countries={countries} />
 
       <div className="mt-5">
+        <TradeStatusBanner tradeStatus={data.tradeStatus} />
         <VerdictBanner hasPreference={hasPreference} isCustomsUnion={isCustomsUnion} />
       </div>
 
