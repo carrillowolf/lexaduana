@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { useSidebar } from './SidebarContext'
 import { useTranslation } from '@/lib/i18n'
 import { commonDict } from '@/lib/i18n/common'
+
+const STORAGE_KEY = 'lexaduana-sidebar-sections'
 
 // ============================================================
 // NAVIGATION STRUCTURE (dynamic labels via i18n)
@@ -17,12 +19,14 @@ function useNavSections() {
   return {
     sections: [
       {
+        key: 'tools',
         label: t('nav.tools'),
         items: [
           { href: '/calculadora', icon: '🧮', label: t('nav.calculator') },
           { href: '/clasificador', icon: '🤖', label: t('nav.classifier') },
           { href: '/factura-ocr', icon: '📄', label: t('nav.invoiceOcr'), badge: 'New' },
           { href: '/comparador', icon: '⚖️', label: t('nav.comparator') },
+          { href: '/origen', icon: '🌍', label: t('nav.origin') },
           { href: '/despachos', icon: '📋', label: t('nav.dispatches') },
           { href: '/bulk', icon: '📊', label: t('nav.bulkCalc') },
           { href: '/cambios', icon: '🔄', label: t('nav.changes'), badge: 'New' },
@@ -30,6 +34,7 @@ function useNavSections() {
         ],
       },
       {
+        key: 'regulations',
         label: t('nav.regulations'),
         items: [
           {
@@ -51,9 +56,9 @@ function useNavSections() {
         ],
       },
       {
+        key: 'resources',
         label: t('nav.resources'),
         items: [
-          { href: '/origen', icon: '🌍', label: t('nav.origin') },
           { href: '/glosario', icon: '📖', label: t('nav.glossary') },
           { href: '/incoterms', icon: '📦', label: t('nav.incoterms') },
           { href: '/valor-en-aduana', icon: '⚖️', label: t('nav.customsValue') },
@@ -71,8 +76,98 @@ function useNavSections() {
 }
 
 // ============================================================
+// SECTION COLLAPSE PERSISTENCE
+// ============================================================
+
+function loadSavedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function saveSectionState(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch { /* noop */ }
+}
+
+function useSectionCollapse(sections, isActiveFn) {
+  const [expanded, setExpanded] = useState(() => {
+    const initial = {}
+    for (const s of sections) {
+      initial[s.key] = true
+    }
+    return initial
+  })
+
+  useEffect(() => {
+    const saved = loadSavedState()
+    const next = {}
+    for (const s of sections) {
+      const sectionHasActive = s.items.some((item) => {
+        if (isActiveFn(item.href)) return true
+        if (item.children) return item.children.some((c) => isActiveFn(c.href))
+        return false
+      })
+      if (sectionHasActive) {
+        next[s.key] = true
+      } else if (saved && saved[s.key] !== undefined) {
+        next[s.key] = saved[s.key]
+      } else {
+        next[s.key] = false
+      }
+    }
+    setExpanded(next)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    setExpanded((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const s of sections) {
+        const sectionHasActive = s.items.some((item) => {
+          if (isActiveFn(item.href)) return true
+          if (item.children) return item.children.some((c) => isActiveFn(c.href))
+          return false
+        })
+        if (sectionHasActive && !prev[s.key]) {
+          next[s.key] = true
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [sections, isActiveFn])
+
+  const toggle = useCallback((key) => {
+    setExpanded((prev) => {
+      const next = { ...prev, [key]: !prev[key] }
+      saveSectionState(next)
+      return next
+    })
+  }, [])
+
+  return { expanded, toggle }
+}
+
+// ============================================================
 // COMPONENTS
 // ============================================================
+
+function SectionChevron({ open }) {
+  return (
+    <svg
+      className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`}
+      fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+    </svg>
+  )
+}
 
 function NavItem({ href, icon, label, badge, isActive, onClick }) {
   return (
@@ -100,12 +195,10 @@ function ExpandableNavItem({ item, pathname, onNavigate, user }) {
   const isParentActive = pathname.startsWith(item.href)
   const [expanded, setExpanded] = useState(isParentActive)
 
-  // Auto-expand cuando estemos en una subruta
   useEffect(() => {
     if (isParentActive) setExpanded(true)
   }, [isParentActive])
 
-  // Filtra children que requieren sesión si no hay usuario
   const visibleChildren = item.children.filter(c => !c.authRequired || user)
 
   const rowClasses = `flex items-center text-sm transition-colors ${
@@ -179,6 +272,13 @@ export default function AppSidebar() {
   const supabase = createClient()
   const { sections: NAV_SECTIONS, authItems: AUTH_ITEMS, loginLabel, suiteLabel } = useNavSections()
 
+  const isActive = useCallback((href) => {
+    if (href === '/cbam') return pathname === '/cbam'
+    return pathname === href || pathname.startsWith(href + '/')
+  }, [pathname])
+
+  const { expanded: sectionExpanded, toggle: toggleSection } = useSectionCollapse(NAV_SECTIONS, isActive)
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -196,11 +296,6 @@ export default function AppSidebar() {
     if (isMobile) closeSidebar()
   }
 
-  function isActive(href) {
-    if (href === '/cbam') return pathname === '/cbam'
-    return pathname === href || pathname.startsWith(href + '/')
-  }
-
   const sidebarContent = (
     <div className="flex flex-col h-full bg-white">
       {/* Logo */}
@@ -215,37 +310,50 @@ export default function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label}>
-            <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-              {section.label}
-            </p>
-            <div className="space-y-0.5">
-              {section.items.map((item) =>
-                item.expandable ? (
-                  <ExpandableNavItem
-                    key={item.href}
-                    item={item}
-                    pathname={pathname}
-                    onNavigate={handleNavigate}
-                    user={user}
-                  />
-                ) : (
-                  <NavItem
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    badge={item.badge}
-                    isActive={isActive(item.href)}
-                    onClick={handleNavigate}
-                  />
-                )
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
+        {NAV_SECTIONS.map((section) => {
+          const open = sectionExpanded[section.key] !== false
+          return (
+            <div key={section.key}>
+              <button
+                type="button"
+                onClick={() => toggleSection(section.key)}
+                aria-expanded={open}
+                className="flex items-center gap-1.5 w-full px-3 mb-1 cursor-pointer group"
+              >
+                <SectionChevron open={open} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 group-hover:text-gray-500 transition-colors">
+                  {section.label}
+                </span>
+              </button>
+              {open && (
+                <div className="space-y-0.5">
+                  {section.items.map((item) =>
+                    item.expandable ? (
+                      <ExpandableNavItem
+                        key={item.href}
+                        item={item}
+                        pathname={pathname}
+                        onNavigate={handleNavigate}
+                        user={user}
+                      />
+                    ) : (
+                      <NavItem
+                        key={item.href}
+                        href={item.href}
+                        icon={item.icon}
+                        label={item.label}
+                        badge={item.badge}
+                        isActive={isActive(item.href)}
+                        onClick={handleNavigate}
+                      />
+                    )
+                  )}
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </nav>
 
       {/* Bottom section */}
