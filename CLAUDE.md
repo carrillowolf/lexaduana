@@ -54,3 +54,15 @@ inmediatamente con `mcp__github__subscribe_pr_activity` al mismo PR — sin
 preguntar. Así se reciben eventos de CI y review comments durante toda la
 sesión y puedo reaccionar (fix pequeño, pregunta si es ambiguo, skip si no
 aplica) sin tener que pedirme que active el watcher cada vez.
+
+## Tipos de cambio de la web (BOE)
+
+`current_exchange_rates` / `upcoming_exchange_rates` (página `/tipos-cambio` y
+banner) usan los cambios del euro del BCE del penúltimo miércoles del mes
+anterior, publicados por el Banco de España en el BOE. No confundir con
+`exchange_rates` (tipos CCT del TARIC, se cargan con loadBlock3).
+
+```bash
+node scripts/updateRatesFromBoe.js --current=BOE-A-... --upcoming=BOE-A-... --dry-run
+node scripts/updateRatesFromBoe.js --current=BOE-A-... --upcoming=BOE-A-...
+```
