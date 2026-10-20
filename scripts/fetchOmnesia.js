@@ -69,9 +69,15 @@ async function get(endpoint, params = {}) {
  * Descarga todas las páginas de un endpoint. Algunos endpoints no devuelven
  * `total` (duties-import), así que se pide en tandas de CONCURRENCY páginas
  * hasta recibir una incompleta. Las filas se deduplican por `id` cuando existe.
+ *
+ * duties-import ordena solo por goods_code y el orden entre filas del mismo
+ * código cambia de una petición a otra, así que en los cortes de página se
+ * pierden y repiten filas. Con `tieKey` se vuelven a pedir completos, filtrando
+ * por ese campo, los valores que caen en un corte.
  */
-async function fetchAll(endpoint, params, pageSize, label) {
+async function fetchAll(endpoint, params, pageSize, label, tieKey = null) {
   const rows = []
+  const boundaryKeys = new Set()
   let offset = 0
   let done = false
 
@@ -80,10 +86,26 @@ async function fetchAll(endpoint, params, pageSize, label) {
     const pages = await Promise.all(offsets.map(o => get(endpoint, { ...params, offset: o, limit: pageSize })))
     for (const page of pages) {
       rows.push(...page.data)
+      if (tieKey && page.data.length) {
+        boundaryKeys.add(page.data[0][tieKey])
+        boundaryKeys.add(page.data[page.data.length - 1][tieKey])
+      }
       if (page.data.length < pageSize) done = true
     }
     offset += CONCURRENCY * pageSize
     process.stdout.write(`\r  📥 ${label}: ${rows.length} filas`)
+  }
+
+  const keys = [...boundaryKeys]
+  for (let i = 0; i < keys.length; i += CONCURRENCY) {
+    await Promise.all(keys.slice(i, i + CONCURRENCY).map(async key => {
+      for (let o = 0; ; o += pageSize) {
+        const page = await get(endpoint, { ...params, [tieKey]: key, offset: o, limit: pageSize })
+        rows.push(...page.data)
+        if (page.data.length < pageSize) break
+      }
+    }))
+    process.stdout.write(`\r  📥 ${label}: revisando cortes de página ${Math.min(i + CONCURRENCY, keys.length)}/${keys.length}`)
   }
 
   const seen = new Set()
@@ -130,7 +152,7 @@ function writeExcel(filename, rows) {
   const sheet = XLSX.utils.json_to_sheet(rows)
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, sheet, 'Sheet1')
-  XLSX.writeFile(workbook, path.join(OUT_PATH, filename))
+  XLSX.writeFile(workbook, path.join(OUT_PATH, filename), { compression: true })
   console.log(`  💾 ${filename}: ${rows.length} filas`)
 }
 
@@ -150,7 +172,7 @@ async function expectedRows(version) {
 // ── Bloque 2: medidas ───────────────────────────────────────
 
 async function measures() {
-  const raw = await fetchAll('duties-import', { taric_version: VERSION }, 200, 'Duties import')
+  const raw = await fetchAll('duties-import', { taric_version: VERSION, structured: false }, 200, 'Duties import', 'goods_code')
   writeExcel('Duties Import 01-99.xlsx', raw.map(r => ({
     'Goods code': r.goods_code,
     'Add code': str(r.add_code),
