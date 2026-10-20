@@ -295,9 +295,16 @@ async function main() {
   if (ONLY) console.log(`🎯 Solo ejecutando: ${ONLY}`)
   console.log('')
 
+  // Omnesia (scripts/fetchOmnesia.js) no genera "Footnotes descriptions.xlsx":
+  // si falta, se conserva footnote_descriptions tal cual y se salta ese paso.
+  const hasFootnotes = fs.existsSync(path.join(EXCEL_PATH, 'Footnotes descriptions.xlsx'))
+  if (!hasFootnotes && ONLY !== 'footnotes') {
+    console.log('⚠️  Sin "Footnotes descriptions.xlsx": se mantiene footnote_descriptions actual\n')
+  }
+
   const requiredFiles = [
     'Box 44 codes of the SAD.xlsx',
-    'Footnotes descriptions.xlsx',
+    ...(hasFootnotes || ONLY === 'footnotes' ? ['Footnotes descriptions.xlsx'] : []),
     'Additional codes descriptions.xlsx',
     'CCT Exchange rates.xlsx',
     'Legal basis.xlsx'
@@ -319,7 +326,7 @@ async function main() {
     if (!ONLY || ONLY === 'certificates') {
       results.certificateTypes = await loadCertificates()
     }
-    if (!ONLY || ONLY === 'footnotes') {
+    if ((!ONLY && hasFootnotes) || ONLY === 'footnotes') {
       results.footnoteDescriptions = await loadFootnoteDescriptions()
     }
     if (!ONLY || ONLY === 'additional') {
