@@ -399,10 +399,6 @@ function detectChanges(newRows, currentRows, config) {
 
 async function insertChanges(changes, runId) {
   if (changes.length === 0) return 0
-  if (DRY_RUN) {
-    console.log(`   🧪 DRY RUN: ${changes.length} cambios (no se insertan)`)
-    return changes.length
-  }
 
   const rows = changes.map(c => ({
     run_id: runId,
@@ -585,7 +581,9 @@ async function main() {
   }
 
   // Insertar cambios
-  if (allChanges.length > 0) {
+  if (allChanges.length > 0 && DRY_RUN) {
+    console.log(`\n🧪 DRY RUN: ${allChanges.length.toLocaleString('es-ES')} cambios detectados (no se insertan en taric_changes)`)
+  } else if (allChanges.length > 0) {
     console.log(`\n💾 Insertando ${allChanges.length.toLocaleString('es-ES')} cambios en taric_changes...`)
     const inserted = await insertChanges(allChanges, runId)
     console.log(`   ✅ ${inserted.toLocaleString('es-ES')} cambios insertados`)

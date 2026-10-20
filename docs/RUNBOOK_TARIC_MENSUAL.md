@@ -49,6 +49,23 @@ Procedimiento operativo para la actualización mensual del snapshot TARIC desde 
 
 4. `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_KEY` cargados.
 
+### Alternativa: generar los Excel desde Omnesia
+
+En vez de descargar los Excel de CIRCABC, `scripts/fetchOmnesia.js` los genera desde la API TARIC de Omnesia con las mismas cabeceras, en `data/nuevo-mes/`:
+
+```bash
+# .env.local: OMNESIA_API_KEY=... (opcional OMNESIA_BASE_URL)
+node scripts/fetchOmnesia.js                  # última versión sincronizada en Omnesia
+node scripts/fetchOmnesia.js --version=202610 # versión concreta
+```
+
+- Tarda ~15–20 min (las medidas son ~730 páginas de 200 filas). Desde un entorno con proxy, añadir `NODE_USE_ENV_PROXY=1`.
+- Al terminar contrasta cada tabla con el número de filas de `sync-logs` de Omnesia: si aparece un `⚠️` de filas descargadas distinto, **no seguir** con la carga.
+- `Footnotes descriptions.xlsx` no existe en Omnesia: no se genera y `loadBlock3.js` conserva `footnote_descriptions` tal cual.
+- `Hier. Pos.` e `IS_LEAF` se derivan del código y del sangrado; `Decl. start date` toma la fecha de inicio de la línea.
+
+Después se sigue igual desde el Paso 1.
+
 ## Pasos en orden
 
 ⚠️ **Crítico: ejecutar `detectChanges` ANTES de cualquier `loadBlock`.** El detector compara el Excel nuevo contra los datos actuales en Supabase; si los `loadBlock` ya han sobrescrito esos datos, los cambios detectados serán vacíos o incorrectos.
