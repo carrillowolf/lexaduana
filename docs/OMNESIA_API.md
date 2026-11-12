@@ -3,7 +3,7 @@
 **Fuente prioritaria para cualquier dato TARIC** (aranceles, medidas, condiciones, suspensiones, nomenclatura, áreas geográficas, tipos de cambio). Consultar la API antes que las tablas TARIC de Supabase, los Excel de CIRCABC o cualquier otro documento.
 
 - **Base URL:** `https://api-pre.omnesia.tech/taric/v1` (preproducción; confirmar dominio de producción con Omnesia)
-- **Autenticación:** cabecera `x-api-key: $OMNESIA_API_KEY`. Nunca escribir la clave en el repo (es público).
+- **Autenticación:** cabecera `x-api-key`. En las sesiones cloud de Claude Code la clave está guardada como secreto de red del entorno para `api-pre.omnesia.tech` y el proxy la añade sola: llamar sin cabecera. Los scripts que exigen `OMNESIA_API_KEY` (p. ej. `fetchOmnesia.js`) aceptan `OMNESIA_API_KEY=proxy-injected`. En local, poner la clave real en `.env.local`. Nunca escribir la clave en el repo (es público).
 - **OpenAPI vivo:** `GET /openapi.json` (con la misma cabecera). Si algo de este documento no cuadra, manda el OpenAPI.
 - **Formato:** todas las respuestas son `{"data": ..., "total": n}`. `total` puede venir `null` (p. ej. `duties-import`).
 - **Paginación:** `offset` + `limit`. Máximo `limit=1000`, salvo `duties-import*` (máx. 200, por defecto 32).
@@ -12,7 +12,7 @@
 - **Orígenes:** ISO alfa-2 (`CN`) o código de zona TARIC (`1011` = ERGA OMNES, `5500` = Mercosur, …).
 
 ```bash
-curl -H "x-api-key: $OMNESIA_API_KEY" "https://api-pre.omnesia.tech/taric/v1/health"
+curl "https://api-pre.omnesia.tech/taric/v1/health"   # en local: -H "x-api-key: $OMNESIA_API_KEY"
 ```
 
 ## Versión TARIC

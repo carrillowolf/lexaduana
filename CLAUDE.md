@@ -10,7 +10,8 @@ Supabase ni los Excel de CIRCABC para responder dudas de datos; solo se tocan
 para la carga mensual (ver más abajo) o si el usuario lo pide.
 
 - Mapa completo de endpoints, parámetros y campos: `docs/OMNESIA_API.md`.
-- Base: `https://api-pre.omnesia.tech/taric/v1`, cabecera `x-api-key: $OMNESIA_API_KEY`.
+- Base: `https://api-pre.omnesia.tech/taric/v1`. En sesiones cloud el proxy añade la cabecera `x-api-key` sola (secreto de red del entorno); los scripts que piden `OMNESIA_API_KEY` aceptan `proxy-injected`.
+- Tipo de cambio del BCE para valor en aduana (art. 146): `GET /customs-exchange-rates?month=YYYY-MM&currency=USD`, `euros = importe / units_per_euro`.
 - Última versión TARIC: `GET /sync-logs?limit=1`.
 - Consulta típica: `GET /duties-import/applicable?taric_version=…&goods_code=…&origin_code=…&reference_date=YYYY-MM-DD`.
 - No escribir la clave en el repositorio (es público).
