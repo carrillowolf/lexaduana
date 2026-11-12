@@ -1,5 +1,20 @@
 # LexAduana — Notas para Claude Code
 
+## Fuente de datos TARIC: API de Omnesia (prioritaria)
+
+Para cualquier consulta de datos TARIC (aranceles, medidas aplicables a un
+código y origen, suspensiones, antidumping, condiciones y certificados de la
+casilla 44, nomenclatura, zonas geográficas, tipos de cambio BCE del art. 146)
+usar **siempre primero la API de Omnesia**. No consultar las tablas TARIC de
+Supabase ni los Excel de CIRCABC para responder dudas de datos; solo se tocan
+para la carga mensual (ver más abajo) o si el usuario lo pide.
+
+- Mapa completo de endpoints, parámetros y campos: `docs/OMNESIA_API.md`.
+- Base: `https://api-pre.omnesia.tech/taric/v1`, cabecera `x-api-key: $OMNESIA_API_KEY`.
+- Última versión TARIC: `GET /sync-logs?limit=1`.
+- Consulta típica: `GET /duties-import/applicable?taric_version=…&goods_code=…&origin_code=…&reference_date=YYYY-MM-DD`.
+- No escribir la clave en el repositorio (es público).
+
 ## Actualización mensual de datos TARIC
 
 Cada mes, cuando lleguen los nuevos Excel de CIRCABC/EUR-Lex, ejecutar en este orden:
